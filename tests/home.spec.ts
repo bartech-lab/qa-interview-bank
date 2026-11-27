@@ -264,3 +264,35 @@ test('at 390 px home fits and #mix-start is on the first screen', { tag: '@narro
   const box = await page.locator('#mix-start').boundingBox();
   expect(box!.y + box!.height, 'bottom of #mix-start').toBeLessThanOrEqual(844);
 });
+
+// ---- Other quizzes stay shuffled (spec: Daily mix). A shuffle equal to the listed order has odds of about 1 in 10! ----
+test('Quiz these N from Review asks the listed questions, not in list order', async ({ open }) => {
+  const { page, bank } = await openWith(open, b => ({ shaky: marks(b.slice(0, 10).map(q => q.id)) }));
+  await goTo(page, 'review');
+  const listed = await page.locator('.rq-row').evaluateAll(els => els.map(e => e.getAttribute('data-id')));
+  expect(listed).toHaveLength(10);
+  await page.getByRole('button', { name: /Quiz these 10/ }).click();
+  const seen = await askAll(page, bank, 10);
+  expect([...seen].sort()).toEqual([...listed].sort());
+  expect(seen).not.toEqual(listed);
+});
+
+test('a quiz from the Quiz tab is not asked in bank order', async ({ open }) => {
+  const page = await open({ time: NOW });
+  const bank = await bankData(page);
+  await page.locator('#tab-quiz').click();
+  await page.locator('.startrow .btn.primary').click();
+  const seen = await askAll(page, bank, 10);
+  expect(seen).not.toEqual(bank.filter(q => q.tier === 'Core').slice(0, 10).map(q => q.id));
+});
+
+// ---- The header title is a keyboard-reachable home button ----
+test('the header title is a button that opens home', async ({ open }) => {
+  const page = await open({ time: NOW });
+  await goTo(page, 'review');
+  const title = page.getByRole('button', { name: 'QA Interview Bank', exact: true });
+  await title.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#today')).toBeVisible();
+  await expect(page.locator('#review')).toBeHidden();
+});

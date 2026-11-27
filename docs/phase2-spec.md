@@ -196,4 +196,6 @@ Backup hint, `#backup-line` on home beside the reset button:
 
 Navigation: `go('review')` opens the Review view, like `go('home')`, `go('learn', file)` and `go('setup')` today.
 
+The page title in the header is a button named `QA Interview Bank` that opens home, so a keyboard can reach it.
+
 Keys: today key `2` means Knew it; from this version `2` is Shaky and `3` is Knew it.
