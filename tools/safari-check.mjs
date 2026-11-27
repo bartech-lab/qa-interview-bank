@@ -8,11 +8,12 @@
 // Whether Safari's automation may open file:// at all is recorded, not assumed; a refused file:// is a finding, not a failure.
 //
 // Usage: node tools/safari-check.mjs [pages-url]   (run tools/build.py first; writes safari-results.json)
-// Exit 1 when any check fails, other than file:// being refused.
+// Exit 1 when any check fails, other than file:// being refused (then the later checks for that target are skipped).
 import { spawn, execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -67,7 +68,11 @@ async function checks(url) {
   const step = async (name, fn) => { try { out[name] = await fn(); } catch (e) { out[name] = `FAIL: ${e.message.split('\n')[0]}`; } };
   await step('open', async () => {
     await wd('POST', '/session/:s/url', { url });
-    return `ok, at ${await wd('GET', '/session/:s/url')}`;
+    const at = await wd('GET', '/session/:s/url');
+    if (at.startsWith(url.split(':')[0] + ':')) return `ok, at ${at}`;
+    // Safari shows its own error page instead of the file; keep what it says.
+    const text = await js("return (document.title + ': ' + document.body.innerText).replace(/\\s+/g, ' ').trim()").catch(e => e.message);
+    throw new Error(`refused: Safari shows ${at}, "${text.slice(0, 300)}"`);
   });
   if (String(out.open).startsWith('FAIL')) return out;
   await step('ready', async () => { await until('data-ready', () => js("return document.documentElement.dataset.ready === '1'"), 20000); return 'ok'; });
@@ -122,11 +127,14 @@ try {
   try {
     const pages = Buffer.from(await (await fetch(PAGES_URL)).arrayBuffer());
     result.pagesPage = { url: PAGES_URL, bytes: pages.length, sha256: sha(pages), sameAsLocalBuild: sha(pages) === sha(local) };
-    for (const [name, url] of [['file', pathToFileURL(path.join(DIST, 'index.html')).href], ['http', `http://127.0.0.1:${server.address().port}/`], ['pages', PAGES_URL]]) {
+    // file:// from three places: the checkout, /tmp and the home folder, to tell a refused protocol from an unreadable folder.
+    const copies = [['file', path.join(DIST, 'index.html')], ['file-tmp', '/tmp/qib/index.html'], ['file-home', path.join(os.homedir(), 'qib', 'index.html')]];
+    for (const [, f] of copies.slice(1)) { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.copyFileSync(path.join(DIST, 'index.html'), f); }
+    for (const [name, url] of [...copies.map(([n, f]) => [n, pathToFileURL(f).href]), ['http', `http://127.0.0.1:${server.address().port}/`], ['pages', PAGES_URL]]) {
       result.targets[name] = { url, ...(await checks(url)) };
       console.log(name, JSON.stringify(result.targets[name]));
       for (const [k, v] of Object.entries(result.targets[name])) {
-        if (String(v).startsWith('FAIL') && !(name === 'file' && k === 'open')) failed = true;
+        if (String(v).startsWith('FAIL') && !(name.startsWith('file') && k === 'open')) failed = true;
       }
     }
   } finally { await wd('DELETE', '/session/:s'); }
