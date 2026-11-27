@@ -7,3 +7,4 @@ __pycache__/
 probes/
 *-local
 *-local.*
+safari-results.json

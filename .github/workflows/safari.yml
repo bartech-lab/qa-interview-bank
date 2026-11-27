@@ -1,0 +1,28 @@
+name: Safari
+# Manual check of the built page in real Safari on a macOS runner (docs/feasibility.md, "Real Safari").
+# Opens dist/index.html by file://, over a local http server, and the GitHub Pages copy, through safaridriver.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safari:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      - name: Build
+        run: python3 tools/build.py
+      - name: Enable safaridriver
+        run: sudo safaridriver --enable
+      - name: Check in Safari
+        run: node tools/safari-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safari-results
+          path: safari-results.json
+          retention-days: 30
