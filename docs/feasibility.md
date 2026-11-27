@@ -58,6 +58,7 @@ Each probe page reports into `window.__result`. "file" means the page was opened
 
     The MIT licences of sql.js, CodeMirror and Sucrase go beside them, in one comment at the end of the page.
 
+15. **A GitHub Codespace from e2e-casebook's dev container** (phase 4, 2026-11-27, `basicLinux32gb`, 2 cores). It was available 88 s after `gh codespace create` (two tries, both 88 s). No test ran in it: `gh codespace ssh` and `gh codespace logs` both need an SSH server, and the Playwright image has none ("failed to start SSH server"). "Available" does not prove that `postCreateCommand` finished. The same dev container came up locally with `npx @devcontainers/cli up` and ran the search-race solution, 3 of 3 passed. Both Codespaces were deleted.
 17. **A part stored gzip-compressed and base64-encoded in the page unpacks on first use** with `DecompressionStream('gzip')`, by file:// and by http, in Chromium 159, Firefox 159 and WebKit 27.2 (phase 3, 2026-11-27). The WebKit run is Playwright's Linux build inside Playwright's Docker image (`mcr.microsoft.com/playwright:v1.65.0-noble`, 2 CPUs) on the maintainer's laptop, not GitHub Actions.
     - Each part sits in a `<script type="application/x-gzip-base64">` tag, which the browser does not run. The page decodes the base64 (`Uint8Array.fromBase64`, present in both; an `atob` loop as the fallback) and pipes the bytes through `DecompressionStream`.
     - Every part worked after unpacking: the 1,057 questions parsed, CodeMirror mounted an editor, Sucrase stripped types, and sql.js started inside a blob worker with the wasm bytes posted in, then ran a window function (SQLite 3.54.1).
@@ -215,5 +216,6 @@ The first run (46060470961, commit 1e97dcf) gave the same http and Pages results
 - Safari on an iPhone: no device is available.
 - Real Safari by file:// (a double-clicked page): its automation refuses file:// ("Real Safari" above), so this needs a person at a Mac.
 - Start time on a real phone (probe 4).
-- Probes 13 to 16 belong to later phases.
+- Probes 13, 14 and 16 belong to later phases.
+- A test inside a real Codespace (probe 15): it needs an SSH server in the dev container, or a person in the browser editor.
 - Probe 17 in WebKit on GitHub Actions: it ran in Docker on the maintainer's laptop instead (same Playwright WebKit build).
