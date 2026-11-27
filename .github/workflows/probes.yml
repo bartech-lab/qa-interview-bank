@@ -1,0 +1,50 @@
+# Phase 1 feasibility probes in WebKit, which does not start on the maintainer's machine. Manual only; see docs/feasibility.md.
+name: Probes
+on:
+  workflow_dispatch:
+    inputs:
+      browsers:
+        description: Browsers to probe, space separated
+        default: webkit
+      app:
+        description: owner/name of the public sample app whose pages probe 11 freezes
+        required: true
+jobs:
+  probes:
+    runs-on: ubuntu-latest
+    env:
+      BROWSERS: ${{ inputs.browsers }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+        with:
+          repository: ${{ inputs.app }}
+          path: sample-app
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium $BROWSERS
+      - name: Build the sample app whose pages probe 11 freezes
+        working-directory: sample-app
+        run: npm ci && npm run build
+      - name: Set up probe pages and packages
+        run: node tools/probes.mjs setup
+      - name: Freeze sample-app pages
+        run: |
+          (cd sample-app && TEST_HOOKS=1 PORT=3177 node server/main.ts &)
+          for i in $(seq 1 60); do curl -sf localhost:3177/api/health >/dev/null && break; sleep 1; done
+          node tools/probes.mjs snapshot http://localhost:3177
+      - name: Run probes
+        run: node tools/probes.mjs run $BROWSERS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: probe-results
+          path: |
+            probes/results-*.json
+            probes/sizes.json
+          retention-days: 30
