@@ -5,5 +5,5 @@ playwright-report/
 __pycache__/
 *.pyc
 probes/
-*-local/
+*-local
 *-local.*
