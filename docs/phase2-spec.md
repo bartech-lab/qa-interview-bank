@@ -106,21 +106,30 @@ The Review view lists every question that is due, shaky, missed, or has a note.
 ## Daily mix
 
 - Built once per day and stored in `mix`, so both tabs and every reload see the same set that day.
-- Size: `mixSize` (5, 10 or 20, default 10), chosen with `select#mix-size`. Changing it rebuilds today's mix.
-- Order of picking: due questions (oldest due first), then shaky, then missed, then unseen Core questions, then unseen Standard questions. Unseen questions are taken one topic at a time in turn, with a shuffle seeded by today's date: the same day gives the same mix for the same progress.
+- Size: `mixSize` (5, 10 or 20, default 10), chosen with `select#mix-size` (accessible name "Daily goal"). It is a goal, not a limit: after it, Keep going asks more. Changing it rebuilds today's mix.
+- Order of picking: due questions (oldest due first), then shaky, then missed, then unseen Core questions, then unseen Standard questions, then (Keep going only) unseen Niche questions. Unseen questions are taken one topic at a time in turn, with a shuffle seeded by today's date: the same day gives the same mix for the same progress.
 - No question appears twice. Fewer questions than the size when the pool is smaller.
 - Done = rated today (`srs[id].last` is today). `#mix-progress` text: `D / N done today`.
-- `#mix-start` starts a quiz with the mix questions not done yet, in the order of `mix.ids`: the quiz asks them in that order, not shuffled. Every other quiz stays shuffled. When all are done it is disabled and reads "Daily mix done".
+- `#mix-start` starts a quiz with the mix questions not done yet, in the order of `mix.ids`: the quiz asks them in that order, not shuffled. Every other quiz stays shuffled.
+- `#mix-extra`, beside `#mix-progress`: `plus N more` when N questions outside `mix.ids` were rated today (Keep going, other quizzes or Learn marks); hidden when N is 0.
+
+### Keep going
+
+- When every mix question is done, `#mix-start` reads "Keep going" and starts Keep going. The round summary after a daily-mix round that finished the mix, or after Keep going, shows a `Keep going` button too while a question is left.
+- Keep going asks one question at a time with no count: the next question in the order of picking (computed from progress as it is now), skipping questions rated today and questions already asked in this round. After each rating it asks the next. It ends when the user presses End or when no question is left; then the round summary shows.
+- The quiz header shows how many were answered in the round, not "N / total".
+- No question left (every question rated today, or known and not due): `#mix-start` is disabled and reads "Nothing left today".
 
 ## Home
 
 Home opens with today's daily mix. The count of due questions shows only on the Review tab (`#tab-review .badge`); home repeats no due count.
 
 - `#today` (`aria-label="Today"`) is the first part of `#home`, and `#mix-start` is the first button in `#home`.
-- `#mix-card` shows the next question of the mix: the first question in `mix.ids` order that is not done today. It shows that question's text and topic name. When no question is left, it shows no question text.
+- `#mix-card` shows the question `#mix-start` asks next: the first question in `mix.ids` order that is not done today, or, when the mix is done, the first question Keep going would ask. It shows that question's text and topic name. When no question is left at all, it shows no question text.
 - `#mix-intro` says what the rest of today's mix holds. A question "to review" has a mark or an `srs` entry; a "new" one has neither.
   - No progress saved (no mark, note or saved code): `Today's N questions are Core questions, taken from the topics in turn.` N = mix size.
-  - Every mix question done, or an empty mix: `Today's mix is done. A new one is ready tomorrow.`
+  - Every mix question done, or an empty mix, and Keep going has a question: `You reached today's goal. Keep going for more, or stop here.`
+  - Every mix question done, or an empty mix, and no question is left: `Nothing left today. A new mix is ready tomorrow.`
   - The rest holds questions to review and new ones: `Today's mix starts with questions to review, then new ones.`
   - Only questions to review: `Today's mix is questions to review.`
   - Only new questions: `Today's mix is new questions, taken from the topics in turn.`

@@ -1082,7 +1082,7 @@ test('daily mix: unseen Core before unseen Standard, and unseen Niche is never p
   expect(five.slice(3).every(i => std.includes(i))).toBe(true);
 });
 
-test('daily mix: start quizzes only what is not done; done count; all done disables the button', async ({ open }) => {
+test('daily mix: start quizzes only what is not done; done count; all done turns the button into Keep going', async ({ open }) => {
   const page = await open({ time: NOW });
   await page.locator('#mix-size').selectOption('5');
   const mixIds = (await saved(page)).mix.ids as string[];
@@ -1100,8 +1100,8 @@ test('daily mix: start quizzes only what is not done; done count; all done disab
   expect(await rateAll(page, 'known')).toBe(3);
   await goTo(page, 'home');
   await expect(page.locator('#mix-progress')).toHaveText('5 / 5 done today');
-  await expect(page.locator('#mix-start')).toBeDisabled();
-  await expect(page.locator('#mix-start')).toHaveText(/Daily mix done/);
+  await expect(page.locator('#mix-start')).toBeEnabled();
+  await expect(page.locator('#mix-start')).toHaveText('Keep going');
   const s = await saved(page);
   expect(sorted(Object.keys(s.srs))).toEqual(sorted(mixIds));
   expect((await saved(page)).mix.ids).toEqual(mixIds);

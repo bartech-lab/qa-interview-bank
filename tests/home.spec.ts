@@ -132,19 +132,19 @@ test('#mix-intro with no progress follows the size chosen in #mix-size', async (
   await page.locator('#mix-size').selectOption('20');
   await intro(page).toHaveText("Today's 20 questions are Core questions, taken from the topics in turn.");
 });
-test('#mix-intro when every mix question is done', async ({ open }) => {
+test('#mix-intro when every mix question is done and questions remain', async ({ open }) => {
   const { page } = await openWith(open, (_b, ids) => ({
     known: marks(ids), srs: Object.fromEntries(ids.map(i => [i, done(i)])), mix: { day: D(0), ids }, mixSize: 5,
   }), 5);
-  await intro(page).toHaveText("Today's mix is done. A new one is ready tomorrow.");
+  await intro(page).toHaveText("You reached today's goal. Keep going for more, or stop here.");
 });
-test('#mix-intro for an empty mix', async ({ open }) => {
+test('#mix-intro for an empty mix with questions remaining', async ({ open }) => {
   const { page } = await openWith(open, () => ({ mix: { day: D(0), ids: [] }, mixSize: 5 }), 5);
-  await intro(page).toHaveText("Today's mix is done. A new one is ready tomorrow.");
+  await intro(page).toHaveText("You reached today's goal. Keep going for more, or stop here.");
 });
 test('#mix-intro for an empty mix with other progress saved', async ({ open }) => {
   const { page } = await openWith(open, (_b, ids) => ({ known: marks([ids[0]]), mix: { day: D(0), ids: [] }, mixSize: 5 }), 5);
-  await intro(page).toHaveText("Today's mix is done. A new one is ready tomorrow.");
+  await intro(page).toHaveText("You reached today's goal. Keep going for more, or stop here.");
 });
 test('#mix-intro when the rest holds questions to review and new ones (done ones do not count)', async ({ open }) => {
   const { page } = await openWith(open, (_b, ids) => ({
