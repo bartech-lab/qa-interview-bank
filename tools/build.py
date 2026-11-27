@@ -4,7 +4,8 @@ src/index.html (the shell), src/style.css and src/js/*.js in the order of SCRIPT
 classic <script> tag, so every top-level name stays global, as the inline onclick handlers need.
 
 Usage: python3 tools/build.py
-Exit 1 when a question has no id, an id repeats, or a question has no Topic line.
+Exit 1 when a question has no id, an id repeats, a question has no Topic line, or dist/index.html
+is larger than BUDGET bytes (the size budget in docs/feasibility.md).
 """
 import json
 import re
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 TOPICS, DIST = ROOT / "topics", ROOT / "dist"
 SRC = ROOT / "src"
 SCRIPTS = ("data", "markdown", "answer", "editor", "navigation", "home", "learn", "quiz", "start")
+BUDGET = 4_500_000  # bytes for dist/index.html, docs/feasibility.md
 TOPIC = re.compile(r"^Topic: (\S+) \| (Core|Standard|Niche) \| id: (q\d{4})$", re.M)
 
 
@@ -68,13 +70,17 @@ def main() -> int:
     shutil.rmtree(DIST, ignore_errors=True)
     DIST.mkdir()
     (DIST / "index.html").write_text(page, encoding="utf-8")
+    size = (DIST / "index.html").stat().st_size
+    if size > BUDGET:
+        print(f"dist/index.html is {size:,} bytes, over the {BUDGET:,}-byte budget in docs/feasibility.md", file=sys.stderr)
+        return 1
     with zipfile.ZipFile(DIST / "qa-interview-bank.zip", "w", zipfile.ZIP_DEFLATED) as z:
         z.write(DIST / "index.html", "qa-interview-bank/index.html")
         for name in ("README.md", "LICENSE", "LICENSE-CONTENT.md"):
             z.write(ROOT / name, f"qa-interview-bank/{name}")
         for f in sorted(TOPICS.glob("*.md")):
             z.write(f, f"qa-interview-bank/topics/{f.name}")
-    print(f"OK: {len(qs)} questions -> dist/index.html ({(DIST / 'index.html').stat().st_size // 1024} KB) and dist/qa-interview-bank.zip")
+    print(f"OK: {len(qs)} questions -> dist/index.html ({size:,} bytes, budget {BUDGET:,}) and dist/qa-interview-bank.zip")
     return 0
 
 
