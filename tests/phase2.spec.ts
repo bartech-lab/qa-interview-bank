@@ -870,9 +870,9 @@ test('review: All lists due first (oldest due first), then the rest in bank orde
 
 test('review: each filter shows only its rows and is the only one pressed', async ({ open }) => {
   const { page, f0, f0b, f1, f2, f3, bankOrder } = await seedQueue(open);
-  const names = ['All', 'Due', 'Shaky', 'Missed', 'With note'];
+  const names = ['All', 'Due', 'Shaky', "Didn't know", 'With note'];
   const expected: Record<string, string[]> = {
-    Due: [f1, f0], Shaky: [f2], Missed: [f0b], 'With note': bankOrder([f2, f3]),
+    Due: [f1, f0], Shaky: [f2], "Didn't know": [f0b], 'With note': bankOrder([f2, f3]),
   };
   for (const name of Object.keys(expected)) {
     await page.locator('#review').getByRole('button', { name, exact: true }).click();
@@ -885,6 +885,33 @@ test('review: each filter shows only its rows and is the only one pressed', asyn
   }
 });
 
+test("words: the Review view says Didn't know, never missed, in filters, row tags and the intro", async ({ open }) => {
+  const { page, f0b, f2 } = await seedQueue(open);
+  const tags = (id: string) => page.locator(`.rq-row[data-id="${id}"] .tag`).allTextContents();
+  expect(await tags(f0b)).toEqual(["Didn't know"]);
+  expect(sorted(await tags(f2))).toEqual(sorted(['Shaky', 'With note']));
+  await expect(page.locator('#review').getByRole('button', { name: "Didn't know", exact: true })).toBeVisible();
+  expect(await page.locator('#review').innerText()).not.toMatch(/\bmiss(ed)?\b/i);
+});
+
+test("words: the empty Review queue does not say missed", async ({ open }) => {
+  const page = await open({ time: NOW });
+  await goTo(page, 'review');
+  await expect(page.locator('#review')).toHaveText(/nothing to review/i);
+  expect(await page.locator('#review').innerText()).not.toMatch(/\bmiss(ed)?\b/i);
+});
+
+test("words: the reset confirm counts questions you didn't know", async ({ open }) => {
+  const page = await open({ seed: { [BOX_KEY]: progress({ known: marks(['q0001', 'q0002']), missed: marks(['q0003']), notes: { q0004: 'n' } }) } });
+  await page.locator('#reset-btn').click();
+  await expect(page.locator('#reset-ask')).toHaveText("Delete 2 known marks, 1 question you didn't know and 1 note? This cannot be undone.");
+  await page.locator('#reset-no').click();
+  await page.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({ missed: marks(['q0003', 'q0005']) })]);
+  await page.reload();
+  await page.locator('#reset-btn').click();
+  await expect(page.locator('#reset-ask')).toHaveText("Delete 2 questions you didn't know? This cannot be undone.");
+});
+
 test('review: topic filter lists one option per topic and narrows the rows (also with a filter button)', async ({ open }) => {
   const { page, files, f0, f0b, f1, f2, f3 } = await seedQueue(open);
   const select = page.locator('select#rq-topic');
@@ -894,7 +921,7 @@ test('review: topic filter lists one option per topic and narrows the rows (also
   await select.selectOption(files[0]);
   expect(await rowIds(page)).toEqual([f0, f0b]);
   await expect(quizThese(page)).toHaveText(/Quiz these 2/);
-  await page.locator('#review').getByRole('button', { name: 'Missed', exact: true }).click();
+  await page.locator('#review').getByRole('button', { name: "Didn't know", exact: true }).click();
   expect(await rowIds(page)).toEqual([f0b]);
   await page.locator('#review').getByRole('button', { name: 'All', exact: true }).click();
   await select.selectOption(files[1]);
@@ -1114,6 +1141,34 @@ test('theme: Auto follows the system, an explicit choice does not', async ({ ban
   await bank.emulateMedia({ colorScheme: 'light' });
   expect(await bgOf(bank)).toBe(DARK);
 });
+
+// WCAG 2 contrast ratio of an element's text colour against its own background colour.
+const contrastOf = (page: Page, selector: string) => page.locator(selector).first().evaluate(el => {
+  const rgb = (c: string) => (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+  const lum = (c: string) => {
+    const [r, g, b] = rgb(c).map(v => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const cs = getComputedStyle(el), a = lum(cs.color), b = lum(cs.backgroundColor);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+});
+const themes: [string, string | null, 'light' | 'dark'][] = [
+  ['Light', 'light', 'dark'], ['Dark', 'dark', 'light'], ['Auto with a dark system', null, 'dark'], ['Auto with a light system', null, 'light'],
+];
+for (const [name, choice, system] of themes) {
+  test(`contrast: text on accent parts is at least 4.5:1 in ${name}`, async ({ open }) => {
+    const seed: Record<string, string> = { [BOX_KEY]: progress({ known: marks(['q0001']), srs: { q0001: { box: 1, last: D(-5), due: D(-1) } } }) };
+    if (choice) seed['qa-bank-theme'] = choice;
+    const page = await open({ time: NOW, seed });
+    await page.emulateMedia({ colorScheme: system });
+    await expect(page.locator('#mix-start')).toBeEnabled();
+    await expect(page.locator('#tab-review .badge')).toBeVisible();
+    for (const sel of ['#mix-start', '#tab-review .badge']) {
+      const ratio = await contrastOf(page, sel);
+      expect(ratio, `${sel} in ${name}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+}
 
 test('theme: the choice persists across a reload', async ({ bank }) => {
   await bank.emulateMedia({ colorScheme: 'light' });

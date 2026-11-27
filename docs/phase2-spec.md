@@ -63,7 +63,7 @@ Correctness must not depend on the `storage` event. Every change re-reads `local
   missed: { qNNNN: 1 },
   notes:  { qNNNN: "text" },          // an empty note removes the key
   code:   { qNNNN: "text" },
-  srs:    { qNNNN: { box: 0..4, last: "YYYY-MM-DD", due: "YYYY-MM-DD" } },
+  srs:    { qNNNN: { box: 0..4, last: "YYYY-MM-DD", due: "YYYY-MM-DD", was?: "YYYY-MM-DD" } },  // was: see Interview date
   exam:   "YYYY-MM-DD" | null,
   backup: "YYYY-MM-DD" | null,
   mix:    { day: "YYYY-MM-DD", ids: [qNNNN, ...] },
@@ -71,7 +71,7 @@ Correctness must not depend on the `storage` event. Every change re-reads `local
 }
 ```
 
-- An id is in at most one of `known`, `shaky`, `missed`.
+- An id is in at most one of `known`, `shaky`, `missed`. The key `missed` holds "Didn't know" ratings; the page never shows the word "missed" (see Words on the page).
 - Keys this version does not know are kept on every save; `v` is never lowered.
 - Reset ("Reset my progress", then "Yes, reset") clears everything in `qa-bank`. It does not touch the theme.
 - `localStorage['qa-bank-theme']`: `"light"` or `"dark"`; absent means follow the system. A device setting: not exported, not imported, not reset.
@@ -96,7 +96,8 @@ Boxes 0 to 4 wait 1, 3, 7, 14 and 30 days.
 
 The Review view lists every question that is due, shaky, missed, or has a note.
 
-- Filters (buttons, one active at a time, `aria-pressed="true"` on the active one): "All", "Due", "Shaky", "Missed", "With note". Default "All".
+- Filters (buttons, one active at a time, `aria-pressed="true"` on the active one): "All", "Due", "Shaky", "Didn't know", "With note". Default "All".
+- Each row carries a tag per reason it is listed, with the filter's name: "Due", "Shaky", "Didn't know", "With note".
 - Topic filter: `select#rq-topic`, first option "All topics" (value `""`), then one option per topic, value = topic file name (for example `01-playwright`).
 - Rows: `.rq-row` with `data-id="qNNNN"`. Due questions first (oldest due date first), then the rest in bank order. Clicking a row opens that question in the Learn view.
 - Button "Quiz these N" (N = rows shown) starts a quiz with exactly those questions. Hidden or disabled when N is 0.
@@ -115,6 +116,12 @@ The Review view lists every question that is due, shaky, missed, or has a note.
 
 - `input[type=date]#exam-date` on the Today card sets `exam`; `#exam-clear` sets it back to null.
 - `#exam-line` text: no date: `No interview date set`; E in 2 or more days: `Interview in N days`; tomorrow: `Interview tomorrow`; today: `Interview today`; past: `The interview date has passed`.
+- Pulling reviews forward. A review due after the interview would come back too late. Every time `exam` is set or cleared:
+  1. Undo the previous pull: every `srs` entry with a `was` day gets `due` = `was`, and `was` is removed. A `was` that is not a valid day is removed without changing `due`.
+  2. When the new E is 2 or more days away, pull: every `srs` entry whose `due` is after E minus 1 gets `was` = its `due`. The i-th such entry in bank order (counting from 0) gets `due` = tomorrow + (i mod N), N = days left minus 1 (the days from tomorrow to E minus 1). An entry due on E minus 1 or earlier stays.
+  3. `box` and `last` never change. With E today, tomorrow, in the past or cleared, step 2 moves nothing. Entries for ids not in this bank are not pulled.
+  - Example: interview in 10 days, reviews due in 30 and 20 days: they move to tomorrow and the day after. Clear the date, and they are due in 30 and 20 days again.
+  - Rating a question replaces its entry (the table above), so its `was` goes away.
 - `#exam-pace`, only when E is in the future: `To see every unseen Core question: N a day`, N = unseen Core count divided by days left, rounded up. Hidden when no Core question is unseen.
 
 ## Export and import
@@ -145,6 +152,16 @@ Backup hint, `#backup-line` on home beside the reset button:
 - Light and Dark set `data-theme="light"` / `"dark"` on `<html>`; Auto removes the attribute. Set before first paint, so a reload never flashes the other theme.
 - Body background: light `rgb(246, 247, 249)`, dark `rgb(14, 16, 21)`. Auto follows the system (`prefers-color-scheme`).
 
+## Words on the page
+
+- The rating saved under `missed` is called "Didn't know" wherever the page shows it: quiz button, Review filter, row tag. The Review intro and empty-queue text say "didn't know", not "missed".
+- The reset confirm counts them as `N question(s) you didn't know`, for example `Delete 2 known marks, 1 question you didn't know and 1 note?`.
+- The apostrophe is the plain `'` everywhere.
+
+## Contrast
+
+- Text on accent-coloured parts (primary buttons such as `#mix-start`, the `#tab-review` due badge) has a contrast ratio of at least 4.5:1 against its own background, in Light, in Dark, and in Auto with a light or a dark system.
+
 ## Page parts the tests use
 
 | Part | Selector or name |
@@ -154,7 +171,7 @@ Backup hint, `#backup-line` on home beside the reset button:
 | Learn: known / shaky | `.known-btn`, `.shaky-btn`, both with `aria-pressed` |
 | Learn: note | `textarea.note`, accessible name "My note"; saved on input |
 | Quiz rating | buttons named `/Didn't know/` (key 1), `/Shaky/` (key 2), `/Knew it/` (key 3) |
-| Review view | `#review`; filters by button name; `select#rq-topic`; `.rq-row[data-id]`; button `/Quiz these \d+/` |
+| Review view | `#review`; filters by button name; `select#rq-topic`; `.rq-row[data-id]`; row tags `.rq-row .tag`; button `/Quiz these \d+/` |
 | Today card (home) | `#today`, `#mix-start`, `#mix-progress`, `select#mix-size`, `#due-count` (number only), `#exam-date`, `#exam-clear`, `#exam-line`, `#exam-pace` |
 | Backup row (home) | `#export-btn`, `#import-input`, `#import-ask`, `#import-yes`, `#import-no`, `#import-msg[data-kind]`, `#backup-line` |
 | Save notice | `#save-error`, `role="alert"` |
