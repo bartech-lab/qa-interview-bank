@@ -18,8 +18,8 @@ function renderHome() {
 function resetRow(asking) {
   const n = k => Object.keys(store[k]).length;
   if (!hasProgress(store)) return '';
-  const parts = [[n('known'), 'known mark'], [n('shaky'), 'shaky mark'], [n('missed'), 'missed mark'], [n('notes'), 'note'], [n('code'), 'saved code edit']];
-  const what = parts.filter(([c]) => c).map(([c, w]) => plural(c, w)).join(', ').replace(/, ([^,]*)$/, ' and $1');
+  const parts = [[n('known'), 'known mark'], [n('shaky'), 'shaky mark'], [n('missed'), 'question', " you didn't know"], [n('notes'), 'note'], [n('code'), 'saved code edit']];
+  const what = parts.filter(([c]) => c).map(([c, w, tail = '']) => plural(c, w) + tail).join(', ').replace(/, ([^,]*)$/, ' and $1');
   return asking
     ? `<span id="reset-ask">Delete ${what}? This cannot be undone.</span>
        <button class="btn miss" id="reset-yes" onclick="resetProgress()">Yes, reset</button>

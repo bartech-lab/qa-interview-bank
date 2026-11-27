@@ -42,7 +42,15 @@ const doneToday = q => !!store.srs[q.k] && store.srs[q.k].last === today();
 function setMixSize(n) { update(s => { s.mixSize = n; s.mix = { day: today(), ids: buildMix(s, today()) }; }); renderHome(); }
 
 // ---------- interview date ----------
-function setExam(value) { update(s => { s.exam = isDay(value) ? value : null; }); renderHome(); }
+function setExam(value) { update(s => { s.exam = isDay(value) ? value : null; pullForward(s); }); renderHome(); }
+// Reviews due after the interview are spread over tomorrow to the day before it; each keeps its old date in `was`,
+// so the next date (or Clear) first puts every one back. A date field can report part-typed dates, so this must undo cleanly.
+function pullForward(s) {
+  for (const e of Object.values(s.srs)) if ('was' in e) { if (isDay(e.was)) e.due = e.was; delete e.was; }
+  const t = today(), left = s.exam ? daysBetween(t, s.exam) : 0, last = s.exam && addDays(s.exam, -1);
+  if (left < 2) return;
+  Q.filter(q => s.srs[q.k] && s.srs[q.k].due > last).forEach((q, i) => { const e = s.srs[q.k]; e.was = e.due; e.due = addDays(t, 1 + i % (left - 1)); });
+}
 function examLines() {
   const e = store.exam, t = today();
   if (!e) return ['No interview date set', ''];
@@ -71,6 +79,7 @@ function todayCard() {
 
 // ---------- Review view ----------
 const rf = { by: 'All', topic: '' };
+const LABEL = { Missed: "Didn't know" }, label = w => LABEL[w] || w;  // the saved key stays `missed`
 const WHY = { Due: (s, q, t) => isDue(s, q.k, t), Shaky: (s, q) => !!s.shaky[q.k], Missed: (s, q) => !!s.missed[q.k], 'With note': (s, q) => !!s.notes[q.k] };
 function queue() {
   const t = today(), test = rf.by === 'All' ? (s, q) => Object.values(WHY).some(w => w(s, q, t)) : WHY[rf.by];
@@ -79,14 +88,14 @@ function queue() {
 }
 function renderReview() {
   const list = queue(), t = today();
-  const tags = q => Object.keys(WHY).filter(w => WHY[w](store, q, t)).map(w => `<span class="tag ${w.replace(' ', '-')}">${w}</span>`).join('');
+  const tags = q => Object.keys(WHY).filter(w => WHY[w](store, q, t)).map(w => `<span class="tag ${w.replace(' ', '-')}">${label(w)}</span>`).join('');
   $('review').innerHTML = `<div class="wrap"><div class="card setup review">
-    <h2>Review</h2><p class="muted" style="margin:0">Questions that are due again, that you marked shaky or missed, or that carry your note.</p>
-    <div class="chips rq-filters">${['All', ...Object.keys(WHY)].map(w => `<button class="chip ${rf.by === w ? 'on' : ''}" aria-pressed="${rf.by === w}" onclick="rf.by='${w}';renderReview()">${w}</button>`).join('')}</div>
+    <h2>Review</h2><p class="muted" style="margin:0">Questions that are due again, that you rated Shaky or Didn't know, or that carry your note.</p>
+    <div class="chips rq-filters">${['All', ...Object.keys(WHY)].map(w => `<button class="chip ${rf.by === w ? 'on' : ''}" aria-pressed="${rf.by === w}" onclick="rf.by='${w}';renderReview()">${label(w)}</button>`).join('')}</div>
     <select id="rq-topic" aria-label="Topic" onchange="rf.topic=this.value;renderReview()"><option value="">All topics</option>${files.map(f => `<option value="${f}" ${rf.topic === f ? 'selected' : ''}>${esc(fileMeta(f)[1])}</option>`).join('')}</select>
     ${list.length ? `<div class="startrow"><button class="btn primary" onclick="startQuiz(queue())">Quiz these ${list.length}</button></div>
       <div class="rq-list">${list.map(q => `<button class="rq-row" data-id="${q.k}" onclick="openQuestion(${q.i})"><span class="rq-q">${inline(q.q)}</span><span class="rq-meta">${tags(q)}<span class="muted small">${fileMeta(q.file)[0]} ${esc(fileMeta(q.file)[1])}</span></span></button>`).join('')}</div>`
-    : `<p class="empty">Nothing to review here yet. Questions you mark shaky, miss in a quiz or write a note on show up here, and so do questions due again.</p>
+    : `<p class="empty">Nothing to review here yet. Questions you rate Shaky or Didn't know, or write a note on, show up here, and so do questions due again.</p>
        <button class="btn" onclick="go('setup')">Start a quiz</button>`}</div></div>`;
 }
 function openQuestion(i) { filter.core = false; go('learn', Q[i].file); pick(i); }
