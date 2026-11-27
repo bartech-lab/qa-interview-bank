@@ -211,6 +211,8 @@ Checked on 2026-11-27 in GitHub Actions with the manual Safari workflow (`.githu
 
 The first run (46060470961, commit 1e97dcf) gave the same http and Pages results; it tried file:// from the checkout folder only.
 
+The Locators tab (phase 4), run 46070135094 on commit c85841a, same Safari and macOS, Pages serving the same bytes as the local build: over http and on Pages the trainer marked 3 elements for `getByRole('button', { name: /^Add/ })` and 2 for an `.or()` locator on the Shop page, as real Playwright does. The other four checks passed again there; file:// was refused again.
+
 ## Not checked
 
 - Safari on an iPhone: no device is available.
