@@ -12,7 +12,7 @@ const DAYS = [1, 3, 7, 14, 30];
 const BOX_KEY = 'qa-bank';
 
 const ids = async (page: Page) => (await bankData(page)).map(q => q.id);
-const firstTopicFirstQuestion = async (page: Page) => { await page.locator('.card.topic').first().click(); };
+const firstTopicFirstQuestion = async (page: Page) => { await page.locator('.topic').first().click(); };
 const setFull = (page: Page, on: boolean) => page.evaluate(v => { (window as unknown as { __full: boolean }).__full = v; }, on);
 const bgOf = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 const sorted = (a: string[]) => [...a].sort();
@@ -56,7 +56,7 @@ test('mode 0: known marks saved before v get a first review spread over 14 days,
   await page.clock.setSystemTime(addDays(NOW, 3));
   await goTo(page, 'review');
   await goTo(page, 'home');
-  await expect(page.locator('#due-count')).toHaveText('2');
+  await expect(page.locator('#tab-review .badge')).toHaveText('2');
   await goTo(page, 'review');
   await page.locator('#review').getByRole('button', { name: 'Due', exact: true }).click();
   expect(sorted((await rowIds(page)) as string[])).toEqual(sorted([known[0], known[14]]));
@@ -78,7 +78,7 @@ test('mode 0: progress that already has v keeps a known mark without an srs entr
 test('mode 3: corrupt JSON loads empty, copies the broken text once, and later saves do not overwrite the copy', async ({ open }) => {
   const broken = '{"known":';
   const page = await open({ seed: { [BOX_KEY]: broken } });
-  await expect(page.locator('.card.topic')).toHaveCount(12);
+  await expect(page.locator('.topic')).toHaveCount(12);
   await expect(page.locator('#ov-text')).toHaveText(/^0 \//);
   expect(await store(page, 'qa-bank-broken')).toBe(broken);
   await firstTopicFirstQuestion(page);
@@ -314,7 +314,7 @@ for (const [name, backup, text, warn] of backupCases) {
 
 test('backup line does not warn when there is no progress at all', async ({ open }) => {
   const page = await open({ time: NOW });
-  await expect(page.locator('.card.topic')).toHaveCount(12);
+  await expect(page.locator('.topic')).toHaveCount(12);
   expect(await page.evaluate(() => document.querySelector('#backup-line')?.classList.contains('warn') ?? false)).toBe(false);
 });
 
@@ -375,7 +375,7 @@ test('mode 16: a note typed while saving failed is saved by the next successful 
 
 test('mode 17: storage blocked on load: page works with empty progress and shows #save-error', async ({ open }) => {
   const page = await open({ blockRead: true });
-  await expect(page.locator('.card.topic')).toHaveCount(12);
+  await expect(page.locator('.topic')).toHaveCount(12);
   await expect(page.locator('#ov-text')).toHaveText(/^0 \//);
   await expect(page.locator('#save-error')).toBeVisible();
   await expect(page.locator('#save-error')).toHaveAttribute('role', 'alert');
@@ -412,7 +412,7 @@ test('mode 18: clock moved back 10 days after a rating: not due, no crash, no ne
   await page.clock.setSystemTime(addDays(NOW, -10));
   await goTo(page, 'review');
   await goTo(page, 'home');
-  await expect(page.locator('#due-count')).toHaveText('0');
+  await expect(page.locator('#tab-review .badge')).toHaveCount(0);
   await expect(page.locator('#tab-review .badge')).toBeHidden();
   await expect(page.locator('#backup-line')).toContainText('Last backup: today');
   await expect(page.locator('#backup-line')).not.toContainText(/-\d/);
@@ -423,7 +423,7 @@ test('mode 18: clock moved back 10 days after a rating: not due, no crash, no ne
 
 test('mode 18: an srs entry whose last date is after today is not due while its due date is in the future', async ({ open }) => {
   const page = await open({ time: addDays(NOW, -10), seed: { [BOX_KEY]: progress({ known: marks(['q0001']), srs: { q0001: { box: 1, last: D(0), due: D(3) } } }) } });
-  await expect(page.locator('#due-count')).toHaveText('0');
+  await expect(page.locator('#tab-review .badge')).toHaveCount(0);
   await expect(page.locator('#tab-review .badge')).toBeHidden();
 });
 
@@ -432,11 +432,10 @@ test('mode 19: clock moved forward past the due date makes the question due', as
   await page.clock.setSystemTime(addDays(NOW, 2));
   await goTo(page, 'review');
   await goTo(page, 'home');
-  await expect(page.locator('#due-count')).toHaveText('0');
+  await expect(page.locator('#tab-review .badge')).toHaveCount(0);
   await page.clock.setSystemTime(addDays(NOW, 5));
   await goTo(page, 'review');
   await goTo(page, 'home');
-  await expect(page.locator('#due-count')).toHaveText('1');
   await expect(page.locator('#tab-review .badge')).toHaveText('1');
   await goTo(page, 'review');
   await page.locator('#review').getByRole('button', { name: 'Due', exact: true }).click();
@@ -445,7 +444,7 @@ test('mode 19: clock moved forward past the due date makes the question due', as
 
 test('mode 19: a question is due on its due date itself', async ({ open }) => {
   const page = await open({ time: addDays(NOW, 3), seed: { [BOX_KEY]: progress({ known: marks(['q0001']), srs: { q0001: { box: 1, last: D(0), due: D(3) } } }) } });
-  await expect(page.locator('#due-count')).toHaveText('1');
+  await expect(page.locator('#tab-review .badge')).toHaveText('1');
 });
 
 test('mode 20: midnight with the page open: the next render uses the new day and the mix is rebuilt', async ({ open }) => {
@@ -990,7 +989,6 @@ test('review: a filter with no rows hides or disables the quiz button', async ({
 test('review: tab badge shows the due count only when above 0', async ({ open }) => {
   const page = await open({ time: NOW, seed: { [BOX_KEY]: progress({ known: marks(['q0001', 'q0002', 'q0003']), srs: {
     q0001: { box: 0, last: D(-2), due: D(-1) }, q0002: { box: 0, last: D(-2), due: D(0) }, q0003: { box: 3, last: D(0), due: D(14) } } }) } });
-  await expect(page.locator('#due-count')).toHaveText('2');
   await expect(page.locator('#tab-review .badge')).toHaveText('2');
 });
 
@@ -1120,8 +1118,8 @@ test('daily mix: the Today card fits the screen with the exam line and pace', { 
 // Light and dark
 // ---------------------------------------------------------------------------------------------
 
-const LIGHT = 'rgb(246, 247, 249)';
-const DARK = 'rgb(14, 16, 21)';
+const LIGHT = 'rgb(233, 237, 242)';
+const DARK = 'rgb(18, 22, 28)';
 
 test('theme: the button cycles Auto, Light, Dark, Auto with attribute, background and storage', async ({ bank }) => {
   await bank.emulateMedia({ colorScheme: 'light' });

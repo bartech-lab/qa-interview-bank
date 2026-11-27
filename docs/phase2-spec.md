@@ -34,7 +34,7 @@ For every case: an error message in `#import-msg` (`data-kind="error"`), no conf
 ### Clock change
 
 18. Clock moved back after a rating (for example 10 days): nothing crashes, the rated question is not due, `#backup-line` never shows a negative number of days.
-19. Clock moved forward past a due date: the question shows as due (count in `#due-count`, row under the Due filter).
+19. Clock moved forward past a due date: the question shows as due (count in `#tab-review .badge`, row under the Due filter).
 20. Midnight passes with the page open: the next render (any navigation) uses the new day. The daily mix is rebuilt for the new day.
 
 ### Two tabs (the same file open twice)
@@ -110,11 +110,25 @@ The Review view lists every question that is due, shaky, missed, or has a note.
 - Order of picking: due questions (oldest due first), then shaky, then missed, then unseen Core questions, then unseen Standard questions. Unseen questions are taken one topic at a time in turn, with a shuffle seeded by today's date: the same day gives the same mix for the same progress.
 - No question appears twice. Fewer questions than the size when the pool is smaller.
 - Done = rated today (`srs[id].last` is today). `#mix-progress` text: `D / N done today`.
-- `#mix-start` starts a quiz with the mix questions not done yet. When all are done it is disabled and reads "Daily mix done".
+- `#mix-start` starts a quiz with the mix questions not done yet, in the order of `mix.ids`: the quiz asks them in that order, not shuffled. Every other quiz stays shuffled. When all are done it is disabled and reads "Daily mix done".
+
+## Home
+
+Home opens with today's daily mix. The count of due questions shows only on the Review tab (`#tab-review .badge`); home repeats no due count.
+
+- `#today` (`aria-label="Today"`) is the first part of `#home`, and `#mix-start` is the first button in `#home`.
+- `#mix-card` shows the next question of the mix: the first question in `mix.ids` order that is not done today. It shows that question's text and topic name. When no question is left, it shows no question text.
+- `#mix-intro` says what the rest of today's mix holds. A question "to review" has a mark or an `srs` entry; a "new" one has neither.
+  - No progress saved (no mark, note or saved code): `Today's N questions are Core questions, taken from the topics in turn.` N = mix size.
+  - Every mix question done, or an empty mix: `Today's mix is done. A new one is ready tomorrow.`
+  - The rest holds questions to review and new ones: `Today's mix starts with questions to review, then new ones.`
+  - Only questions to review: `Today's mix is questions to review.`
+  - Only new questions: `Today's mix is new questions, taken from the topics in turn.`
+- Topics: 12 `.topic` buttons, one per topic in bank order. Each shows the topic name and `K / N` (known out of all questions in the topic), and opens that topic in the Learn view.
 
 ## Interview date
 
-- `input[type=date]#exam-date` on the Today card sets `exam`; `#exam-clear` sets it back to null.
+- `input[type=date]#exam-date` on home sets `exam`; `#exam-clear` sets it back to null.
 - Changing the date never redraws `#exam-date` while it has focus. Chromium reports an empty value part-way through retyping one part of a filled date; retyping the month or day with the keyboard must end with the new date set, not cleared.
 - `#exam-line` text: no date: `No interview date set`; E in 2 or more days: `Interview in N days`; tomorrow: `Interview tomorrow`; today: `Interview today`; past: `The interview date has passed`.
 - Pulling reviews forward. A review due after the interview would come back too late. Every time `exam` is set or cleared:
@@ -151,7 +165,7 @@ Backup hint, `#backup-line` on home beside the reset button:
 
 - `#theme-btn` in the header cycles Auto, Light, Dark, Auto. Its accessible name contains the current choice: `/Theme: Auto/`, `/Theme: Light/`, `/Theme: Dark/`.
 - Light and Dark set `data-theme="light"` / `"dark"` on `<html>`; Auto removes the attribute. Set before first paint, so a reload never flashes the other theme.
-- Body background: light `rgb(246, 247, 249)`, dark `rgb(14, 16, 21)`. Auto follows the system (`prefers-color-scheme`).
+- Body background: light `rgb(233, 237, 242)`, dark `rgb(18, 22, 28)`. Auto follows the system (`prefers-color-scheme`).
 
 ## Words on the page
 
@@ -162,6 +176,7 @@ Backup hint, `#backup-line` on home beside the reset button:
 ## Contrast
 
 - Text on accent-coloured parts (primary buttons such as `#mix-start`, the `#tab-review` due badge) has a contrast ratio of at least 4.5:1 against its own background, in Light, in Dark, and in Auto with a light or a dark system.
+- Grey secondary text on home (`#exam-line`, the `K / N` count in `.topic`) has at least 4.5:1 against the nearest background behind it, in the same four cases.
 
 ## Page parts the tests use
 
@@ -173,7 +188,9 @@ Backup hint, `#backup-line` on home beside the reset button:
 | Learn: note | `textarea.note`, accessible name "My note"; saved on input |
 | Quiz rating | buttons named `/Didn't know/` (key 1), `/Shaky/` (key 2), `/Knew it/` (key 3) |
 | Review view | `#review`; filters by button name; `select#rq-topic`; `.rq-row[data-id]`; row tags `.rq-row .tag`; button `/Quiz these \d+/` |
-| Today card (home) | `#today`, `#mix-start`, `#mix-progress`, `select#mix-size`, `#due-count` (number only), `#exam-date`, `#exam-clear`, `#exam-line`, `#exam-pace` |
+| Today (home) | `#today`, `#mix-intro`, `#mix-card`, `#mix-start`, `#mix-progress`, `select#mix-size`, `#exam-date`, `#exam-clear`, `#exam-line`, `#exam-pace` |
+| Topics (home) | `.topic` (12 buttons) |
+| Quiz setup | start button `.startrow .btn.primary` |
 | Backup row (home) | `#export-btn`, `#import-input`, `#import-ask`, `#import-yes`, `#import-no`, `#import-msg[data-kind]`, `#backup-line` |
 | Save notice | `#save-error`, `role="alert"` |
 
