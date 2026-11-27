@@ -9,6 +9,12 @@ const LOC_MSG = {
 };
 const loc = { data: null, engine: '', page: null, task: null, seq: 0, ready: false, pending: null, timer: 0, shown: false };
 
+// A quote character, or a / that starts a regex literal (after ( , : [ { or at the start), opens a span the scanners skip.
+function quoteAt(t, i) {
+  const c = t[i];
+  if (c === "'" || c === '"' || c === '`') return c;
+  return c === '/' && /(^|[(,:[{])\s*$/.test(t.slice(0, i)) ? '/' : null;
+}
 // Removes what Playwright code carries around a locator: spaces, one leading await, a trailing ;, and page. before a locator.
 // Text inside quotes is left alone.
 function cleanLocator(text) {
@@ -22,7 +28,7 @@ function cleanLocator(text) {
       else if (c === quote) quote = null;
       continue;
     }
-    if (c === "'" || c === '"' || c === '`') { quote = c; out += c; continue; }
+    if (quoteAt(t, i)) { quote = c; out += c; continue; }
     if (t.startsWith('page.', i) && (i === 0 || /[\s(,:{[]/.test(t[i - 1]))) { i += 4; continue; }
     out += c;
   }
@@ -51,7 +57,7 @@ function locBridge() {
     for (let i = 0; i < text.length; i++) {
       const c = text[i];
       if (quote) { if (c === '\\') i++; else if (c === quote) quote = null; continue; }
-      if (c === "'" || c === '"' || c === '`') quote = c;
+      if (quoteAt(text, i)) quote = c;
       else if (c === '(' || c === '{' || c === '[') depth++;
       else if (c === ')' || c === '}' || c === ']') depth--;
       else if (depth === 0 && c === '.') {
@@ -61,7 +67,7 @@ function locBridge() {
         for (let j = i + op[0].length - 1; j < text.length; j++) {
           const x = text[j];
           if (q) { if (x === '\\') j++; else if (x === q) q = null; continue; }
-          if (x === "'" || x === '"' || x === '`') q = x;
+          if (quoteAt(text, j)) q = x;
           else if (x === '(') d++;
           else if (x === ')' && --d === 0) return [i, op[1], j];
         }
@@ -79,14 +85,14 @@ function locBridge() {
     while (i < text.length) {
       const c = text[i];
       if (quote) { out += c; if (c === '\\') out += text[++i] || ''; else if (c === quote) quote = null; i++; continue; }
-      if (c === "'" || c === '"' || c === '`') { quote = c; out += c; i++; continue; }
+      if (quoteAt(text, i)) { quote = c; out += c; i++; continue; }
       const m = /^(has|hasNot)\s*:\s*/.exec(text.slice(i));
       if (!m || (i > 0 && /[\w$]/.test(text[i - 1]))) { out += c; i++; continue; }
       let j = i + m[0].length, d = 0, q = null;
       for (; j < text.length; j++) {
         const x = text[j];
         if (q) { if (x === '\\') j++; else if (x === q) q = null; continue; }
-        if (x === "'" || x === '"' || x === '`') q = x;
+        if (quoteAt(text, j)) q = x;
         else if (x === '(' || x === '{' || x === '[') d++;
         else if (x === ')' || x === '}' || x === ']') { if (d === 0) break; d--; }
         else if (x === ',' && d === 0) break;
@@ -106,7 +112,7 @@ function locBridge() {
     while (i < text.length) {
       const c = text[i];
       if (quote) { out += c; if (c === '\\') out += text[++i] || ''; else if (c === quote) quote = null; i++; continue; }
-      if (c === "'" || c === '"' || c === '`') { quote = c; out += c; i++; continue; }
+      if (quoteAt(text, i)) { quote = c; out += c; i++; continue; }
       const m = /^\.filter\(\s*\{/.exec(text.slice(i));
       if (!m) { out += c; i++; continue; }
       const parts = [];
@@ -114,7 +120,7 @@ function locBridge() {
       for (; j < text.length; j++) {
         const x = text[j];
         if (q) { if (x === '\\') j++; else if (x === q) q = null; continue; }
-        if (x === "'" || x === '"' || x === '`') q = x;
+        if (quoteAt(text, j)) q = x;
         else if (x === '(' || x === '{' || x === '[') d++;
         else if ((x === ')' || x === ']') && d > 0) d--;
         else if (x === '}' && d > 0) d--;
@@ -235,7 +241,7 @@ function locShowPage() {
   // No closing script tag may appear literally here: this file itself sits inside the page's one <script> element.
   const end = '<' + '/script', script = code => `<script>${code.replaceAll(end, '<\\/script')}${end}>`;
   const head = `<style>${loc.data.css}</style><style>[data-qa-match] { outline:3px solid #e8590c !important; outline-offset:2px; background-color:rgba(232,89,12,.14) !important; }</style>`
-    + script(loc.engine) + script(`(${locBridge})()`);
+    + script(loc.engine) + script(`${quoteAt}\n(${locBridge})()`);
   frame.srcdoc = loc.data.html[p.id].replace('</head>', () => head + '</head>');  // a function: the engine code holds "$&", which a replacement string would expand
 }
 

@@ -71,7 +71,7 @@ Rules from phase 1 that apply (`docs/feasibility.md`): nothing beside the HTML; 
 
 ### Parity with real Playwright (done-when of phase 4)
 
-Every locator of the parity set below (rows 49 to 56 added in phase 4's follow-up for `.or()`, `.and()` and multi-option filters) and every task answer is typed into the trainer on its page in the built page. Real Playwright 1.65.1 builds the same locator on `#loc-frame` (the text with `page.` in front (locators inside `.or()`, `.and()` and `has:` carry their own `page.` in the table, as in real test code), evaluated with `page` bound to `page.frameLocator('#loc-frame')`) and collects its matched set. The elements marked `data-qa-match` must be exactly that set, in Chromium, Firefox and WebKit, by file://.
+Every locator of the parity set below (rows 49 to 57 added in phase 4's follow-up for `.or()`, `.and()` and multi-option filters) and every task answer is typed into the trainer on its page in the built page. Real Playwright 1.65.1 builds the same locator on `#loc-frame` (the text with `page.` in front (locators inside `.or()`, `.and()` and `has:` carry their own `page.` in the table, as in real test code), evaluated with `page` bound to `page.frameLocator('#loc-frame')`) and collects its matched set. The elements marked `data-qa-match` must be exactly that set, in Chromium, Firefox and WebKit, by file://.
 
 - Guard against an empty pass: an entry marked 0 below must match 0 elements in real Playwright; every other entry at least 1.
 - Mix rule, checked by the test itself: at most a third of the parity set uses only `getByRole` calls; every kind in the "kind" column appears at least once; at least 10 entries are typed the way learners type (column "typed").
@@ -135,6 +135,7 @@ Every locator of the parity set below (rows 49 to 56 added in phase 4's follow-u
 | 54 | orders | `getByRole('row').filter({ has: page.getByRole('cell', { name: 'Ann' }), hasText: '400' })` | filter |  | ≥1 |
 | 55 | orders | `getByRole('row').filter({ hasNotText: 'ann', hasText: /Ewa|Ola/ }).first()` | filter | case | ≥1 |
 | 56 | playlist | `getByRole('listitem').filter({ visible: true, hasText: 'slow' })` | filter | case | ≥1 |
+| 57 | orders | `getByRole('row').filter({ hasText: /a{1,2}, b|Ann/, has: page.getByRole('cell', { name: '400' }) })` | filter | regex | ≥1 |
 
 ## Links to e2e-casebook (idea 51)
 
@@ -161,7 +162,7 @@ A regular expression that takes very long to match (for example `getByText(/(a+)
 ## Failure modes the tests cover
 
 1. Empty box, spaces only.
-2. Not a locator: `foo()`, `getByRole(` unfinished, `getByRole('button').click()`, `getByRole('button').or(foo())`, `frameLocator('#x').getByRole('button')`. And the opposite: `.or()`, `.and()` and multi-option filters are read (parity rows 49 to 56).
+2. Not a locator: `foo()`, `getByRole(` unfinished, `getByRole('button').click()`, `getByRole('button').or(foo())`, `frameLocator('#x').getByRole('button')`. And the opposite: `.or()`, `.and()` and multi-option filters are read (parity rows 49 to 57).
 3. Read but rejected: `locator('button[')` (bad CSS), `locator('foo=bar')` (unknown engine).
 4. 0, 1 and many matches, with the right number in the text.
 5. Prefixes: `await`, `page.`, `;`, and `page.` inside `has:`. A string that contains `page.` (for example `getByText('page.one')`) keeps it.
