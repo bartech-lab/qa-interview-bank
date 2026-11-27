@@ -4,17 +4,11 @@ Measured on 2026-11-27 with Playwright 1.65.1's own browser builds, headless. Ch
 
 Playwright's Firefox ships with `security.fileuri.strict_origin_policy` off, which loosens file:// rules. The runner turns it back on, so the Firefox rows show stock file:// behaviour. Chromium ran with Playwright's default flags, none of which relax file:// rules.
 
-**WebKit here is Playwright's Linux build of WebKit, not Safari.** Safari on a Mac or an iPhone has its own rules for files opened by double-click and its own privacy settings, so every WebKit row is a lower bound of what to check. A check on real Safari is still open (see the end).
+**WebKit here is Playwright's Linux build of WebKit, not Safari.** Safari on a Mac or an iPhone has its own rules for files opened by double-click and its own privacy settings, so every WebKit row is a lower bound of what to check. Real Safari was not checked (see the end).
 
 ## How to repeat it
 
-```sh
-node tools/probes.mjs setup                  # pinned packages and probe pages into probes/ (git-ignored)
-node tools/probes.mjs snapshot <app-url>     # probe 11 only: freeze pages of a running sample app
-node tools/probes.mjs run chromium firefox   # every probe by file:// and by http, results in probes/results-<browser>.json
-```
-
-WebKit: run the manual **Probes** workflow (Actions tab) with `browsers: webkit` and the sample app's `owner/name`; it uploads the same JSON files.
+The probe runner and the WebKit workflow are local maintainer tools, kept out of the repository. The versions used are in git history: `tools/probes.mjs` and `.github/workflows/probes.yml` at commit 02ea9be. The runner has three steps: `setup` (pinned packages and probe pages), `snapshot <app-url>` (probe 11 only: freeze pages of a running sample app) and `run <browser>...` (every probe by file:// and by http). WebKit ran through the workflow, which uploads the same JSON results.
 
 Each probe page reports into `window.__result`. "file" means the page was opened from disk (`file://`), like a double-click; "http" means a local web server. Probe 3 and 4 timings are the median of 5 cold loads, measured from the page's own time origin, so they include parsing the inlined code.
 
@@ -174,8 +168,8 @@ WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the
 - The zip should grow by about 0.72 MB, the gzip size of the new parts, to roughly 1.9 MB. This is estimated, not measured.
 - Each phase checks the built size against this budget and records it here.
 
-## Open
+## Not checked
 
-- Real Safari on a Mac and an iPhone: probes 1, 2, 5, 6, 8 and 9 by double-click. Linux WebKit passed them, but Safari's file rules may differ.
+- Real Safari on a Mac or an iPhone: no such device is available. Linux WebKit passed probes 1, 2, 5, 6, 8 and 9, but Safari's file rules may differ.
 - Start time on a real phone (probe 4).
 - Probes 13 to 16 belong to later phases.
