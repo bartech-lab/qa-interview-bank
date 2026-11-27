@@ -42,7 +42,17 @@ const doneToday = q => !!store.srs[q.k] && store.srs[q.k].last === today();
 function setMixSize(n) { update(s => { s.mixSize = n; s.mix = { day: today(), ids: buildMix(s, today()) }; }); renderHome(); }
 
 // ---------- interview date ----------
-function setExam(value) { update(s => { s.exam = isDay(value) ? value : null; pullForward(s); }); renderHome(); }
+function setExam(value) { update(s => { s.exam = isDay(value) ? value : null; pullForward(s); }); showExam(); }
+// Updates the interview row in place. Chromium reports an empty value part-way through retyping one part of the date,
+// so the field itself is never redrawn while it has focus, or the half-typed edit would be lost and the date cleared.
+function showExam() {
+  const field = $('exam-date'), [line, pace] = examLines();
+  if (!field) return;
+  $('exam-line').textContent = line;
+  $('exam-pace').textContent = pace; $('exam-pace').hidden = !pace;
+  $('exam-clear').disabled = !store.exam;
+  if (document.activeElement !== field) field.value = store.exam || '';
+}
 // Reviews due after the interview are spread over tomorrow to the day before it; each keeps its old date in `was`,
 // so the next date (or Clear) first puts every one back. A date field can report part-typed dates, so this must undo cleanly.
 function pullForward(s) {

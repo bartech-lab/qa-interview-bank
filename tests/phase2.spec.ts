@@ -627,6 +627,23 @@ for (const [name, n, line] of examLines) {
   });
 }
 
+test('mode 26: retyping the first part of a filled date with the keyboard ends with the new date set, not cleared', async ({ open, browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit on Linux has no segmented date field to type into');
+  const page = await open({ time: NOW });
+  const field = page.locator('#exam-date');
+  await field.fill(D(10));                                     // 2026-01-25
+  await expect(page.locator('#exam-line')).toHaveText('Interview in 10 days');
+  await page.locator('#exam-line').click();                    // leave the field, so focus starts at its first part
+  await field.focus();
+  await page.keyboard.type('02');                              // the first part is the month or the day, by browser layout
+  await page.locator('#exam-line').click();
+  const byLayout: Record<string, string> = { '2026-02-25': 'Interview in 41 days', '2026-01-02': 'The interview date has passed' };
+  await expect(field).toHaveValue(new RegExp(`^(${Object.keys(byLayout).join('|')})$`));
+  const value = await field.inputValue();
+  await expect(page.locator('#exam-line')).toHaveText(byLayout[value]);
+  expect((await saved(page)).exam).toBe(value);
+});
+
 test('mode 26: clearing the interview date resets the line, the pace and the saved value', async ({ open }) => {
   const page = await open({ time: NOW, seed: { [BOX_KEY]: progress({ exam: D(10) }) } });
   await expect(page.locator('#exam-line')).toHaveText('Interview in 10 days');

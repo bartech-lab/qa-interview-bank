@@ -115,6 +115,7 @@ The Review view lists every question that is due, shaky, missed, or has a note.
 ## Interview date
 
 - `input[type=date]#exam-date` on the Today card sets `exam`; `#exam-clear` sets it back to null.
+- Changing the date never redraws `#exam-date` while it has focus. Chromium reports an empty value part-way through retyping one part of a filled date; retyping the month or day with the keyboard must end with the new date set, not cleared.
 - `#exam-line` text: no date: `No interview date set`; E in 2 or more days: `Interview in N days`; tomorrow: `Interview tomorrow`; today: `Interview today`; past: `The interview date has passed`.
 - Pulling reviews forward. A review due after the interview would come back too late. Every time `exam` is set or cleared:
   1. Undo the previous pull: every `srs` entry with a `was` day gets `due` = `was`, and `was` is removed. A `was` that is not a valid day is removed without changing `due`.
