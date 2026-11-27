@@ -4,7 +4,7 @@ Measured on 2026-11-27 with Playwright 1.65.1's own browser builds, headless. Ch
 
 Playwright's Firefox ships with `security.fileuri.strict_origin_policy` off, which loosens file:// rules. The runner turns it back on, so the Firefox rows show stock file:// behaviour. Chromium ran with Playwright's default flags, none of which relax file:// rules.
 
-**WebKit here is Playwright's Linux build of WebKit, not Safari.** Safari on a Mac or an iPhone has its own rules for files opened by double-click and its own privacy settings, so every WebKit row is a lower bound of what to check. Real Safari was not checked (see the end).
+**WebKit here is Playwright's Linux build of WebKit, not Safari.** Safari on a Mac or an iPhone has its own rules for files opened by double-click and its own privacy settings, so every WebKit row is a lower bound of what to check. Real Safari on a Mac was checked later, over http only (see "Real Safari" below); iPhone Safari was not checked.
 
 ## How to repeat it
 
@@ -16,7 +16,7 @@ Each probe page reports into `window.__result`. "file" means the page was opened
 
 "Yes in all three" below means Chromium 159, Firefox 159 and WebKit 27.2 (all Playwright builds; WebKit is the Linux build), by file:// and by http.
 
-1. **A worker made from text in the page starts.** Yes in all three, as a `blob:` URL and as a `data:` URL. The 2023 Safari failure did not repeat in Linux WebKit; real Safari is unchecked.
+1. **A worker made from text in the page starts.** Yes in all three, as a `blob:` URL and as a `data:` URL. The 2023 Safari failure did not repeat in Linux WebKit, nor in real Safari 27.2 on a Mac over http ("Real Safari" below).
 2. **A sandboxed frame (`sandbox="allow-scripts"`, no same-origin) runs code and reports back** by `postMessage`. Yes in all three. The frame cannot read the page and has no `localStorage`; its origin is `null`.
 3. **The sql.js single-file build loads** in all three, runs a CTE with a window function, and reports SQLite 3.54.1. Its wasm memory is 21.1 MB at start and stays 21.1 MB after 10,000 rows. Chromium's JS heap after the test: 9.5 MB; Firefox and WebKit do not report a JS heap.
 4. **Start time** (median of 5, page open to ready, includes parsing the inlined code):
@@ -33,7 +33,7 @@ Each probe page reports into `window.__result`. "file" means the page was opened
    - QuickJS's interrupt handler stops `while(true){}` at 1,000 ms in all three.
    - QuickJS needs `setMaxStackSize` (256 KB tested). Without it, plain recursion in Chromium overflows the browser's stack inside the wasm code and breaks the QuickJS instance (`dispose` then throws).
    - Recursion that catches its own stack error overshoots QuickJS's 1 s deadline: 1.4 to 2.0 s with the stack limit, 3.0 to 4.2 s without it in Firefox and WebKit.
-   - Conclusion: workers do the job in all three engines, so QuickJS (871 KB) is not needed. Keep it as the fallback if real Safari fails probe 1.
+   - Conclusion: workers do the job in all three engines, so QuickJS (871 KB) is not needed. Real Safari 27.2 on a Mac also runs the page's worker and stops it at the 5 s limit ("Real Safari" below), so the fallback is not needed there.
 9. **An endless loop in a sandboxed frame freezes the whole page** in all three engines, not only WebKit: a 3-second busy loop in the frame stalled the page's timer for 3.0 s. User code must run in a worker; a frame alone does not protect the page.
 10. **playwright-injected runs unchanged** on double-click and inside a sandboxed frame in all three. It returns the expected matches for role, name, level and hidden-element locators.
 11. **Parity with real Playwright 1.65.1:** 746 of 746 locators match in Chromium and Firefox, 747 of 747 in WebKit, on 11 frozen pages of a public React practice app.
@@ -194,9 +194,25 @@ WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the
 | 3b | 2026-11-27 | 2,169,803 | + 96,199: redesign, two embedded fonts |
 | 3 | 2026-11-27 | 1,812,066 | - 357,737: editor, TS/JS and SQL runners, judging, predict, Run buttons; the questions and the three engines are stored compressed (probe 17) |
 
+## Real Safari (Mac, over http)
+
+Checked on 2026-11-27 in GitHub Actions with the manual Safari workflow (`.github/workflows/safari.yml`, script `tools/safari-check.mjs`), run 46060767809 on commit de5f824. Safari 27.2 on macOS 26.7.2, runner image macos26 20261123.0526.1, driven through `safaridriver` (W3C WebDriver). The page was the build of that commit, 1,812,601 bytes. The Pages copy served the same bytes (same SHA-256).
+
+**Safari's automation does not open file:// at all.** Every file:// address ends on Safari's error page: "Ignoring request to load this main resource because it is outside the sandbox". This happened for the checkout folder, `/tmp` and the home folder alike. So a double-clicked page in Safari is still unchecked. Only http was recorded.
+
+| Check | Local http server | GitHub Pages copy |
+|---|---|---|
+| Questions unpack (`html[data-ready="1"]`) | yes | yes |
+| A worker runs: q1019's worked solution prints `reverse: ok` | yes, finished in 52 ms | yes, finished in 126 ms |
+| The 5 s limit stops `while (true) {}` with the limit message | yes, after 5.3 s | yes, after 5.4 s |
+| SQL task q1030: its worked answer is judged "match" | yes | yes |
+
+The first run (46060470961, commit 1e97dcf) gave the same http and Pages results; it tried file:// from the checkout folder only.
+
 ## Not checked
 
-- Real Safari on a Mac or an iPhone: no such device is available. Linux WebKit passed probes 1, 2, 5, 6, 8 and 9, but Safari's file rules may differ.
+- Safari on an iPhone: no device is available.
+- Real Safari by file:// (a double-clicked page): its automation refuses file:// ("Real Safari" above), so this needs a person at a Mac.
 - Start time on a real phone (probe 4).
 - Probes 13 to 16 belong to later phases.
 - Probe 17 in WebKit on GitHub Actions: it ran in Docker on the maintainer's laptop instead (same Playwright WebKit build).
