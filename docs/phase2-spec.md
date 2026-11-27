@@ -10,6 +10,7 @@ Each line is covered by at least one test.
 
 ### Old saved progress (`localStorage['qa-bank']` written before this version)
 
+0. Known marks from before this version never come back for review: they have no `srs` entry. See the first-review rule under Spaced review.
 1. Pre-id shape: `{ known: { "<file>|<question text>": 1 }, code: { "<file>|<question text>": "..." } }`. Moves to the question id (already covered by `page.spec.ts`; stays green).
 2. Current shape `{ known, code }` with no `v`: loads unchanged; the first change writes the phase 2 shape and keeps `known` and `code` as they were.
 3. Corrupt JSON (for example `{"known":`): the page loads with empty progress, no page error, no console error. The broken text is copied once to `localStorage['qa-bank-broken']` before anything overwrites `qa-bank`.
@@ -87,6 +88,7 @@ Boxes 0 to 4 wait 1, 3, 7, 14 and 30 days.
 - `last` = today, `due` = today + the box's days.
 - With an interview date E after tomorrow, `due` is at most E minus 1 day, and at least tomorrow. With E today, tomorrow or past, the date does not change `due`.
 - Learn view: "Mark as known" applies Knew it; "Shaky" applies Shaky. Pressing a pressed button again removes the mark and the `srs` entry (the question is new again). Quiz ratings apply the table.
+- Known marks saved before this version (saved progress without `v`) have no `srs` entry. When the page loads such progress it gives each of them a first review: box 1, `last` = today, `due` spread over 3 to 16 days, so about one fourteenth comes back each day. The i-th such mark in bank order (counting from 0) is due on today + 3 + (i mod 14). They stay `known`. Progress that has `v` is left as it is.
 - A question is due when `srs.due` is today or earlier. A `due` in the future is not due, even if `last` is after today (clock moved back).
 
 ## Review queue

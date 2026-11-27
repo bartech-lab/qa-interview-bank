@@ -66,7 +66,9 @@ test('reset asks in the page, Cancel keeps progress, Yes clears it for good', as
   await expect(bank.locator('#ov-text')).toHaveText(/^0 \//);
   await bank.reload();
   await expect(bank.locator('#ov-text')).toHaveText(/^0 \//);
-  expect(await saved(bank)).toEqual({ known: {}, code: {} });
+  const s = await saved(bank);  // opening the page saves today's daily mix, so check the progress parts only
+  expect(s.known).toEqual({});
+  expect(s.code).toEqual({});
 });
 
 test('each answer links a prefilled issue that names the question id', async ({ bank }) => {
