@@ -6,7 +6,9 @@ Topics: Playwright, TypeScript and JavaScript, API testing, SQL, testing fundame
 
 ## Open it
 
-You need Python 3.9 or newer (`python3 --version` shows it). Nothing else.
+The easiest way: download `qa-interview-bank.zip` from the latest [release](https://github.com/bartech-lab/qa-interview-bank/releases/latest), unzip it and double-click `index.html`.
+
+Or build it yourself. You need Python 3.9 or newer (`python3 --version` shows it). Nothing else.
 
 1. Get the files: on GitHub press **Code → Download ZIP** and unzip it, or run `git clone https://github.com/bartech-lab/qa-interview-bank.git`.
 2. In a terminal, inside that folder, run:

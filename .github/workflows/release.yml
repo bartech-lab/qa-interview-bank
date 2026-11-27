@@ -1,0 +1,21 @@
+name: Release
+# Push a tag such as v0.2.0 to build the page and attach the zip to a GitHub Release.
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Content check
+        run: python3 tools/leak_check.py
+      - name: Build
+        run: python3 tools/build.py
+      - name: Create the release with the zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/qa-interview-bank.zip --title "$GITHUB_REF_NAME" --generate-notes
