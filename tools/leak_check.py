@@ -76,7 +76,11 @@ def main() -> int:
     for path, n, line, kinds in hits:
         shown = deny.sub("<private>", line) if deny else line
         print(f"{path.relative_to(ROOT)}:{n}: [{','.join(kinds)}] {shown.strip()[:200]}")
-    print(f"leak_check: {len(hits)} unreviewed hits" if hits else "leak_check: OK")
+    if hits:
+        print(f"leak_check: {len(hits)} unreviewed hits. Reword each line as advice to the reader, or, if it is fine,"
+              " run `python3 tools/leak_check.py --accept` and commit tools/reviewed-lines.txt. See README.md.")
+    else:
+        print("leak_check: OK")
     return 1 if hits else 0
 
 

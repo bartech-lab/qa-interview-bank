@@ -15,7 +15,7 @@ You need Python 3.9 or newer (`python3 --version` shows it). Nothing else.
    python3 tools/build.py
    ```
 
-   It prints `OK: 1057 questions -> dist/index.html`.
+   It prints a line starting `OK: 1057 questions -> dist/index.html`. It also writes `dist/qa-interview-bank.zip`, the same page packed with the Markdown, for sharing.
 3. Double-click `dist/index.html`. It opens in your browser and works offline.
 
 On Windows, use `py tools/build.py` if `python3` is not found.
@@ -70,11 +70,13 @@ After a change, run the checks:
 python3 tools/build.py          # the page builds
 python3 tools/leak_check.py     # no answer states one person's career history
 npm ci                          # once: installs Playwright (needs Node.js 20 or newer)
-npx playwright install          # once: downloads the test browsers
+npx playwright install          # once: downloads Chromium, Firefox and WebKit
 npm test                        # builds the page and runs the browser tests
 ```
 
-`leak_check.py` fails on lines like "I have used X" or "in a previous job". Reword them as advice ("If you have used X, say how"). If a line is fine as it is, read it once more and run `python3 tools/leak_check.py --accept` to record it as reviewed.
+`npm test` runs every test in three browsers at desktop and phone width. WebKit needs system libraries that Ubuntu and macOS have; on other Linux systems it may not start. Then run only the others: `npx playwright test --project 'chromium-*' --project 'firefox-*'`.
+
+`leak_check.py` prints each problem line with a label. `[personal]` means the line states one person's career history, such as "I have used X" or "in a previous job". Reword it as advice ("If you have used X, say how"). If the line is fine as it is, read it once more, then run `python3 tools/leak_check.py --accept`. That stores a fingerprint of the line in `tools/reviewed-lines.txt`; commit that file with your change.
 
 ## Licence
 
