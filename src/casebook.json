@@ -1,0 +1,518 @@
+{
+ "about": "Links from Playwright questions to e2e-casebook cases (idea 51, docs/phase4-spec.md). Case data copied from e2e-casebook web/src/case-index.json at 5a31126.",
+ "cases": {
+  "1": {
+   "title": "Two-user realtime chat",
+   "doc": "cases/01-two-user-realtime-chat.md",
+   "page": "chat",
+   "solution": "realtime-chat"
+  },
+  "2": {
+   "title": "Concurrent edit",
+   "doc": "cases/02-concurrent-edit.md",
+   "page": "board",
+   "solution": "concurrent-edit"
+  },
+  "3": {
+   "title": "Optimistic moves",
+   "doc": "cases/03-optimistic-moves.md",
+   "page": "board",
+   "solution": "optimistic-moves"
+  },
+  "4": {
+   "title": "Export job",
+   "doc": "cases/04-export-job.md",
+   "page": "exports",
+   "solution": "export-job"
+  },
+  "6": {
+   "title": "Due dates, time zones, and DST",
+   "doc": "cases/06-due-dates-time-zones-and-dst.md",
+   "page": "board",
+   "solution": "due-dates"
+  },
+  "7": {
+   "title": "A shared environment",
+   "doc": "cases/07-a-shared-environment.md",
+   "page": "board",
+   "solution": "shared-environment"
+  },
+  "8": {
+   "title": "Magic-link sign-in",
+   "doc": "cases/08-magic-link-sign-in.md",
+   "page": "account",
+   "solution": "magic-link"
+  },
+  "10": {
+   "title": "A toast and a page that is never idle",
+   "doc": "cases/10-a-toast-and-a-page-that-is-never-idle.md",
+   "page": "settings",
+   "solution": "toast-and-polling"
+  },
+  "11": {
+   "title": "Checkout total",
+   "doc": "cases/11-checkout-total.md",
+   "page": "shop",
+   "solution": "checkout-total"
+  },
+  "16": {
+   "title": "The People picker",
+   "doc": "cases/16-the-people-picker.md",
+   "page": "shop"
+  },
+  "20": {
+   "title": "Budget",
+   "doc": "cases/20-budget.md",
+   "page": "budget"
+  },
+  "21": {
+   "title": "Your plan",
+   "doc": "cases/21-your-plan.md",
+   "page": "plan"
+  },
+  "24": {
+   "title": "Draft",
+   "doc": "cases/24-draft.md",
+   "page": "draft"
+  },
+  "26": {
+   "title": "Contacts",
+   "doc": "cases/26-contacts.md",
+   "page": "contacts"
+  },
+  "27": {
+   "title": "Stores",
+   "doc": "cases/27-stores.md",
+   "page": "stores"
+  },
+  "29": {
+   "title": "Booking",
+   "doc": "cases/29-booking.md",
+   "page": "booking/dates"
+  },
+  "38": {
+   "title": "Search",
+   "doc": "cases/38-search.md",
+   "page": "search",
+   "solution": "search-race"
+  },
+  "39": {
+   "title": "Invoices",
+   "doc": "cases/39-invoices.md",
+   "page": "invoices"
+  },
+  "46": {
+   "title": "Inbox",
+   "doc": "cases/46-inbox.md",
+   "page": "inbox"
+  },
+  "56": {
+   "title": "Stay signed in",
+   "doc": "cases/56-stay-signed-in.md",
+   "page": "sign-in"
+  },
+  "59": {
+   "title": "Session",
+   "doc": "cases/59-session.md",
+   "page": "session"
+  },
+  "71": {
+   "title": "Sales report",
+   "doc": "cases/71-sales-report.md",
+   "page": "report"
+  },
+  "75": {
+   "title": "Shop reviews",
+   "doc": "cases/75-shop-reviews.md",
+   "page": "shop-reviews"
+  },
+  "78": {
+   "title": "Statement",
+   "doc": "cases/78-statement.md",
+   "page": "statement"
+  },
+  "84": {
+   "title": "Flash sale",
+   "doc": "cases/84-flash-sale.md",
+   "page": "flash-sale"
+  },
+  "85": {
+   "title": "Class list",
+   "doc": "cases/85-class-list.md",
+   "page": "class-list"
+  },
+  "99": {
+   "title": "Delivery details",
+   "doc": "cases/99-delivery-details.md",
+   "page": "delivery-form"
+  },
+  "100": {
+   "title": "Hotels",
+   "doc": "cases/100-hotels.md",
+   "page": "hotels"
+  },
+  "101": {
+   "title": "Lamps",
+   "doc": "cases/101-lamps.md",
+   "page": "lamps"
+  },
+  "110": {
+   "title": "Reading list",
+   "doc": "cases/110-reading-list.md",
+   "page": "reading-list"
+  },
+  "111": {
+   "title": "Bus stop",
+   "doc": "cases/111-bus-stop.md",
+   "page": "bus-stop"
+  },
+  "115": {
+   "title": "Event feedback",
+   "doc": "cases/115-event-feedback.md",
+   "page": "event-feedback"
+  },
+  "120": {
+   "title": "Flats",
+   "doc": "cases/120-flats.md",
+   "page": "flats"
+  },
+  "121": {
+   "title": "Parking permit",
+   "doc": "cases/121-parking-permit.md",
+   "page": "parking"
+  },
+  "127": {
+   "title": "Choir sign-up",
+   "doc": "cases/127-choir-sign-up.md",
+   "page": "choir"
+  },
+  "130": {
+   "title": "Receipts",
+   "doc": "cases/130-receipts.md",
+   "page": "receipts"
+  },
+  "132": {
+   "title": "Concert poster",
+   "doc": "cases/132-concert-poster.md",
+   "page": "poster"
+  },
+  "134": {
+   "title": "Club activity",
+   "doc": "cases/134-club-activity.md",
+   "page": "club-activity"
+  },
+  "136": {
+   "title": "Prints",
+   "doc": "cases/136-prints.md",
+   "page": "prints"
+  },
+  "139": {
+   "title": "Flight search",
+   "doc": "cases/139-flight-search.md",
+   "page": "flight-search"
+  },
+  "147": {
+   "title": "Handbook",
+   "doc": "cases/147-handbook.md",
+   "page": "handbook"
+  },
+  "149": {
+   "title": "Running order",
+   "doc": "cases/149-running-order.md",
+   "page": "running-order"
+  },
+  "150": {
+   "title": "Site photos",
+   "doc": "cases/150-site-photos.md",
+   "page": "site-photos"
+  },
+  "169": {
+   "title": "Cinema",
+   "doc": "cases/169-cinema.md",
+   "page": "cinema"
+  },
+  "170": {
+   "title": "Parts search",
+   "doc": "cases/170-parts-search.md",
+   "page": "parts"
+  },
+  "178": {
+   "title": "Loyalty points",
+   "doc": "cases/178-loyalty-points.md",
+   "page": "loyalty-points"
+  },
+  "179": {
+   "title": "Café dashboard",
+   "doc": "cases/179-cafe-dashboard.md",
+   "page": "cafe"
+  },
+  "187": {
+   "title": "Team overview",
+   "doc": "cases/187-team-overview.md",
+   "page": "team-overview"
+  },
+  "199": {
+   "title": "Exhibition",
+   "doc": "cases/199-exhibition.md",
+   "page": "exhibition"
+  }
+ },
+ "links": {
+  "q0001": [
+   10
+  ],
+  "q0002": [
+   169
+  ],
+  "q0003": [
+   10
+  ],
+  "q0004": [
+   10
+  ],
+  "q0006": [
+   4
+  ],
+  "q0007": [
+   4
+  ],
+  "q0008": [
+   21
+  ],
+  "q0009": [
+   38
+  ],
+  "q0010": [
+   10
+  ],
+  "q0011": [
+   8
+  ],
+  "q0012": [
+   78
+  ],
+  "q0014": [
+   1
+  ],
+  "q0015": [
+   24
+  ],
+  "q0016": [
+   199
+  ],
+  "q0017": [
+   29
+  ],
+  "q0018": [
+   16
+  ],
+  "q0019": [
+   16
+  ],
+  "q0020": [
+   39
+  ],
+  "q0021": [
+   120,
+   46
+  ],
+  "q0023": [
+   121,
+   75
+  ],
+  "q0024": [
+   115
+  ],
+  "q0025": [
+   20
+  ],
+  "q0026": [
+   3
+  ],
+  "q0027": [
+   85,
+   150
+  ],
+  "q0030": [
+   1
+  ],
+  "q0035": [
+   7
+  ],
+  "q0037": [
+   7
+  ],
+  "q0044": [
+   56
+  ],
+  "q0052": [
+   6
+  ],
+  "q0054": [
+   56
+  ],
+  "q0055": [
+   110
+  ],
+  "q0056": [
+   2
+  ],
+  "q0057": [
+   7
+  ],
+  "q0058": [
+   187
+  ],
+  "q0059": [
+   56
+  ],
+  "q0062": [
+   7
+  ],
+  "q0064": [
+   7
+  ],
+  "q0066": [
+   136
+  ],
+  "q0068": [
+   78,
+   39
+  ],
+  "q0069": [
+   130,
+   26
+  ],
+  "q0070": [
+   149
+  ],
+  "q0071": [
+   59,
+   84
+  ],
+  "q0072": [
+   6,
+   27
+  ],
+  "q0073": [
+   99,
+   101
+  ],
+  "q0075": [
+   24
+  ],
+  "q0077": [
+   100
+  ],
+  "q0079": [
+   11
+  ],
+  "q0081": [
+   10
+  ],
+  "q0082": [
+   46
+  ],
+  "q0083": [
+   38
+  ],
+  "q0084": [
+   7
+  ],
+  "q0086": [
+   56
+  ],
+  "q0087": [
+   121,
+   75
+  ],
+  "q0089": [
+   6
+  ],
+  "q0096": [
+   179
+  ],
+  "q0105": [
+   170
+  ],
+  "q0110": [
+   38
+  ],
+  "q0111": [
+   38
+  ],
+  "q0113": [
+   111
+  ],
+  "q0115": [
+   139
+  ],
+  "q0116": [
+   178
+  ],
+  "q0121": [
+   56
+  ],
+  "q0124": [
+   4
+  ],
+  "q0134": [
+   7
+  ],
+  "q0135": [
+   132
+  ],
+  "q0137": [
+   134
+  ],
+  "q0139": [
+   147
+  ],
+  "q0140": [
+   127
+  ],
+  "q0158": [
+   1
+  ],
+  "q0159": [
+   1
+  ],
+  "q0160": [
+   1
+  ],
+  "q0161": [
+   1
+  ],
+  "q0162": [
+   1
+  ],
+  "q1014": [
+   78
+  ],
+  "q1017": [
+   71
+  ],
+  "q1041": [
+   38
+  ],
+  "q1042": [
+   150
+  ],
+  "q1044": [
+   139,
+   179
+  ],
+  "q1046": [
+   10
+  ],
+  "q1047": [
+   1
+  ],
+  "q1050": [
+   56
+  ],
+  "q1054": [
+   187
+  ]
+ }
+}

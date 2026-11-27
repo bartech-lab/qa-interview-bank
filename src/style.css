@@ -302,6 +302,9 @@
     .rate .btn { min-width:0; flex:1; } header { gap:10px; padding:10px 12px; }
   }
   @media (max-width:640px) { .logo { display:none; } }
+  /* Four tabs since phase 4: on a phone they tighten so the header fits 360 px. */
+  @media (max-width:420px) { .seg { gap:0; } .seg button { padding:6px 7px !important; font-size:13px !important; } }
+  @media (max-width:340px) { header { gap:4px !important; padding:8px 6px !important; } .seg button { padding:6px 5px !important; } }
   @media (max-width:560px) {
     header { gap:6px; padding:8px; } .ov-word { display:none; } .seg button { padding:6px 10px; font-size:14px; } .overall { font-size:13px; } .iconbtn { width:32px; height:32px; }
     .wrap { padding:24px 16px 60px; } .deck-head h1 { font-size:36px; } #mix-intro { font-size:17px; }
@@ -314,3 +317,27 @@
     .navrow { flex-wrap:wrap; } .navrow .grow { flex-basis:100%; } .navrow .btn { flex:1; white-space:nowrap; padding:9px 10px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+
+  /* locator trainer (docs/phase4-spec.md) */
+  #locators { padding:20px; }
+  .loc-wrap { display:grid; grid-template-columns:minmax(300px, 380px) 1fr; gap:20px; max-width:1400px; margin:0 auto; align-items:start; }
+  .loc-panel { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px 18px; box-shadow:var(--shadow); }
+  .loc-panel h2 { margin:0 0 4px; font-size:20px; } .loc-panel h3 { margin:16px 0 6px; font-size:15px; }
+  .loc-field { display:block; margin:12px 0 0; font-weight:600; font-size:14px; }
+  .loc-field select, .loc-field input { display:block; width:100%; margin-top:4px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:var(--bg); font-weight:400; }
+  #loc-input { font-family:var(--mono); font-size:14px; }
+  #loc-state { min-height:3.2em; margin:10px 0 0; font-size:14px; }
+  #loc-state[data-state=unsupported], #loc-state[data-state=invalid] { color:var(--bad); }
+  #loc-tasks { margin:0; padding-left:22px; }
+  #loc-tasks li { margin:4px 0; }
+  .loc-task { border:1px solid transparent; background:none; padding:3px 6px; border-radius:5px; text-align:left; font-size:14px; }
+  .loc-task[aria-pressed=true] { border-color:var(--acc); background:var(--acc-soft); }
+  #loc-tasks li.passed .loc-task::after { content:''; display:inline-block; width:.5em; height:.85em; margin-left:8px; border:solid var(--ok); border-width:0 2px 2px 0; transform:rotate(45deg); }
+  #loc-verdict { font-size:14px; margin:10px 0 0; } #loc-verdict[data-verdict=pass] { color:var(--ok); } #loc-verdict[data-verdict=count], #loc-verdict[data-verdict=other] { color:var(--warn); }
+  #loc-answer { font-family:var(--mono); font-size:13px; }
+  .loc-stage { min-width:0; }
+  #loc-frame { width:100%; height:calc(100vh - 120px); min-height:480px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .loc-error { color:var(--bad); }
+  .casebook { margin:18px 0 0; padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--soft); }
+  .casebook ul { margin:4px 0 6px; padding-left:20px; } .casebook p { margin:4px 0 0; }
+  @media (max-width: 760px) { .loc-wrap { grid-template-columns:1fr; } #locators { padding:12px; } #loc-frame { height:70vh; } }

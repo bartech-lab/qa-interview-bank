@@ -30,7 +30,7 @@ const $ = id => document.getElementById(id);
 // localStorage['qa-bank'] holds everything below (docs/phase2-spec.md). Keys this version does not know are kept,
 // so a copy of the page from a newer version does not lose its data when an older copy saves.
 const STORE_KEY = 'qa-bank', THEME_KEY = 'qa-bank-theme', MARKS = ['known', 'shaky', 'missed'];
-const blank = () => ({ v: 2, known: {}, shaky: {}, missed: {}, notes: {}, code: {}, srs: {}, exam: null, backup: null, mix: null, mixSize: 10 });
+const blank = () => ({ v: 2, known: {}, shaky: {}, missed: {}, notes: {}, code: {}, srs: {}, exam: null, backup: null, mix: null, mixSize: 10, locators: {}, locPage: null });
 
 // Days are local calendar days as 'YYYY-MM-DD'; strings in this form compare in date order.
 const pad = n => String(n).padStart(2, '0');
@@ -52,13 +52,14 @@ function cleanProgress(raw) {
     for (const [id, x] of Object.entries(raw[name])) ok(x) ? out[name][id] = x : bad.push(`${name}.${id}`);
   };
   MARKS.forEach(m => map(m, x => x === 1));
-  map('notes', x => typeof x === 'string'); map('code', x => typeof x === 'string');
+  map('notes', x => typeof x === 'string'); map('code', x => typeof x === 'string'); map('locators', x => x === 1);
   map('srs', x => isObj(x) && Number.isInteger(x.box) && x.box >= 0 && x.box <= 4 && isDay(x.last) && isDay(x.due));
   for (const k of ['exam', 'backup']) if (raw[k] !== undefined && raw[k] !== null) { if (isDay(raw[k])) out[k] = raw[k]; else bad.push(k); }
   if (raw.mix !== undefined && raw.mix !== null) {
     if (isObj(raw.mix) && isDay(raw.mix.day) && Array.isArray(raw.mix.ids) && raw.mix.ids.every(i => typeof i === 'string')) out.mix = { day: raw.mix.day, ids: raw.mix.ids.slice() };
     else bad.push('mix');
   }
+  if (raw.locPage !== undefined && raw.locPage !== null) { if (typeof raw.locPage === 'string') out.locPage = raw.locPage; else bad.push('locPage'); }
   if (raw.mixSize !== undefined) { if ([5, 10, 20].includes(raw.mixSize)) out.mixSize = raw.mixSize; else bad.push('mixSize'); }
   for (const id of Object.keys(out.known)) { delete out.shaky[id]; delete out.missed[id]; }
   for (const id of Object.keys(out.shaky)) delete out.missed[id];

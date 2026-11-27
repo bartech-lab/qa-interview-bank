@@ -8,7 +8,8 @@ Code blocks that can run on their own get "run" added to their fence (idea 39); 
 
 Usage: python3 tools/build.py
 Exit 1 when a question has no id, an id repeats, a question has no Topic line, a SQL task has no seed or not exactly one
-```sql answer block, or dist/index.html is larger than BUDGET bytes (the size budget in docs/feasibility.md).
+```sql answer block, src/casebook.json links an unknown question or case, src/locators/tasks.json does not match the frozen
+pages, or dist/index.html is larger than BUDGET bytes (the size budget in docs/feasibility.md).
 """
 import base64
 import gzip
@@ -22,9 +23,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TOPICS, DIST = ROOT / "topics", ROOT / "dist"
 SRC = ROOT / "src"
-SCRIPTS = ("pack", "data", "markdown", "answer", "editor", "run", "sql", "review", "backup", "navigation", "home", "learn", "quiz", "start")
+SCRIPTS = ("pack", "data", "markdown", "answer", "editor", "run", "sql", "review", "backup", "locators", "navigation", "home", "learn", "quiz", "start")
 VENDOR = ROOT / "vendor"
-PACKS = {"codemirror": "codemirror.js", "sucrase": "sucrase.js", "sqljs": "sql-wasm.js", "sqlwasm": "sql-wasm.wasm"}
+PACKS = {"codemirror": "codemirror.js", "sucrase": "sucrase.js", "sqljs": "sql-wasm.js", "sqlwasm": "sql-wasm.wasm", "pwi": "playwright-injected.js"}
+LOCATORS = SRC / "locators"  # frozen e2e-casebook pages and the trainer's tasks (docs/phase4-spec.md)
+CASEBOOK = SRC / "casebook.json"  # links from questions to e2e-casebook cases (idea 51)
 BUDGET = 4_500_000  # bytes for dist/index.html, docs/feasibility.md
 FONT = re.compile(r"url\(fonts/([\w.-]+\.woff2)\)")
 TOPIC = re.compile(r"^Topic: (\S+) \| (Core|Standard|Niche) \| id: (q\d{4})$", re.M)
@@ -105,6 +108,49 @@ def questions() -> tuple[list, list]:
     return qs, problems
 
 
+def link_casebook(qs: list) -> list:
+    """Idea 51: each linked question gets its cases from src/casebook.json. Returns the problems found."""
+    data, problems = json.loads(CASEBOOK.read_text(encoding="utf-8")), []
+    by_id = {q["id"]: q for q in qs}
+    for qid, numbers in data["links"].items():
+        if qid not in by_id:
+            problems.append(f"src/casebook.json: link from unknown question {qid}")
+            continue
+        missing = [n for n in numbers if str(n) not in data["cases"]]
+        if missing or not numbers:
+            problems.append(f"src/casebook.json: {qid} links case(s) {missing or numbers} missing from cases")
+            continue
+        by_id[qid]["cases"] = [{"n": n, **data["cases"][str(n)]} for n in numbers]
+    return problems
+
+
+def frozen() -> tuple[bytes, list]:
+    """Idea 50: the frozen pages, their shared stylesheet and the tasks, as one JSON part. Returns it and the problems found."""
+    meta, problems = json.loads((LOCATORS / "tasks.json").read_text(encoding="utf-8")), []
+    files = {f.stem: f.read_text(encoding="utf-8") for f in sorted((LOCATORS / "pages").glob("*.html"))}
+    ids = [p["id"] for p in meta["pages"]]
+    if sorted(ids) != sorted(files):
+        problems.append(f"src/locators: pages in tasks.json {sorted(ids)} differ from the files in pages/ {sorted(files)}")
+    seen = set()
+    for t in meta["tasks"]:
+        if t["page"] not in ids:
+            problems.append(f"src/locators/tasks.json: task {t['id']} is on unknown page {t['page']}")
+        if t["id"] in seen:
+            problems.append(f"src/locators/tasks.json: task id {t['id']} repeats")
+        seen.add(t["id"])
+    for p in meta["pages"]:
+        if not any(t["page"] == p["id"] for t in meta["tasks"]):
+            problems.append(f"src/locators/tasks.json: page {p['id']} has no task")
+    for name, html in files.items():
+        if html.count("</head>") != 1 or "<script" in html:
+            problems.append(f"src/locators/pages/{name}.html: needs exactly one </head> and no script")
+        loads = re.findall(r'\s(?:src|srcset|poster|data)="(?!data:)[^"]+"|<link\b|url\((?!["\']?data:)', html)
+        if loads:
+            problems.append(f"src/locators/pages/{name}.html: loads {loads[:3]}; the trainer's frame must load nothing (inline it as data:)")
+    part = {"css": (LOCATORS / "pages" / "style.css").read_text(encoding="utf-8"), "html": files, "pages": meta["pages"], "tasks": meta["tasks"]}
+    return json.dumps(part, ensure_ascii=False).encode(), problems
+
+
 def page_source() -> str:
     """The page with style and scripts put in place; the question data goes in last, so data text is never searched."""
     on_disk = sorted(f.stem for f in (SRC / "js").glob("*.js"))
@@ -114,7 +160,8 @@ def page_source() -> str:
     if page.count("</body>") != 1:
         raise SystemExit("src/index.html must hold </body> exactly once")
     # Third-party licences: one comment at the end of the page (docs/feasibility.md, rule 5).
-    licences = (SRC / "fonts" / "OFL.txt").read_text(encoding="utf-8") + "\n" + "=" * 72 + "\n\n" + (VENDOR / "LICENSES.txt").read_text(encoding="utf-8")
+    licences = (SRC / "fonts" / "OFL.txt").read_text(encoding="utf-8") + "\n" + "=" * 72 + "\n\n" + (VENDOR / "LICENSES.txt").read_text(encoding="utf-8") \
+        + "\n" + "=" * 72 + "\n\n" + (LOCATORS / "NOTICE.txt").read_text(encoding="utf-8")
     if "-->" in licences or "--!>" in licences:
         raise SystemExit('a licence text holds "-->", which ends the HTML comment early')
     page = page.replace("</body>", "<!--\n" + licences + "-->\n</body>")
@@ -137,10 +184,13 @@ def pack(name: str, data: bytes) -> str:
 
 def main() -> int:
     qs, problems = questions()
+    problems += link_casebook(qs)
+    frozen_part, more = frozen()
+    problems += more
     if problems:
         print(*problems, sep="\n", file=sys.stderr)
         return 1
-    parts = {"data": json.dumps(qs, ensure_ascii=False).encode()} | {k: (VENDOR / f).read_bytes() for k, f in PACKS.items()}
+    parts = {"data": json.dumps(qs, ensure_ascii=False).encode()} | {k: (VENDOR / f).read_bytes() for k, f in PACKS.items()} | {"frozen": frozen_part}
     page = page_source().replace("/*PACKS*/", "\n".join(pack(k, v) for k, v in parts.items()))
     shutil.rmtree(DIST, ignore_errors=True)
     DIST.mkdir()

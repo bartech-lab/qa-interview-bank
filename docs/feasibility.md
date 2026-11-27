@@ -193,6 +193,7 @@ WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the
 | 2 | 2026-11-27 | 2,073,604 | + 24,401: shaky marks, notes, review queue, spaced review, export and import, interview date, daily mix, theme switch |
 | 3b | 2026-11-27 | 2,169,803 | + 96,199: redesign, two embedded fonts |
 | 3 | 2026-11-27 | 1,812,066 | - 357,737: editor, TS/JS and SQL runners, judging, predict, Run buttons; the questions and the three engines are stored compressed (probe 17) |
+| 4 | 2026-11-27 | 1,938,272 | + 126,206: locator trainer (playwright-injected engine, 155,862 bytes raw, and ten frozen e2e-casebook pages with their stylesheet, 250,717 bytes raw; both packed), links to 49 casebook cases from 82 questions, notices |
 
 ## Real Safari (Mac, over http)
 

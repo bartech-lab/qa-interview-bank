@@ -50,6 +50,15 @@ function report(q) {
   const body = `Question: ${q.q}\nId: ${q.id}\nTopic file: ${q.file}\n\nWhat is wrong or out of date:\n\nSource that shows it (link):\n`;
   return `<p class="report small"><a href="${REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}" target="_blank" rel="noopener">Report a problem with this answer</a> <span class="muted">${esc(q.id)}</span></p>`;
 }
+// Idea 51: practice cases on e2e-casebook for a linked question (docs/phase4-spec.md).
+const CASEBOOK = 'https://github.com/bartech-lab/e2e-casebook', DEMO = 'https://e2e-proving-ground.onrender.com';
+function casebook(q) {
+  if (!q.cases || !q.cases.length) return '';
+  const a = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
+  return `<section class="casebook" aria-label="Practise on e2e-casebook"><div class="lbl">Practise on e2e-casebook</div><ul>${q.cases.map(c => `<li>${a(`${CASEBOOK}/blob/main/${c.doc}`, `Case ${c.n}: ${c.title}`)}
+    · ${a(`${DEMO}/?try=${encodeURIComponent(c.page)}`, `Try case ${c.n} live`)}${c.solution ? ` · ${a(`${CASEBOOK}/tree/main/solutions/cases/${c.solution}#readme`, `Worked solution for case ${c.n}`)}` : ''}</li>`).join('')}</ul>
+    <p class="small">${a('https://codespaces.new/bartech-lab/e2e-casebook?quickstart=1', 'Run real Playwright in GitHub Codespaces')}. <span class="muted">The live demo sleeps when idle and can take about a minute to wake.</span></p></section>`;
+}
 function answer(q) {
   const f = q.f, fu = f['Follow-ups'] ? (f['Follow-ups'].match(/^\s*- /gm) || []).length : 0;
   return `<div class="body">${f.extra ? md(f.extra) : ''}${sayHtml(f.Say)}
@@ -57,7 +66,7 @@ function answer(q) {
     ${f.Trap ? `<div class="trap"><div class="lbl">Common trap</div>${md(f.Trap)}</div>` : ''}
     ${f['Full process'] ? `<details class="block"><summary>Full explanation <span class="hint">steps and code</span></summary><div class="inner">${md(f['Full process'])}</div></details>` : ''}
     ${fu ? `<details class="block"><summary>Follow-up questions <span class="hint">${fu} the interviewer may ask next</span></summary><div class="inner">${followUps(f['Follow-ups'])}</div></details>` : ''}
-    ${f.Source ? sources(f.Source) : ''}${report(q)}</div>`;
+    ${casebook(q)}${f.Source ? sources(f.Source) : ''}${report(q)}</div>`;
 }
 const tierBadge = t => `<span class="tier ${t}" title="${esc(TIERS[t])}">${t}</span>`;
 const crumbs = q => `<div class="crumbs">${tierBadge(q.tier)}<span>${esc(fileMeta(q.file))}</span><span>${inline(q.sec)}</span></div>`;

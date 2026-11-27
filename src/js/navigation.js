@@ -7,6 +7,8 @@ function go(v, arg) {
   $('tab-learn').classList.toggle('on', v === 'home' || v === 'learn');
   $('tab-quiz').classList.toggle('on', v === 'setup' || v === 'quiz');
   $('tab-review').classList.toggle('on', v === 'review');
+  $('tab-locators').classList.toggle('on', v === 'locators');
+  $('locators').classList.toggle('hidden', v !== 'locators');
   $('review').classList.toggle('hidden', v !== 'review');
   $('home').classList.toggle('hidden', v !== 'home');
   $('learn').classList.toggle('hidden', v !== 'learn');
@@ -16,6 +18,7 @@ function go(v, arg) {
   if (v === 'setup') renderSetup();
   if (v === 'review') renderReview();
   if (v === 'quiz') renderQuiz();
+  if (v === 'locators') renderLocators();
   overall(); window.scrollTo(0, 0);
 }
 
