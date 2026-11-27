@@ -6,7 +6,7 @@ Rules from phase 1 that apply (`docs/feasibility.md`): user code runs only in a 
 
 ## Words used here
 
-- **Task**: a question with a `**Starter:**` code block. 21 exist in `topics/13-live-coding.md`. 5 are Playwright tasks (their starter imports `@playwright/test`), 11 are TypeScript/JavaScript (q1019 to q1029), 5 are SQL (q1030 to q1034). The sixth Playwright task, q1015, has a starter without code (it points to the broken file in its Full process), so it shows the starter text and no editor, as before.
+- **Task**: a question with a `**Starter:**` code block. 22 exist in `topics/13-live-coding.md`. 6 are Playwright tasks (their starter imports `@playwright/test`), 11 are TypeScript/JavaScript (q1019 to q1029), 5 are SQL (q1030 to q1034).
 - **Runnable task**: the 11 TS/JS and 5 SQL tasks. Playwright tasks get the editor but no Run button.
 - **Predict question**: a question whose title contains `What does this print?` (11 questions: q0236 and q0288 to q0297).
 - **Seed**: the SQL that creates and fills the tables of a SQL task.
@@ -137,7 +137,7 @@ Each line is covered by at least one test.
 18. `NULL` versus `0`: a query returning `0` where the worked answer has `NULL` (q1034, first `change_from_previous`) is `rows`, not `match`.
 19. Table judging on q1032: the worked DELETE gives `match`; deleting customer 1 instead gives `rows` naming table `customers`; a user's script that ends with a different `SELECT` but leaves the right tables still gives `match`.
 20. Each of the 16 runnable tasks: its starter runs and ends with an error or a failed check (TS/JS: `.out-error`; SQL starter: no error, and Check gives `noresult`, except q1032, which is judged by its tables and gives `rows`: customer 4 is still there); its worked solution (the last ```` ```ts ```` block of the Full process for TS/JS, the worked answer for SQL) prints its `ok` line with no `.out-error` (TS/JS) or gives `match` (SQL). In Chromium, Firefox and WebKit.
-21. The 5 Playwright tasks with a starter editor have no Run button.
+21. The 6 Playwright tasks have no Run button.
 
 ## Page parts the tests use
 

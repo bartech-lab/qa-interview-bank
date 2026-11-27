@@ -252,7 +252,26 @@ test('Export CSV downloads a file with the expected name and rows', async ({ pag
 
 Topic: pw-fixtures | Core | id: q1015
 
-**Starter:** The broken file in step 1 of the full process. You explain, then fix it in place.
+**Starter:** The broken file the interviewer shows. Explain why it fails, then fix it in place.
+
+```ts
+import { test, expect } from '@playwright/test';
+
+const products = ['Blue Mug', 'Red Cap'];
+
+test.beforeEach(async ({ page }) => {
+  await page.setContent('<h1>Shop</h1>');
+  for (const name of products) {
+    test(`shows ${name}`, async () => {
+      expect(name).toBeTruthy();
+    });
+  }
+});
+
+test('first', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: 'Shop', exact: true })).toBeVisible();
+});
+```
 
 **Say:** Playwright reads the test file once, before any test runs, and builds the list of tests from the calls to `test()` at that moment. A `beforeEach` runs later, once per test, inside a worker, so a `test()` call there is too late and it throws "Playwright Test did not expect test() to be called here". The hook should do setup only. If I want several tests from a list of data, I loop at the file or `describe` level, and the loop creates the tests. If I want stages inside one test, I use `test.step`.
 

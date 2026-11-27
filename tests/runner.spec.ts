@@ -107,10 +107,10 @@ test('FM15 editor part cannot be unpacked: the plain text box stays and saves; R
 });
 
 // ---------------------------------------------------------------- editor (idea 34)
-test('editor 1 and 2: every one of the 21 tasks shows one visible Code editor holding its starter', async ({ open }) => {
+test('editor 1 and 2: every one of the 22 tasks shows one visible Code editor holding its starter', async ({ open }) => {
   const page = await open();
   const tasks = (await bankData(page)).filter(isTask);
-  expect(tasks).toHaveLength(21);
+  expect(tasks).toHaveLength(22);
   for (const q of tasks) {
     await openById(page, q.id);
     await expect(editor(page), q.id).toHaveCount(1);
@@ -191,12 +191,12 @@ test('editor 5: Reset to starter puts the starter into the code editor; Compare 
 });
 
 // ---------------------------------------------------------------- run bar and output
-test('run bar 1: runnable tasks have Run (SQL also Check); FM21 the 5 Playwright tasks with an editor have neither', async ({ open }) => {
+test('run bar 1: runnable tasks have Run (SQL also Check); FM21 the 6 Playwright tasks have neither', async ({ open }) => {
   const page = await open();
   const bank = await bankData(page);
   const tasks = bank.filter(isTask);
   const pw = tasks.filter(q => starterOf(q).includes('@playwright/test'));
-  expect(pw.map(q => q.id).sort()).toHaveLength(5);
+  expect(pw.map(q => q.id).sort()).toHaveLength(6);
   for (const q of pw) {
     await openById(page, q.id);
     await expect(editor(page), `${q.id} has the editor`).toBeVisible();
