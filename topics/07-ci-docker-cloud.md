@@ -193,8 +193,6 @@ Topic: ci-cd | Standard | id: q0698
 
 - *Why fewer workers per machine after adding shards? Machines are independent of workers.* They are independent. The worker count per machine follows that machine's CPU and memory: when browsers starve, tests time out. The shard count follows how fast the suite must finish. The one thing that ties them is the backend, which sees shards times workers users at once. If it answers with 503 under that load, the total has to come down, whichever setting I lower.
 
-**Powiedz:** Workery i shardy to dwie osobne rzeczy. Workery to procesy na jednej maszynie, więc ich liczbę ogranicza CPU i pamięć tej maszyny: jak przeglądarkom brakuje zasobów, testy łapią timeouty. Shardy to osobne maszyny w CI, każda dostaje część suite'u, i ich liczba wynika z tego, jak szybko suite ma się skończyć. Łączy je tylko backend, bo on widzi shardy razy workery użytkowników naraz. Jeśli pod takim obciążeniem zaczyna zwracać 503, to trzeba zejść z sumą, obojętnie którym ustawieniem. Każdy shard zapisuje blob report, a na końcu osobny job robi `merge-reports` do jednego raportu.
-
 **Trap:** Sharding without merging reports, so people have to open four reports to find one failure.
 
 **Source:** https://playwright.dev/docs/test-sharding
@@ -409,8 +407,6 @@ Topic: ci-cd | Standard | id: q0712
 | Every merge request | smoke (`--grep @smoke`) and the tests tagged for the changed area | an answer in minutes; a failure blocks the merge |
 | After merge to main | full regression, sharded | catches what the small set missed, before release |
 | Nightly | full regression on all browsers, slow tests | cost does not slow anyone down |
-
-**Powiedz:** Całe E2E na każdym MR-ze przy dużym suite'cie to zła praktyka: feedback trwa długo, runnery się kolejkują, a jeden flaky test blokuje merge wszystkim. Na MR-ze puszczam mały, stabilny zestaw: smoke oznaczony tagiem `@smoke` plus testy z obszaru, który się zmienił. Pełna regresja idzie po merge'u albo w nocy, na shardach. Jeśli suite jest mały i kończy się w kilka minut, może iść cały na MR-ze. Granicą jest czas i stabilność, a nie sama zasada.
 
 **Trap:** A smoke suite that grows into the whole regression suite.
 

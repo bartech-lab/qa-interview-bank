@@ -744,8 +744,6 @@ Run on Playwright 1.65.1 against a local backend that accepts a child age from 0
 - *`type` or `interface` here?* Either. Only `type` can also name a list of allowed values (`'adult' | 'child'`), and only `interface` can be declared twice and merged. For a plain data object the choice is the team's convention.
 - *Why a factory and not one shared constant?* A shared object gets changed by one test and read by another. A factory returns a fresh object each time.
 
-**Powiedz:** Kształt danych opisuję typem obiektu: nazwy pól i rodzaj wartości. Dla obiektu `type` i `interface` robią to samo, więc biorę to, co jest już w repo. Do tego robię fabrykę, czyli funkcję, która zwraca poprawny obiekt z wartościami domyślnymi i przyjmuje `Partial` tego typu jako nadpisania, żeby test podawał tylko to pole, o które mu chodzi. Wartości, które muszą być unikalne, jak email, generuję w fabryce. Typy pól zostawiam szerokie, zwykły `number` albo `string`. Typ mówi, jak dane wyglądają, a nie które wartości są poprawne, bo niepoprawne też muszę umieć wysłać.
-
 **Trap:** One shared test-data object imported by many tests. It is shared state, and it breaks under parallel runs.
 
 **Source:** https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype
@@ -807,8 +805,6 @@ Run on Playwright 1.65.1 against a local backend with that rule: four pass, and 
 - *What happens to equivalence classes when the rule is in the type?* Only the valid class is left. The invalid classes, below 0 and above 18, cannot be written, so they are not tested.
 - *Is a narrow type ever right?* Yes, for a closed list that is part of the shape, such as `type Board = 'all-inclusive' | 'breakfast'`. Even then the test that sends an unknown value builds its body as a plain object, not as that type.
 - *How do you send a value of the wrong kind, such as text for the age?* As a plain object passed to the request, outside the type. That test is about the API contract, not about my data model.
-
-**Powiedz:** Nie. Typ opisuje kształt danych: to pole jest liczbą. Reguła biznesowa, czyli wiek dziecka od 0 do 18, należy do produktu i to moje testy mają ją sprawdzać. Jeśli wpiszę regułę w typ, skompilują się tylko poprawne wartości, więc nie napiszę testów negatywnych ani wartości brzegowych, 19 i minus 1. Z klas równoważności zostaje mi tylko ta poprawna. Ktoś to potem obejdzie przez `as any` i typ przestaje cokolwiek chronić. Dlatego typ zostawiam szeroki, `number`, a regułę trzymam w danych testu: jeden wiersz na klasę równoważności i na wartość brzegową, każdy z oczekiwanym wynikiem. AI często zawęża takie typy, bo wygląda to precyzyjnie, więc pilnuję tego w review.
 
 **Trap:** Answering "yes, types should say exactly what is allowed". That is right for product code. In test code it removes the negative tests.
 
@@ -2841,8 +2837,6 @@ Run on Playwright 1.65.1 against a local backend that answers in 100 ms, returns
 - *What did the parallel run teach you?* The limit belongs to the backend, not to my test. In a trial run, a batch of 10 got a 429 as soon as other tests called the same endpoint in parallel. So the real budget is the batch size times the number of workers.
 - *`Promise.all` or `Promise.allSettled`?* `Promise.all` here. `request.get` does not reject on a 4xx or 5xx, it returns the response, so I check the status myself. `allSettled` is for calls that may reject when I still want the other results.
 - *Does the batch waste calls?* Up to 9, when the hit is first in its batch. That is the price of the speed.
-
-**Powiedz:** Synchronicznie, jeden request po drugim, to najwolniejsza droga: każde wywołanie czeka na poprzednie, więc 40 wywołań to 40 pełnych odpowiedzi. Te wywołania od siebie nie zależą, więc wysyłam je paczkami. Odpalam 10 requestów naraz, czekam na wszystkie przez `Promise.all`, sprawdzam 10 odpowiedzi i kończę na pierwszej, która ma to, czego szukam. Jeśli żadna nie ma, leci następna dziesiątka. Wielkość paczki wynika z rate limitu backendu, a nie z tego, ile udźwignie moja maszyna. Pętla ma limit, na przykład 100 wywołań, po którym test pada z jasnym komunikatem, a nie kręci się bez końca.
 
 **Trap:** A `while (true)` loop with no cap, or all the calls fired at once with no thought for the rate limit.
 

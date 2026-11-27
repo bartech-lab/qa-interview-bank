@@ -14,27 +14,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TOPICS, DIST = ROOT / "topics", ROOT / "dist"
 TOPIC = re.compile(r"^Topic: (\S+) \| (Core|Standard|Niche) \| id: (q\d{4})$", re.M)
-LABEL = re.compile(r"^(\*\*[A-Za-z -]+:\*\*|#{1,3} )")
-
-
-def drop_polish(text: str) -> str:
-    """The page has no language switch yet, so the Polish spoken answers (**Powiedz:**) are left out of the build."""
-    out, skip = [], False
-    for line in text.splitlines():
-        if line.startswith("**Powiedz:**"):
-            skip = True
-            continue
-        if skip and LABEL.match(line):
-            skip = False
-        if not skip:
-            out.append(line)
-    return "\n".join(out)
 
 
 def questions() -> tuple[list, list]:
     qs, problems, ids = [], [], {}
     for f in sorted(TOPICS.glob("*.md")):
-        text = drop_polish(f.read_text(encoding="utf-8"))
+        text = f.read_text(encoding="utf-8")
         title, section = text.splitlines()[0].lstrip("# "), ""
         for chunk in re.split(r"(?m)^(?=#{2,3} )", text):
             head, _, body = chunk.partition("\n")

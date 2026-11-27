@@ -38,8 +38,6 @@ Other web-first matchers: `toHaveText`, `toContainText`, `toHaveURL`, `toHaveTit
 - *What if I need retries for something that is not a locator?* Use `expect.poll` for a value you can read in a function, for example an API status. `expect().toPass()` exists for blocks of code, but I avoid it in my own suites.
 - *Can the timeout be changed?* Yes: `expect: { timeout: 10_000 }` in the config, or `{ timeout }` on one assertion, or `expect.configure({ timeout })` for a custom instance.
 
-**Powiedz:** Web-first assertion to asercja, która nie sprawdza raz, tylko ponawia. Dostaje lokator, odczytuje element w przeglądarce i powtarza to, aż warunek będzie spełniony albo minie timeout, domyślnie 5 sekund. Strona ładuje dane asynchronicznie, więc jednorazowe sprawdzenie często trafia za wcześnie i test jest flaky. Juniorowi powiedziałbym tak: `await expect(locator).toHaveText(...)` czeka za ciebie, a `expect(await locator.textContent()).toBe(...)` nie czeka wcale. To jest temat o asercjach, nie o lokatorach: `getByRole` czy `getByLabel` to osobna sprawa.
-
 **Trap:** Saying "it waits for the element". Auto-waiting for actions and web-first assertions are two different mechanisms. Actions wait for actionability, assertions retry a condition. Another trap is "the timeout is the test timeout": the expect timeout is separate.
 
 **Source:** https://playwright.dev/docs/test-assertions
@@ -156,8 +154,6 @@ test('a method that returns a value can still be retried with expect.poll', asyn
 ```
 
 Run on Playwright 1.65.1 as written: the first test fails, the other two pass.
-
-**Powiedz:** Różnica jest w tym, na czym asercja operuje. Auto-retrying assertion dostaje lokator, więc Playwright może odczytać element jeszcze raz i jeszcze raz, aż warunek będzie spełniony albo minie timeout, domyślnie 5 sekund. Non-retrying assertion dostaje gotową wartość, na przykład stringa, i porównuje ją raz. Jeśli zrobię `const title = await locator.textContent()` i potem `expect(title).toBe(...)`, to nic się nie ponawia: tekst został odczytany raz, w tamtej chwili. Dlatego Page Object powinien zwracać lokator, a w teście piszę `await expect(locator).toHaveText(...)`. Jeśli metoda musi zwracać wartość, owijam ją w `expect.poll`.
 
 **Trap:** Thinking every `expect` in Playwright retries. Only the matchers on locators, pages and responses retry. `expect(value).toBe(...)` is the plain Jest-style matcher.
 
@@ -283,8 +279,6 @@ test('a test outside the group keeps the default', async ({}, testInfo) => {
 
 Run on Playwright 1.65.1 with a local page in place of `/booking/summary`: all five pass, so the `testInfo.timeout` values above are real.
 
-**Powiedz:** Timeouty w Playwright są od siebie niezależne. Test ma domyślnie 30 sekund, asercja 5 sekund, a akcja i nawigacja nie mają własnego limitu, więc ogranicza je timeout testu. Ustawiam je na kilku poziomach, od najszerszego: config dla całego suite'u, projekt w configu, plik albo `describe`, pojedynczy test i na końcu pojedyncza akcja albo asercja. Zasada jest taka, że podnoszę timeout najwęziej, jak się da. Jedna wolna akcja dostaje `{ timeout }` na tej akcji. Trzy testy z sześćdziesięciu dostają `test.describe.configure({ timeout })` albo `test.slow()`. Globalnego timeoutu nie podnoszę, bo wtedy każdy zawieszony test czeka trzy minuty, pipeline wolniej pada, a wolne testy przestają być widoczne.
-
 **Trap:** Saying "the default timeout is 30 seconds" for everything. Assertions are 5 seconds, and actions and navigations have none.
 
 **Source:** https://playwright.dev/docs/test-timeouts
@@ -353,8 +347,6 @@ Run on Playwright 1.65.1 against a backend that writes the booking 3 seconds aft
 | Default timeout | 5 s | 0: it repeats until the test timeout |
 | Use it for | "the status becomes 200" | "the status is 200 and the body says confirmed" |
 
-**Powiedz:** Samo 2xx nie wystarczy. 202 mówi tylko, że request został przyjęty, a zapis idzie przez kolejkę i trwa od 5 sekund do 2 minut. Jeśli od razu odczytam zasób i zrobię zwykłą asercję, test będzie flaky, bo zwykła asercja sprawdza wartość raz. Dlatego odpytuję endpoint w `expect.poll`: podaję funkcję, która robi GET i zwraca na przykład status, a Playwright wywołuje ją ponownie, aż matcher przejdzie albo minie timeout. Ustawiam `timeout` trochę powyżej najdłuższego zapisu, czyli 2 minuty, i `intervals`, na przykład 1, 2 i 5 sekund, żeby nie pytać co 100 milisekund. Jeśli muszę sprawdzić kilka rzeczy naraz, status i body, używam `expect(async () => { ... }).toPass({ intervals, timeout })`.
-
 **Trap:** Using `expect.poll` for something a locator assertion can do. Poll is the escape hatch for values outside the DOM.
 
 **Source:** https://playwright.dev/docs/test-assertions
@@ -401,7 +393,6 @@ test('a booking sent through the queue ends as confirmed', async ({ request }) =
 
 Run on Playwright 1.65.1 against a backend that writes the booking 3 seconds after the 202: passes.
 
-**Powiedz:** `toPass` jest z `expect`, nie z `page`. Piszę `await expect(async () => { ... }).toPass({ intervals, timeout })`: do `expect` przekazuję funkcję, a `toPass` wykonuje cały ten blok od początku, aż wszystkie asercje w środku przejdą. Domyślny timeout to 0, czyli bez opcji `timeout` ponawia aż do timeoutu testu, więc zawsze go podaję. Używam go, gdy na wolny zapis w backendzie muszę zrobić kilka asercji naraz, na przykład status 200 i `status: 'confirmed'` w body. W bloku trzymam tylko odczyty i asercje, bo POST albo klik w środku wykonałby się przy każdej próbie. Do jednej wartości wolę `expect.poll`, a do UI zwykłe web-first assertions.
 - *How do you answer if the team already uses it widely?* I would not rewrite working tests as a drive-by. I would make new tests use web-first matchers and poll, and look at each `toPass` when the test next flakes.
 
 **Trap:** Presenting `toPass` as the normal way to make a flaky test stable. It makes a flaky test green, which is not the same as stable.

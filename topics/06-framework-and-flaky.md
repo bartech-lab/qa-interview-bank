@@ -617,8 +617,6 @@ test('favourites page: the same search form shows the empty message', async ({ f
 
 Each class has three parts: the fields (locators and components), the constructor that fills them, and the methods that act. Run on Playwright 1.65.1 with two local pages in place of `/oferty` and `/ulubione`: both tests pass, and both fail when the button name inside `SearchForm` is changed, which shows the one component serves both pages.
 
-**Powiedz:** Page Object na 1500 linii rozbijam na mniejsze części. Każdy powtarzalny kawałek ekranu wyciągam do osobnego component objectu: klasy, która dostaje swój główny lokator i zna tylko to, co jest w środku. Page A i page B tworzą sobie ten komponent, czyli kompozycja: strona ma formularz wyszukiwania. Do BasePage'a bym tego nie wrzucał, bo dziedziczenie mówi, że każda strona jest BasePage'em i dostaje wszystko, co w nim jest. Przycisk Cancel w BasePage'u oznacza, że każda strona ma ten sam Cancel, a to nieprawda. Potem inni robią to samo i 1500 linii przenosi się z Page Objectu do BasePage'a, tylko że teraz zmiana dotyka wszystkich stron. W BasePage'u może zostać najwyżej to, co jest poza domeną i wspólne dla każdej strony, na przykład `page` i `goto`. Page Objecty podaję testom przez fixtures.
-
 **Trap:** Throwing POM away completely. Then the same locator appears in 30 files.
 
 **Source:** https://playwright.dev/docs/pom
@@ -813,8 +811,6 @@ Topic: fw-test-data | Core | id: q0639
 - *The business says it is critical and must be tested on your level. What then?* Then one real E2E test finds the case through the API and checks the message, and I say openly that its run time depends on how soon the case turns up.
 - *What would you ask the developers for?* A way to produce the case on a test environment: a test-only endpoint or a flag that marks one offer as changed. That turns a search into a setup step.
 - *Why not only the lower level?* It proves the rule. It does not prove that the real page shows the real message for a real offer.
-
-**Powiedz:** Rozdzielam to na dwie rzeczy. Sama reguła, czyli "jeśli cena się zmieniła, pokaż komunikat", to logika i najtaniej testować ją niżej, tam gdzie da się wymusić wejście: unit albo integracja w repo serwisu. To jest sugestia dla developerów, a ja sprawdzam, że taki test istnieje. Na mojej warstwie, w E2E bez mocków i bez seedowania, nie mogę tego przypadku wymusić, więc go szukam. Test najpierw pyta backend przez API, która oferta ma teraz zmienioną cenę, a potem otwiera w przeglądarce dokładnie tę ofertę i sprawdza komunikat. Szukanie ma limit wywołań. Jeśli przypadek się nie znajdzie, test pada z komunikatem, że go nie znalazł, a to co innego niż zepsuty komunikat.
 
 **Trap:** Clicking through 40 offers in the UI until the message shows up. The search belongs in the API, where one call takes milliseconds.
 
@@ -1390,8 +1386,6 @@ for (const offer of ['Majorka', 'Kreta', 'Rodos', 'Zanzibar']) {
 **Follow-ups:**
 - *Is 1 worker and 4 shards ever a right setup?* Yes, when the runners are small and one browser is all a runner can carry. Then it is a resource decision and it is written down as one.
 - *What if the cause is the backend failing under 4 parallel users?* Then it is a product or environment finding, not a test problem. I report it with the numbers.
-
-**Powiedz:** Traktuję to jako obejście, nie naprawę. Workery to procesy na jednej maszynie, więc przy 4 workerach testy dzielą CPU, pamięć i pliki tej maszyny i jednocześnie uderzają w backend. Przy 1 workerze i 4 shardach każda maszyna puszcza swoje testy po kolei. Zmieniło się to, że testy nie biegną obok siebie na tej samej maszynie, czyli flaky brało się z czegoś, co testy współdzielą: shared state. Suite jest zielony, ale przyczyna została, płacimy za 4 maszyny, żeby mieć szybkość 4 workerów, i problem wróci, gdy ktoś podniesie liczbę workerów. Szukam, co jest współdzielone. Skoro pomogło rozdzielenie na maszyny, najpierw patrzę na to, co żyje na maszynie: plik, który testy zapisują, port, CPU i pamięć, albo środowisko, które każdy shard ma teraz dla siebie. Potem na dane w backendzie, na przykład jednego użytkownika dla wszystkich testów. Każdy test dostaje własne dane przez fixture i wracam do 4 workerów. I jedna uwaga: jeśli shardy biją w ten sam backend, to stan w backendzie dalej się zderza, więc same shardy tego nie ukryją.
 
 **Trap:** Saying "it works now, so it is fixed". Also the opposite mistake: saying shards always hide shared state. They hide only what lives on the machine.
 
