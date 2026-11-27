@@ -118,7 +118,7 @@ Documented results the tests check: q1030 returns Dan and Eve (ids 4, 5); q1033 
 Each line is covered by at least one test.
 
 1. Endless loop `while (true) {}`: time-limit status after about 5 s (between 4.5 and 8 s); the page timer never stalls more than 250 ms; the next Run prints normally.
-2. Runaway recursion, plain (`function f() { return f(); } f();`) and catching (`function f() { try { f(); } catch { f(); } } f();`): see TS rule 10; the next run works.
+2. Runaway recursion, plain (`function f() { return 1 + f(); } f();`; not `return f()`, which WebKit runs as a proper tail call in strict mode, so it never overflows and the time limit stops it) and catching (`function f() { try { f(); } catch { f(); } } f();`): see TS rule 10; the next run works.
 3. Syntax error `const x = ;` on line 3: `SyntaxError` with `(line 3)`. An engine-only syntax error still shows `SyntaxError`.
 4. Wrong row order on q1033 (the right rows ordered by month descending): `order`. The right rows in another order on q1030: `match`.
 5. Empty result on q1030 (`... WHERE 1 = 0`): `empty`, message names 2 rows.

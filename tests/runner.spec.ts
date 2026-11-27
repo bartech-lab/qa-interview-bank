@@ -302,7 +302,7 @@ test('FM2 plain runaway recursion: an error that mentions the call stack or recu
   test.setTimeout(30_000);
   const page = await open();
   await task(page, 'q1020', "console.log('next ok');");
-  const r = await runCode(page, 'q1019', 'function f(): number { return f(); }\nf();');
+  const r = await runCode(page, 'q1019', 'function f(): number { return 1 + f(); }\nf();');
   expect(r.errors.join('\n')).toMatch(/call stack|recursion/i);
   expect(r.status).toMatch(/^Finished in \d+ ms\.$/);
   await openById(page, 'q1020');
