@@ -386,6 +386,21 @@ test('mode 17: storage blocked on load: page works with empty progress and shows
   await expect(page.locator('.startrow .btn.primary')).toBeVisible();
 });
 
+test('mode 17a: the save notice does not cover the rating buttons or the export button', { tag: '@narrow' }, async ({ open }) => {
+  const page = await open({ blockRead: true });
+  await expect(page.locator('#save-error')).toBeVisible();
+  await page.locator('#tab-quiz').click();
+  await page.locator('.startrow .btn.primary').click();
+  await page.getByRole('button', { name: /Show answer/ }).click();
+  await ratingButton(page, 'known').click();
+  await expect(page.locator('#ov-text')).toHaveText(/^1 \//);
+  await expect(page.locator('#save-error')).toBeVisible();
+  await goTo(page, 'home');
+  await expect(page.locator('#save-error')).toBeVisible();
+  const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#export-btn').click()]);
+  expect(download.suggestedFilename()).toMatch(/^qa-interview-bank-progress-\d{4}-\d\d-\d\d\.json$/);
+});
+
 // ---------------------------------------------------------------------------------------------
 // Failure modes 18-20: clock changes
 // ---------------------------------------------------------------------------------------------
@@ -542,7 +557,7 @@ test('daily mix: both tabs see the same set on the same day', async ({ bank: a, 
 
 const longNote = 'This is a deliberately long note about a flaky locator that keeps wrapping across several lines on a narrow phone screen without any sideways scroll.';
 
-test('mode 25: Home with the Today card, exam line and pace, backup warning and import confirm fits', async ({ open, fitsScreen }) => {
+test('mode 25: Home with the Today card, exam line and pace, backup warning and import confirm fits', { tag: '@narrow' }, async ({ open, fitsScreen }) => {
   const page = await open({ time: NOW, seed: { [BOX_KEY]: progress({ known: marks(['q0001', 'q0002']), shaky: marks(['q0003']), exam: D(10), backup: D(-20) }) } });
   await expect(page.locator('#today')).toBeVisible();
   await expect(page.locator('#exam-line')).toHaveText('Interview in 10 days');
@@ -557,7 +572,7 @@ test('mode 25: Home with the Today card, exam line and pace, backup warning and 
   await fitsScreen();
 });
 
-test('mode 25: Review with filters, topic select and many rows fits', async ({ open, fitsScreen }) => {
+test('mode 25: Review with filters, topic select and many rows fits', { tag: '@narrow' }, async ({ open, fitsScreen }) => {
   const notes = Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['q' + String(i + 1).padStart(4, '0'), longNote]));
   const page = await open({ time: NOW, seed: { [BOX_KEY]: progress({ notes, shaky: marks(['q0001', 'q0002']), srs: { q0003: { box: 0, last: D(-3), due: D(-1) } }, known: marks(['q0003']) }) } });
   await goTo(page, 'review');
@@ -566,7 +581,7 @@ test('mode 25: Review with filters, topic select and many rows fits', async ({ o
   await fitsScreen();
 });
 
-test('mode 25: Learn with the shaky button and the note fits', async ({ bank, fitsScreen }) => {
+test('mode 25: Learn with the shaky button and the note fits', { tag: '@narrow' }, async ({ bank, fitsScreen }) => {
   await firstTopicFirstQuestion(bank);
   await bank.locator('.shaky-btn').click();
   await bank.getByRole('textbox', { name: 'My note' }).fill(longNote);
@@ -575,7 +590,7 @@ test('mode 25: Learn with the shaky button and the note fits', async ({ bank, fi
   await fitsScreen();
 });
 
-test('mode 25: the quiz rating row with three buttons fits', async ({ open, fitsScreen }) => {
+test('mode 25: the quiz rating row with three buttons fits', { tag: '@narrow' }, async ({ open, fitsScreen }) => {
   const page = await open({ time: NOW, seed: { [BOX_KEY]: progress({ notes: { q0001: 'n' } }) } });
   await goTo(page, 'review');
   await quizThese(page).click();
@@ -1050,7 +1065,7 @@ test('daily mix: start quizzes only what is not done; done count; all done disab
   expect((await saved(page)).mix.ids).toEqual(mixIds);
 });
 
-test('daily mix: the Today card fits the screen with the exam line and pace', async ({ open, fitsScreen }) => {
+test('daily mix: the Today card fits the screen with the exam line and pace', { tag: '@narrow' }, async ({ open, fitsScreen }) => {
   const page = await open({ time: NOW, seed: { [BOX_KEY]: progress({ exam: D(3) }) } });
   await expect(page.locator('#exam-pace')).toBeVisible();
   await expect(page.locator('#today')).toBeVisible();

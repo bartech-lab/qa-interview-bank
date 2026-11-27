@@ -12,7 +12,7 @@ Each line is covered by at least one test.
 
 0. Known marks from before this version never come back for review: they have no `srs` entry. See the first-review rule under Spaced review.
 1. Pre-id shape: `{ known: { "<file>|<question text>": 1 }, code: { "<file>|<question text>": "..." } }`. Moves to the question id (already covered by `page.spec.ts`; stays green).
-2. Current shape `{ known, code }` with no `v`: loads unchanged; the first change writes the phase 2 shape and keeps `known` and `code` as they were.
+2. Current shape `{ known, code }` with no `v`: `known` and `code` load as they were (known marks also get a first review, see Spaced review). The next save, which can happen on opening because home saves today's daily mix, writes the phase 2 shape.
 3. Corrupt JSON (for example `{"known":`): the page loads with empty progress, no page error, no console error. The broken text is copied once to `localStorage['qa-bank-broken']` before anything overwrites `qa-bank`.
 4. Wrong types: `known` is an array or a string, `code` holds a number, `srs` entries miss fields or carry a bad date, `exam` is `"tomorrow"`. Each bad part is dropped; the good parts load. No page error.
 5. Written by a newer version (`v: 99` and a key this version does not know, for example `future: { a: 1 }`): loads the parts it knows. A later change keeps `future` unchanged and keeps `v: 99`.
@@ -29,6 +29,7 @@ For every case: an error message in `#import-msg` (`data-kind="error"`), no conf
 15. `localStorage.setItem` throws (`QuotaExceededError`): `#save-error` with `role="alert"` becomes visible. The change still shows in the page (counter, buttons). No page error, no console error, no dialog.
 16. When saving works again, the next change saves every change made while it failed, and `#save-error` hides.
 17. `localStorage.getItem` throws on load (storage blocked): the page works with empty progress and shows `#save-error`.
+17a. While `#save-error` shows, it covers no control: on a 390 px screen the quiz can still be revealed and rated with a normal click, and the home buttons work.
 
 ### Clock change
 

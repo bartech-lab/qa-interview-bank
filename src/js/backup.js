@@ -54,7 +54,7 @@ function importNo() { importState = { msg: null, kind: '', pending: null }; rend
 function backupLine() {
   const b = store.backup, d = b ? Math.max(0, daysBetween(b, today())) : null;
   const when = d === null ? 'never' : d === 0 ? 'today' : d === 1 ? '1 day ago' : `${d} days ago`;
-  return `<span id="backup-line" class="${hasProgress(store) && (d === null || d >= 7) ? 'warn' : ''}">Progress is saved in this browser only, for this file location. Last backup: ${when}</span>`;
+  return `<span id="backup-line" class="${hasProgress(store) && (d === null || d >= 7) ? 'warn' : ''}">Progress is saved in this browser only, for this file location. <span class="when">Last backup: ${when}</span></span>`;
 }
 function backupRow() {
   const p = importState.pending, here = Object.keys(store.known).length;
