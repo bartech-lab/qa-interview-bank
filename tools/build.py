@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Build dist/index.html (one offline file) and dist/qa-interview-bank.zip from topics/*.md and src/app.html.
+"""Build dist/index.html (one offline file) and dist/qa-interview-bank.zip from topics/*.md and the page sources in src/:
+src/index.html (the shell), src/style.css and src/js/*.js in the order of SCRIPTS. The scripts share one
+classic <script> tag, so every top-level name stays global, as the inline onclick handlers need.
 
 Usage: python3 tools/build.py
 Exit 1 when a question has no id, an id repeats, or a question has no Topic line.
@@ -13,6 +15,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TOPICS, DIST = ROOT / "topics", ROOT / "dist"
+SRC = ROOT / "src"
+SCRIPTS = ("data", "markdown", "answer", "editor", "navigation", "home", "learn", "quiz", "start")
 TOPIC = re.compile(r"^Topic: (\S+) \| (Core|Standard|Niche) \| id: (q\d{4})$", re.M)
 
 
@@ -38,15 +42,31 @@ def questions() -> tuple[list, list]:
     return qs, problems
 
 
+def page_source() -> str:
+    """The page with style and scripts put in place; the question data goes in last, so data text is never searched."""
+    on_disk = sorted(f.stem for f in (SRC / "js").glob("*.js"))
+    if on_disk != sorted(SCRIPTS):
+        raise SystemExit(f"src/js holds {on_disk}; list every file in SCRIPTS in tools/build.py, in load order")
+    page = (SRC / "index.html").read_text(encoding="utf-8")
+    parts = {"/*STYLE*/\n": (SRC / "style.css").read_text(encoding="utf-8"),
+             "/*SCRIPTS*/\n": "".join((SRC / "js" / f"{n}.js").read_text(encoding="utf-8") for n in SCRIPTS),
+             "/*DATA*/": "/*DATA*/"}
+    for mark, text in parts.items():
+        if page.count(mark) != 1:
+            raise SystemExit(f"src/index.html must hold {mark.strip()} exactly once")
+        page = page.replace(mark, text)
+    return page
+
+
 def main() -> int:
     qs, problems = questions()
     if problems:
         print(*problems, sep="\n", file=sys.stderr)
         return 1
+    data = json.dumps(qs, ensure_ascii=False).replace("</", "<\\/")
+    page = page_source().replace("/*DATA*/", data)
     shutil.rmtree(DIST, ignore_errors=True)
     DIST.mkdir()
-    data = json.dumps(qs, ensure_ascii=False).replace("</", "<\\/")
-    page = (ROOT / "src" / "app.html").read_text(encoding="utf-8").replace("/*DATA*/", data)
     (DIST / "index.html").write_text(page, encoding="utf-8")
     with zipfile.ZipFile(DIST / "qa-interview-bank.zip", "w", zipfile.ZIP_DEFLATED) as z:
         z.write(DIST / "index.html", "qa-interview-bank/index.html")

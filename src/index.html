@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA Interview Bank</title>
+<style>
+/*STYLE*/
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" onclick="go('home')"><span>🎯</span> QA Interview Bank</div>
+  <div class="seg">
+    <button id="tab-learn" class="on" onclick="go('home')">📖 Learn</button>
+    <button id="tab-quiz" onclick="go('setup')">⚡ Quiz</button>
+  </div>
+  <div class="grow"></div>
+  <div class="overall" title="Questions you marked as known. Saved in this browser only."><span id="ov-text"></span><span class="meter"><i id="ov-bar"></i></span></div>
+</header>
+
+<div id="home" class="wrap"></div>
+<div id="learn" class="hidden"><nav id="side"></nav><main id="reader"></main></div>
+<div id="quiz" class="hidden"></div>
+
+<script id="data" type="application/json">/*DATA*/</script>
+<script>
+/*SCRIPTS*/
+</script>
+</body>
+</html>

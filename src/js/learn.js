@@ -1,0 +1,46 @@
+// ---------- learn ----------
+function learnList() {
+  const s = filter.text.toLowerCase();
+  return Q.filter(q => q.file === topic && (!filter.core || q.tier === 'Core') && (!s || q.q.toLowerCase().includes(s) || q.body.toLowerCase().includes(s)));
+}
+function renderSide() {
+  const list = learnList(), cur = Q[current], secs = [...new Set(list.map(q => q.sec))];
+  $('side-list').innerHTML = secs.map(sec => { const qs = list.filter(q => q.sec === sec), open = (cur && cur.sec === sec) || filter.text;
+    return `<details ${open ? 'open' : ''}><summary>${inline(sec)}<span class="n">${qs.filter(known).length}/${qs.length}</span></summary>
+      ${qs.map(q => `<div class="qlink ${q.i === current ? 'on' : ''}" onclick="pick(${q.i})"><span class="dot ${known(q) ? 'done' : ''}"></span><span>${inline(q.q)}</span></div>`).join('')}</details>`; }).join('')
+    || '<p class="muted" style="padding:16px">No question matches.</p>';
+}
+function renderLearn() {
+  const list = learnList();
+  if (!list.some(q => q.i === current)) current = list[0] ? list[0].i : null;
+  $('side').innerHTML = `<div class="side-head">
+      <button class="back" onclick="go('home')">← All topics</button>
+      <div class="side-title">${fileMeta(topic)[0]} ${esc(fileMeta(topic)[1])}</div>
+      <input class="search" id="lsearch" type="search" placeholder="Search in this topic…" value="${esc(filter.text)}">
+      <label class="switch"><input type="checkbox" id="lcore" ${filter.core ? 'checked' : ''}> Core questions only</label>
+      <span class="muted small" style="line-height:1.4">${tierBadge('Core')} = most asked: in 30%+ of QA job ads, or set by hand.</span>
+    </div><div id="side-list"></div>`;
+  $('lsearch').oninput = e => { filter.text = e.target.value; refresh(); };
+  $('lcore').onchange = e => { filter.core = e.target.checked; refresh(); };
+  renderSide(); renderArticle();
+}
+function refresh() {  // re-filter without rebuilding the search box, so typing keeps focus
+  const list = learnList();
+  if (!list.some(q => q.i === current)) current = list[0] ? list[0].i : null;
+  renderSide(); renderArticle();
+}
+function renderArticle() {
+  if (current === null) { $('reader').innerHTML = '<div class="article muted">No question matches.</div>'; return; }
+  const list = learnList(), q = Q[current], idx = list.indexOf(q), prev = list[idx - 1], next = list[idx + 1];
+  $('reader').innerHTML = `<article class="article">${crumbs(q)}<h2>${inline(q.q)}</h2>${given(q)}${answer(q)}
+    <div class="navrow">
+      <button class="btn known-btn ${known(q) ? 'on' : ''}" onclick="toggleKnown()">${known(q) ? '✓ I know this' : 'Mark as known'}</button>
+      <div class="grow"></div>
+      <button class="btn" ${prev ? '' : 'disabled'} onclick="pick(${prev ? prev.i : ''})">← Previous</button>
+      <button class="btn primary" ${next ? '' : 'disabled'} onclick="pick(${next ? next.i : ''})">Next →</button>
+    </div><p class="muted small" style="text-align:right">Tip: the ← and → keys work too</p></article>`;
+  $('reader').scrollTop = 0;
+}
+function pick(i) { current = i; renderSide(); renderArticle(); const el = $('side').querySelector('.qlink.on'); if (el) el.scrollIntoView({ block: 'nearest' }); }
+function toggleKnown() { const q = Q[current]; if (known(q)) delete store.known[q.k]; else store.known[q.k] = 1; save(); overall(); renderSide(); renderArticle(); }
+
