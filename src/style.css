@@ -100,7 +100,12 @@
   .icard-q code { font-size:.8em; }
   .icard-done { color:var(--muted); }
   .deck-act { grid-area:act; }
-  #mix-progress { font-weight:600; margin:20px 0 12px; font-variant-numeric:tabular-nums; }
+  .mix-count { margin:20px 0 12px; font-variant-numeric:tabular-nums; }
+  #mix-progress { font-weight:600; }
+  #mix-extra { color:var(--muted); }
+  #mix-extra[hidden] { display:none; }
+  .goal { display:inline-flex; align-items:center; gap:8px; font-size:15px; color:var(--muted); }
+  .goal select { color:var(--fg); }
   .deck-ctl { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
   .deck-ctl .btn.primary { padding:12px 22px; font-size:17px; }
   .exam { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin-top:28px; padding-top:20px; border-top:1px solid var(--line); font-size:15px; }

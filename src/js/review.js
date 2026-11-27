@@ -22,23 +22,34 @@ function seeded(text) {  // FNV-1a hash of the text seeds mulberry32
   return () => { a = (a + 0x6D2B79F5) >>> 0; let x = a; x = Math.imul(x ^ x >>> 15, x | 1); x ^= x + Math.imul(x ^ x >>> 7, x | 61); return ((x ^ x >>> 14) >>> 0) / 4294967296; };
 }
 function shuffled(list, rnd) { const a = list.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-// Due first, then shaky, then missed, then unseen Core and Standard questions taken one topic at a time.
-function buildMix(s, t) {
+// The order of picking: due first, then shaky, then missed, then unseen questions of each tier taken one topic at a time.
+// The shuffle is seeded by the day, so the same day and progress give the same order.
+function pickOrder(s, t, tiers) {
   const rnd = seeded(t), unseen = q => !markOf(s, q.k) && !s.srs[q.k], picked = dueList(s, t).map(q => q.k);
   picked.push(...Q.filter(q => s.shaky[q.k]).map(q => q.k), ...Q.filter(q => s.missed[q.k]).map(q => q.k));
-  for (const tier of ['Core', 'Standard']) {
+  for (const tier of tiers) {
     const piles = shuffled(files, rnd).map(f => shuffled(Q.filter(q => q.file === f && q.tier === tier && unseen(q)), rnd));
     for (let n = 0; piles.some(p => p.length > n); n++) piles.forEach(p => { if (p[n]) picked.push(p[n].k); });
-    if (new Set(picked).size >= s.mixSize) break;
   }
-  return [...new Set(picked)].slice(0, s.mixSize);
+  return [...new Set(picked)];
 }
+const buildMix = (s, t) => pickOrder(s, t, ['Core', 'Standard']).slice(0, s.mixSize);
 const byId = Object.fromEntries(Q.map(q => [q.k, q]));
 function todayMix() {
   const t = today(), ids = store.mix && store.mix.day === t ? store.mix.ids : buildMix(store, t);
   return ids.map(id => byId[id]).filter(Boolean);
 }
 const doneToday = q => !!store.srs[q.k] && store.srs[q.k].last === today();
+// Keep going: the next question in the order of picking (Niche last) not rated today and not in `skip` (asked this round).
+function nextExtra(skip = new Set()) {
+  const t = today(), id = pickOrder(store, t, ['Core', 'Standard', 'Niche']).find(k => !skip.has(k) && !(store.srs[k] && store.srs[k].last === t));
+  return id ? byId[id] : null;
+}
+// Questions outside today's mix rated today: Keep going, other quizzes and Learn marks.
+function extraToday() {
+  const mix = new Set(todayMix().map(q => q.k)), t = today();
+  return Q.filter(q => !mix.has(q.k) && store.srs[q.k] && store.srs[q.k].last === t).length;
+}
 function setMixSize(n) { update(s => { s.mixSize = n; s.mix = { day: today(), ids: buildMix(s, today()) }; }); renderHome(); }
 
 // ---------- interview date ----------
@@ -74,23 +85,26 @@ function examLines() {
 
 // ---------- Today on home: the daily mix as a deck of cards ----------
 // What the rest of today's mix holds. A question to review has a mark or a review entry; a new one has neither.
-function mixIntro(mix) {
+function mixIntro(mix, next) {
   const left = mix.filter(q => !doneToday(q)), review = left.filter(q => markOf(store, q.k) || store.srs[q.k]).length;
-  if (!left.length) return "Today's mix is done. A new one is ready tomorrow.";
+  if (!left.length) return next ? "You reached today's goal. Keep going for more, or stop here." : 'Nothing left today. A new mix is ready tomorrow.';
   if (!hasProgress(store)) return `Today's ${mix.length} questions are Core questions, taken from the topics in turn.`;
   if (review === left.length) return "Today's mix is questions to review.";
   return review ? "Today's mix starts with questions to review, then new ones." : "Today's mix is new questions, taken from the topics in turn.";
 }
 function todayCard() {
-  const mix = todayMix(), done = mix.filter(doneToday).length, next = mix.find(q => !doneToday(q)), [line, pace] = examLines();
+  const mix = todayMix(), done = mix.filter(doneToday).length, inMix = mix.find(q => !doneToday(q)), next = inMix || nextExtra();
+  const extra = extraToday(), [line, pace] = examLines();
+  const button = inMix ? `onclick="startQuiz(todayMix().filter(q => !doneToday(q)), true)">${done ? 'Continue the daily mix' : 'Start the daily mix'}`
+    : next ? `onclick="keepGoing()">Keep going` : 'disabled>Nothing left today';
   return `<section id="today" class="deck" aria-label="Today">
-    <div class="deck-head"><h1>Daily mix</h1><p id="mix-intro">${mixIntro(mix)}</p></div>
+    <div class="deck-head"><h1>Daily mix</h1><p id="mix-intro">${mixIntro(mix, next)}</p></div>
     <div class="stack"><div id="mix-card" class="icard">${next
       ? `<div class="icard-head"><span>${esc(fileMeta(next.file))}</span>${tierBadge(next.tier)}</div><p class="icard-q">${inline(next.q)}</p>`
       : `<div class="icard-head"><span>Daily mix</span></div><p class="icard-q icard-done">That's every card for today.</p>`}</div></div>
-    <div class="deck-act"><p id="mix-progress">${done} / ${mix.length} done today</p>
-      <div class="deck-ctl"><button class="btn primary" id="mix-start" ${next ? '' : 'disabled'} onclick="startQuiz(todayMix().filter(q => !doneToday(q)), true)">${next ? (done ? 'Continue the daily mix' : 'Start the daily mix') : 'Daily mix done'}</button>
-        <select id="mix-size" aria-label="Questions in the daily mix" onchange="setMixSize(+this.value)">${[5, 10, 20].map(n => `<option value="${n}" ${store.mixSize === n ? 'selected' : ''}>${n} a day</option>`).join('')}</select></div>
+    <div class="deck-act"><p class="mix-count"><span id="mix-progress">${done} / ${mix.length} done today</span> <span id="mix-extra" ${extra ? '' : 'hidden'}>plus ${extra} more</span></p>
+      <div class="deck-ctl"><button class="btn primary" id="mix-start" ${button}</button>
+        <label class="goal">Daily goal <select id="mix-size" aria-label="Daily goal" onchange="setMixSize(+this.value)">${[5, 10, 20].map(n => `<option value="${n}" ${store.mixSize === n ? 'selected' : ''}>${n} a day</option>`).join('')}</select></label></div>
       <div class="exam"><label for="exam-date">Interview date</label>
         <input type="date" id="exam-date" value="${store.exam || ''}" onchange="setExam(this.value)">
         <button class="btn" id="exam-clear" ${store.exam ? '' : 'disabled'} onclick="setExam('')">Clear</button>

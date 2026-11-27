@@ -22,17 +22,27 @@ function renderSetup() {
       <span class="muted small">${n} match these settings</span></div></div></div>`;
 }
 // The daily mix keeps its order (reviews first, then new questions); every other quiz is shuffled.
+// round: 'mix' (the daily mix, in order), 'more' (Keep going) or 'quiz' (anything else, shuffled).
+let round = 'quiz';
 function startQuiz(list, inOrder) {
+  round = inOrder ? 'mix' : 'quiz';
   deck = list ? list.slice() : pool();
   if (!inOrder) for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
   if (!list && qs.size) deck = deck.slice(0, qs.size);
   pos = 0; shown = false; result = { hit: [], shaky: [], miss: [] }; go('quiz');
 }
+// Keep going: one question at a time in the order of picking, with no count, until End or until none is left.
+function keepGoing() {
+  const q = nextExtra();
+  if (!q) return;
+  round = 'more'; deck = [q]; pos = 0; shown = false; result = { hit: [], shaky: [], miss: [] }; go('quiz');
+}
+function endRound() { if (round !== 'more') return go('setup'); deck = deck.slice(0, pos); renderSummary(); }
 function renderQuiz() {
   if (pos >= deck.length) return renderSummary();
   const q = deck[pos];
   $('quiz').innerHTML = `<div class="qstage">
-    <div class="qtop"><span>${pos + 1} / ${deck.length}</span>${roundBar()}<button class="btn small" onclick="go('setup')">End</button></div>
+    <div class="qtop"><span>${round === 'more' ? `${pos} answered` : `${pos + 1} / ${deck.length}`}</span>${roundBar()}<button class="btn small" onclick="endRound()">End</button></div>
     <div class="card qcard">${crumbs(q)}<h2>${inline(q.q)}</h2>${given(q)}
       ${shown ? answer(q) : `<div class="reveal"><p class="muted">Answer out loud first. Then check yourself.</p>
         <button class="btn primary" onclick="reveal()">Show answer <span class="kbd">Space</span></button></div>`}</div></div>
@@ -43,7 +53,8 @@ function renderQuiz() {
 }
 // The round so far: knew it, shaky and didn't know as parts of the whole round.
 function roundBar() {
-  const w = n => (100 * n / deck.length).toFixed(1) + '%', [h, s, m] = [result.hit.length, result.shaky.length, result.miss.length];
+  const [h, s, m] = [result.hit.length, result.shaky.length, result.miss.length], all = round === 'more' ? Math.max(h + s + m, 1) : deck.length;
+  const w = n => (100 * n / all).toFixed(1) + '%';
   return `<span class="bar" role="img" aria-label="${h} knew it, ${s} shaky, ${m} didn't know"><i class="k" style="width:${w(h)}"></i><i class="s" style="width:${w(s)}"></i><i class="m" style="width:${w(m)}"></i></span>`;
 }
 function reveal() { shown = true; renderQuiz(); }
@@ -51,16 +62,20 @@ function rate(g) {
   const q = deck[pos];
   update(s => grade(s, q.k, g));
   result[{ known: 'hit', shaky: 'shaky', missed: 'miss' }[g]].push(q);
-  overall(); pos++; shown = false; renderQuiz();
+  overall(); pos++; shown = false;
+  if (round === 'more' && pos >= deck.length) { const n = nextExtra(new Set(deck.map(d => d.k))); if (n) deck.push(n); }
+  renderQuiz();
 }
 function renderSummary() {
+  const more = round !== 'quiz' && !todayMix().some(q => !doneToday(q)) && nextExtra();
   const h = result.hit.length, again = [...result.shaky, ...result.miss], m = again.length, pct = h + m ? Math.round(100 * h / (h + m)) : 0;
   $('quiz').innerHTML = `<div class="qstage"><div class="card summary">
     <h2>Round finished</h2>
     <div class="stats3"><div><b>${h}</b><span class="muted">knew it</span></div><div><b>${m}</b><span class="muted">to review</span></div><div><b>${pct}%</b><span class="muted">score</span></div></div>
     ${m ? `<ul class="missed">${again.map(q => `<li>${result.shaky.includes(q) ? '<span class="tag Shaky">Shaky</span>' : `<span class="tag Missed">Didn't know</span>`}<span>${inline(q.q)}</span></li>`).join('')}</ul>` : ''}
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      ${m ? `<button class="btn primary" onclick="startQuiz([...result.shaky, ...result.miss])">Repeat the ${m} to review</button>` : ''}
+      ${more ? `<button class="btn primary" onclick="keepGoing()">Keep going</button>` : ''}
+      ${m ? `<button class="btn ${more ? '' : 'primary'}" onclick="startQuiz([...result.shaky, ...result.miss])">Repeat the ${m} to review</button>` : ''}
       <button class="btn" onclick="go('setup')">New round</button></div></div></div>`;
 }
 
