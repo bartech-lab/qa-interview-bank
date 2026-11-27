@@ -57,13 +57,17 @@ function predictBox(q) {
 }
 
 // ---------- Run, Check, Run and compare ----------
+// Run and Check share a task's panels, so pressing one stops the other first.
+const stopOther = (box, sel) => { const b = box.querySelector(sel); if (b && b._ctl) b._ctl.stop(); };
 function runTask(btn, i) {
   const box = btn.closest('.editor'), q = Q[i], code = editorCode(box), out = box.querySelector('.out');
+  if (!btn._ctl) stopOther(box, '.check-btn');
   box.querySelector('.judge').innerHTML = '';
   return runButton(btn, ctl => starterLang(q) === 'sql' ? runSQL(code, q.seed, out, ctl) : runTS(code, out, ctl));
 }
 function checkTask(btn, i) {
   const box = btn.closest('.editor'), q = Q[i], code = editorCode(box), judge = box.querySelector('.judge');
+  if (!btn._ctl) stopOther(box, '.run-btn');
   box.querySelector('.out').innerHTML = '';
   judge.innerHTML = '<div class="out-status">Checking…</div>';
   return runButton(btn, async ctl => {

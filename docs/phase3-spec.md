@@ -14,7 +14,7 @@ Rules from phase 1 that apply (`docs/feasibility.md`): user code runs only in a 
 
 ## Packed parts and start-up
 
-1. The built page stores four parts gzip-compressed and base64-encoded in `<script type="application/x-gzip-base64" id="pack-NAME">` tags: `data` (the questions), `codemirror`, `sucrase`, `sqljs` (loader) and `sqlwasm` (SQLite as WebAssembly). The browser unpacks them with `DecompressionStream('gzip')`.
+1. The built page stores five parts gzip-compressed and base64-encoded in `<script type="application/x-gzip-base64" id="pack-NAME">` tags: `data` (the questions), `codemirror`, `sucrase`, `sqljs` (loader) and `sqlwasm` (SQLite as WebAssembly). The browser unpacks them with `DecompressionStream('gzip')`.
 2. The questions are unpacked when the page opens. When home is drawn for the first time, `<html>` gets `data-ready="1"`. Tests wait for it after every `goto` and `reload`.
 3. The other parts are unpacked on first use only, at most once per page load: the editor when the first task is shown, Sucrase on the first TS/JS run, sql.js on the first SQL run.
 4. If unpacking the questions fails (for example `DecompressionStream` is missing), `#home` shows `This browser cannot unpack the questions. Use a current Chrome, Edge, Firefox or Safari.` with `role="alert"`. No page error.
@@ -30,6 +30,8 @@ Rules from phase 1 that apply (`docs/feasibility.md`): user code runs only in a 
 4. Tab inserts two spaces. Esc, then Tab, moves focus out of the editor.
 5. `Reset to starter`, `Compare with the answer` and the timer keep working as in phase 2.
 6. Ctrl+Enter (Cmd+Enter on a Mac) in the editor of a runnable task does the same as its Run button.
+7. Keys typed in the editor never trigger page shortcuts (Space and 1, 2, 3 in the quiz; the arrow keys in Learn).
+8. On a SQL task, Run and Check stop each other: pressing one while the other is going stops it, and only the new one's result shows.
 
 ## Run bar and output (ideas 35 and 36)
 
@@ -134,7 +136,7 @@ Each line is covered by at least one test.
 17. Wrong column count on q1030 (`SELECT c.id FROM ...`): `columns`.
 18. `NULL` versus `0`: a query returning `0` where the worked answer has `NULL` (q1034, first `change_from_previous`) is `rows`, not `match`.
 19. Table judging on q1032: the worked DELETE gives `match`; deleting customer 1 instead gives `rows` naming table `customers`; a user's script that ends with a different `SELECT` but leaves the right tables still gives `match`.
-20. Each of the 16 runnable tasks: its starter runs and ends with an error or a failed check (TS/JS: `.out-error`; SQL starter: no error, `noresult` on Check); its worked solution (the last ```` ```ts ```` block of the Full process for TS/JS, the worked answer for SQL) prints its `ok` line with no `.out-error` (TS/JS) or gives `match` (SQL). In Chromium, Firefox and WebKit.
+20. Each of the 16 runnable tasks: its starter runs and ends with an error or a failed check (TS/JS: `.out-error`; SQL starter: no error, and Check gives `noresult`, except q1032, which is judged by its tables and gives `rows`: customer 4 is still there); its worked solution (the last ```` ```ts ```` block of the Full process for TS/JS, the worked answer for SQL) prints its `ok` line with no `.out-error` (TS/JS) or gives `match` (SQL). In Chromium, Firefox and WebKit.
 21. The 5 Playwright tasks with a starter editor have no Run button.
 
 ## Page parts the tests use

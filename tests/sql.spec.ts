@@ -314,3 +314,16 @@ for (const id of SQL_TASKS) {
   });
 }
 
+
+// Run and Check share one task: starting one stops the other, and neither writes into the other's panel.
+test('judging 6: Check pressed while a slow Run is going stops the Run and shows only the verdict', async ({ bank }) => {
+  const slow = "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 3000000) SELECT count(*) FROM n;\n" + workedSql((await bankData(bank)).find(q => q.id === 'q1030')!).code;
+  await task(bank, 'q1030', slow);
+  await runBtn(bank).click();
+  await expect(runBtn(bank)).toHaveText('Stop');
+  await bank.locator('.check-btn').click();
+  await expect(bank.locator('.verdict')).toHaveAttribute('data-verdict', 'match', { timeout: 15_000 });
+  await expect(runBtn(bank)).toHaveText('Run');
+  await bank.waitForTimeout(500);
+  await expect(bank.getByText('Running…')).toHaveCount(0);
+});

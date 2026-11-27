@@ -666,3 +666,14 @@ for (let shard = 0; shard < SHARDS; shard++) {
   });
 }
 
+
+// Page shortcuts (Space and 1/2/3 in the quiz) must not fire while typing in the code editor.
+test('editor 8: Space and 1 typed in the editor of a quiz task neither reveal nor rate', async ({ open }) => {
+  const page = await open();
+  await page.evaluate(() => (window as unknown as { eval: (s: string) => () => void }).eval('() => { deck = [Q.find(q => q.id === "q1019")]; pos = 0; shown = false; go("quiz"); }')());
+  await upgraded(page);
+  await editor(page).click();
+  await page.keyboard.type(' 1');
+  await expect(page.getByRole('button', { name: /Show answer/ })).toBeVisible();
+  await expect(editor(page)).toContainText(' 1');
+});

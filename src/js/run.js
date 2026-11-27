@@ -444,12 +444,14 @@ function startWorker(url, message, transfer, on) {
 function outPanel(out) {
   out.innerHTML = '<div class="out-status">Running…</div>';
   const status = out.lastChild;
-  const add = (cls, text) => { const el = document.createElement('div'); el.className = cls; el.textContent = text; out.insertBefore(el, status); return el; };
+  // Once the panel was cleared (another run took it over), late writes go nowhere.
+  const live = () => status.parentNode === out;
+  const add = (cls, text) => { const el = document.createElement('div'); el.className = cls; el.textContent = text; if (live()) out.insertBefore(el, status); return el; };
   return {
     line: text => add('out-line', text),
     error: text => add('out-error', text),
-    node: el => out.insertBefore(el, status),
-    end: ({ status: s, ms }) => { status.textContent = s === 'done' ? `Finished in ${ms} ms.` : MSG[s]; status.dataset.status = s; },
+    node: el => { if (live()) out.insertBefore(el, status); },
+    end: ({ status: s, ms }) => { if (!live()) return; status.textContent = s === 'done' ? `Finished in ${ms} ms.` : MSG[s]; status.dataset.status = s; },
   };
 }
 

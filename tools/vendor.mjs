@@ -43,7 +43,8 @@ for (const f of ['sql-wasm.js', 'sql-wasm.wasm']) fs.copyFileSync(path.join(ROOT
 addPackage('node_modules/sql.js');
 
 const notices = [];
-for (const [dir, pkg] of [...packages].sort(([a], [b]) => a.localeCompare(b))) {
+// Plain order, the same in every locale.
+for (const [dir, pkg] of [...packages].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
   if (!ALLOWED.has(pkg.license)) throw new Error(`${pkg.name}: licence ${pkg.license} is not in the allowed list; check it before bundling`);
   const file = fs.readdirSync(path.join(ROOT, dir)).find(f => /^(licen[cs]e|copying)(\.(md|txt))?$/i.test(f));
   if (!file) throw new Error(`${pkg.name}: no licence file in ${dir}`);

@@ -1,6 +1,6 @@
 // ---------- keys ----------
 document.addEventListener('keydown', e => {
-  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.target.isContentEditable || e.ctrlKey || e.metaKey || e.altKey) return;  // contenteditable: the code editor
   if (view === 'quiz' && pos < deck.length) {
     if (e.key === ' ' && !shown) { e.preventDefault(); reveal(); }
     if (shown && ['1', '2', '3'].includes(e.key)) rate(['missed', 'shaky', 'known'][e.key - 1]);
