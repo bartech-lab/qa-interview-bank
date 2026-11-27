@@ -49,11 +49,12 @@ Rules from phase 1 that apply (`docs/feasibility.md`): nothing beside the HTML; 
 | `one` | 1 element matches | `1 element matches.` |
 | `many` | N > 1 elements match | `N elements match. An action such as click() would fail in strict mode; narrow it down.` |
 
-4. Clean-up before reading: surrounding spaces, one leading `await `, a leading `page.`, a trailing `;`, and `page.` in front of a locator inside the text (for example `filter({ has: page.getByRole('button') })`) are removed. Text inside quotes is never changed. The cleaned text must start with `getByRole(`, `getByText(`, `getByLabel(`, `getByPlaceholder(`, `getByAltText(`, `getByTitle(`, `getByTestId(` or `locator(`, and must be read completely by Playwright's own locator reader (`locatorOrSelectorAsSelector`). A text that is exactly one `locator('<selector>')` call goes to the engine as that selector even when the reader refuses it, as `page.locator()` does, so a broken selector shows as `invalid`. Otherwise the state is `unsupported`: this covers `foo()`, `getByRole(` without its end, a trailing `.click()`, frame locators, and `.or()` / `.and()`, which this engine version does not read.
-5. Matched elements carry the attribute `data-qa-match` and are outlined in the frame. No other element carries it. A new result removes every old mark before setting new ones. With 0 matches, nothing is marked.
-6. The first match is scrolled into view inside the frame. The bank page itself does not scroll.
-7. The frozen page cannot go anywhere: clicks on links, buttons and submit buttons, and form submits, are cancelled inside the frame. The frame never navigates and never loads anything from the network, by file:// or over http.
-8. The frame cannot reach the bank page: it has no access to the page's DOM or `localStorage` (no `allow-same-origin`). The bank page accepts messages only from its own frame (`event.source` is the frame's window); any other message, whatever its shape, changes nothing.
+4. Clean-up before reading: surrounding spaces, one leading `await `, a leading `page.`, a trailing `;`, and `page.` in front of a locator inside the text (for example `filter({ has: page.getByRole('button') })`) are removed. Text inside quotes is never changed. The cleaned text must start with `getByRole(`, `getByText(`, `getByLabel(`, `getByPlaceholder(`, `getByAltText(`, `getByTitle(`, `getByTestId(` or `locator(`, and must be read completely by Playwright's own locator reader (`locatorOrSelectorAsSelector`). A text that is exactly one `locator('<selector>')` call goes to the engine as that selector even when the reader refuses it, as `page.locator()` does, so a broken selector shows as `invalid`. Otherwise the state is `unsupported`: this covers `foo()`, `getByRole(` without its end, a trailing `.click()` and frame locators.
+5. `.or(<locator>)` and `.and(<locator>)` work anywhere in the chain and inside `has:` / `hasNot:`, matching what Playwright builds for them (`internal:or`, `internal:and`): Playwright's own text reader, in every version, has no `.or()` and `.and()`. A `filter({ ... })` with several options works like consecutive filters in Playwright's order: `hasText`, `hasNotText`, `has`, `hasNot`, `visible`.
+6. Matched elements carry the attribute `data-qa-match` and are outlined in the frame. No other element carries it. A new result removes every old mark before setting new ones. With 0 matches, nothing is marked.
+7. The first match is scrolled into view inside the frame. The bank page itself does not scroll.
+8. The frozen page cannot go anywhere: clicks on links, buttons and submit buttons, and form submits, are cancelled inside the frame. The frame never navigates and never loads anything from the network, by file:// or over http.
+9. The frame cannot reach the bank page: it has no access to the page's DOM or `localStorage` (no `allow-same-origin`). The bank page accepts messages only from its own frame (`event.source` is the frame's window); any other message, whatever its shape, changes nothing.
 
 ### Tasks
 
@@ -70,7 +71,7 @@ Rules from phase 1 that apply (`docs/feasibility.md`): nothing beside the HTML; 
 
 ### Parity with real Playwright (done-when of phase 4)
 
-Every locator of the parity set below and every task answer is typed into the trainer on its page in the built page. Real Playwright 1.65.1 builds the same locator on `#loc-frame` (the text with `page.` in front, evaluated with `page` bound to `page.frameLocator('#loc-frame')`) and collects its matched set. The elements marked `data-qa-match` must be exactly that set, in Chromium, Firefox and WebKit, by file://.
+Every locator of the parity set below (rows 49 to 56 added in phase 4's follow-up for `.or()`, `.and()` and multi-option filters) and every task answer is typed into the trainer on its page in the built page. Real Playwright 1.65.1 builds the same locator on `#loc-frame` (the text with `page.` in front (locators inside `.or()`, `.and()` and `has:` carry their own `page.` in the table, as in real test code), evaluated with `page` bound to `page.frameLocator('#loc-frame')`) and collects its matched set. The elements marked `data-qa-match` must be exactly that set, in Chromium, Firefox and WebKit, by file://.
 
 - Guard against an empty pass: an entry marked 0 below must match 0 elements in real Playwright; every other entry at least 1.
 - Mix rule, checked by the test itself: at most a third of the parity set uses only `getByRole` calls; every kind in the "kind" column appears at least once; at least 10 entries are typed the way learners type (column "typed").
@@ -126,6 +127,14 @@ Every locator of the parity set below and every task answer is typed into the tr
 | 46 | playlist | `getByRole('link')` | role | | ≥1 |
 | 47 | shop | `page.getByRole('button', { name: 'Add Pen' });` | role | prefix | ≥1 |
 | 48 | signup | `await page.getByLabel('Name', { exact: true })` | label | prefix | ≥1 |
+| 49 | notes | `getByRole('button', { name: 'Star' }).or(page.getByRole('button', { name: 'Archive' }))` | or |  | ≥1 |
+| 50 | notes | `getByRole('checkbox').and(page.getByLabel('Trip ideas'))` | and |  | ≥1 |
+| 51 | shop | `getByRole('link', { name: 'Reviews for Pen' }).or(page.getByRole('button', { name: 'Add Pen' })).first()` | or |  | ≥1 |
+| 52 | orders | `getByRole('row').filter({ hasText: 'Ann' }).and(page.getByRole('row').filter({ hasText: '1006' }))` | and |  | ≥1 |
+| 53 | shop | `getByRole('listitem').filter({ has: page.getByRole('button').or(page.getByRole('link')) })` | or |  | ≥1 |
+| 54 | orders | `getByRole('row').filter({ has: page.getByRole('cell', { name: 'Ann' }), hasText: '400' })` | filter |  | ≥1 |
+| 55 | orders | `getByRole('row').filter({ hasNotText: 'ann', hasText: /Ewa|Ola/ }).first()` | filter | case | ≥1 |
+| 56 | playlist | `getByRole('listitem').filter({ visible: true, hasText: 'slow' })` | filter | case | ≥1 |
 
 ## Links to e2e-casebook (idea 51)
 
@@ -138,6 +147,13 @@ Every locator of the parity set below and every task answer is typed into the tr
 3. Every link in the block opens in a new tab (`target="_blank"`, `rel="noopener"`).
 4. Questions without links show no `.casebook` block.
 
+## Addresses (for the e2e-casebook learning path)
+
+1. Opening the page with `#qNNNN` (an existing question id) shows that question in Learn, its topic open. `#locators` opens the Locators tab.
+2. Changing the address to such a value while the page is open does the same.
+3. An unknown id (`#q9999`), another value or no `#` part leaves home open, with no page error.
+4. `data-ready="1"` is set after the address was followed.
+
 ## Known limit (stated, not tested)
 
 A regular expression that takes very long to match (for example `getByText(/(a+)+$/)` on long text) can freeze the tab, because matching runs inside the frame and a busy frame freezes the page in all three engines (probe 9). Only the learner's own tab is affected.
@@ -145,7 +161,7 @@ A regular expression that takes very long to match (for example `getByText(/(a+)
 ## Failure modes the tests cover
 
 1. Empty box, spaces only.
-2. Not a locator: `foo()`, `getByRole(` unfinished, `getByRole('button').click()`, `getByRole('button').or(getByRole('link'))`, `frameLocator('#x').getByRole('button')`.
+2. Not a locator: `foo()`, `getByRole(` unfinished, `getByRole('button').click()`, `getByRole('button').or(foo())`, `frameLocator('#x').getByRole('button')`. And the opposite: `.or()`, `.and()` and multi-option filters are read (parity rows 49 to 56).
 3. Read but rejected: `locator('button[')` (bad CSS), `locator('foo=bar')` (unknown engine).
 4. 0, 1 and many matches, with the right number in the text.
 5. Prefixes: `await`, `page.`, `;`, and `page.` inside `has:`. A string that contains `page.` (for example `getByText('page.one')`) keeps it.

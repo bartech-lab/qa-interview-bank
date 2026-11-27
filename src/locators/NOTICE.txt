@@ -1,7 +1,9 @@
 Frozen pages of e2e-casebook in the locator trainer (src/locators/pages/), copied from the app's rendered HTML and
 stylesheet at e2e-casebook commit 5a31126 (https://github.com/bartech-lab/e2e-casebook), scripts removed.
-They are under the Apache License 2.0, whose text is above with Playwright's. Attribution: e2e-casebook's NOTICE file,
-https://github.com/bartech-lab/e2e-casebook/blob/main/NOTICE (both projects have the same author).
+They are under the Apache License 2.0, whose text is above with Playwright's. e2e-casebook's NOTICE file, unchanged:
+
+e2e-casebook
+Copyright 2026 Bartosz Kowalski
 
 The pages inline icons from lucide-react 1.80.0 as SVG. Its licence, unchanged:
 

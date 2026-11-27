@@ -39,11 +39,118 @@ function locBridge() {
   // Playwright's reader refuses a locator('...') whose selector it cannot parse; page.locator() passes it on and the engine throws,
   // so a single locator('...') call goes to the engine as it is.
   const single = /^locator\((['"`])((?:\\.|(?!\1)[^\\])*)\1\)$/;
-  const read = text => {
+  const readOne = text => {
     const s = PWI.locatorOrSelectorAsSelector('javascript', text, 'data-testid');
     if (s && s !== text) return s;
     const m = single.exec(text);
     return m ? m[2].replace(/\\(.)/g, '$1') : '';
+  };
+  // The first .or( or .and( outside quotes and brackets: [index, 'or' | 'and', index of its closing bracket], or null.
+  function combinator(text) {
+    let depth = 0, quote = null;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (quote) { if (c === '\\') i++; else if (c === quote) quote = null; continue; }
+      if (c === "'" || c === '"' || c === '`') quote = c;
+      else if (c === '(' || c === '{' || c === '[') depth++;
+      else if (c === ')' || c === '}' || c === ']') depth--;
+      else if (depth === 0 && c === '.') {
+        const op = /^\.(or|and)\(/.exec(text.slice(i));
+        if (!op) continue;
+        let d = 0, q = null;
+        for (let j = i + op[0].length - 1; j < text.length; j++) {
+          const x = text[j];
+          if (q) { if (x === '\\') j++; else if (x === q) q = null; continue; }
+          if (x === "'" || x === '"' || x === '`') q = x;
+          else if (x === '(') d++;
+          else if (x === ')' && --d === 0) return [i, op[1], j];
+        }
+        return null;
+      }
+    }
+    return null;
+  }
+  // Playwright's text reader has no .or() and .and(); a.or(b) in a test becomes a >> internal:or="<b>", so the trainer builds
+  // the same selector. Only calls at the top of the chain are read this way; one nested inside filter() stays unreadable.
+  // A has: or hasNot: value that holds .or( or .and( is read on its own and put back as the selector Playwright builds for it.
+  function readHas(text) {
+    const subs = [];
+    let out = '', i = 0, quote = null;
+    while (i < text.length) {
+      const c = text[i];
+      if (quote) { out += c; if (c === '\\') out += text[++i] || ''; else if (c === quote) quote = null; i++; continue; }
+      if (c === "'" || c === '"' || c === '`') { quote = c; out += c; i++; continue; }
+      const m = /^(has|hasNot)\s*:\s*/.exec(text.slice(i));
+      if (!m || (i > 0 && /[\w$]/.test(text[i - 1]))) { out += c; i++; continue; }
+      let j = i + m[0].length, d = 0, q = null;
+      for (; j < text.length; j++) {
+        const x = text[j];
+        if (q) { if (x === '\\') j++; else if (x === q) q = null; continue; }
+        if (x === "'" || x === '"' || x === '`') q = x;
+        else if (x === '(' || x === '{' || x === '[') d++;
+        else if (x === ')' || x === '}' || x === ']') { if (d === 0) break; d--; }
+        else if (x === ',' && d === 0) break;
+      }
+      const value = text.slice(i + m[0].length, j).trim();
+      if (combinator(value)) { subs.push(value); out += `${m[1]}: locator('__qa_has${subs.length - 1}__')`; }
+      else out += text.slice(i, j);
+      i = j;
+    }
+    return [out, subs];
+  }
+  // Playwright's reader takes one option per filter({ ... }). A test's filter({ hasText, has }) applies its options one after
+  // another in this order (Playwright's Locator), so the trainer writes them as consecutive filters.
+  const FILTER_ORDER = ['hasText', 'hasNotText', 'has', 'hasNot', 'visible'];
+  function splitFilters(text) {
+    let out = '', i = 0, quote = null;
+    while (i < text.length) {
+      const c = text[i];
+      if (quote) { out += c; if (c === '\\') out += text[++i] || ''; else if (c === quote) quote = null; i++; continue; }
+      if (c === "'" || c === '"' || c === '`') { quote = c; out += c; i++; continue; }
+      const m = /^\.filter\(\s*\{/.exec(text.slice(i));
+      if (!m) { out += c; i++; continue; }
+      const parts = [];
+      let j = i + m[0].length, start = j, d = 0, q = null;
+      for (; j < text.length; j++) {
+        const x = text[j];
+        if (q) { if (x === '\\') j++; else if (x === q) q = null; continue; }
+        if (x === "'" || x === '"' || x === '`') q = x;
+        else if (x === '(' || x === '{' || x === '[') d++;
+        else if ((x === ')' || x === ']') && d > 0) d--;
+        else if (x === '}' && d > 0) d--;
+        else if ((x === ',' || x === '}') && d === 0) { parts.push(text.slice(start, j).trim()); start = j + 1; if (x === '}') break; }
+      }
+      const close = /^\}\s*\)/.exec(text.slice(j));
+      const opts = parts.filter(Boolean).map(o => [(/^(\w+)\s*:/.exec(o) || [])[1], o]);
+      if (!close || !opts.length || opts.some(([k]) => !FILTER_ORDER.includes(k))) { out += c; i++; continue; }
+      opts.sort((x, y) => FILTER_ORDER.indexOf(x[0]) - FILTER_ORDER.indexOf(y[0]));
+      out += opts.map(([, o]) => `.filter({ ${splitFilters(o)} })`).join('');
+      i = j + close[0].length;
+    }
+    return out;
+  }
+  const read = raw => {
+    const text = splitFilters(raw);
+    const [plain, subs] = readHas(text);
+    if (subs.length) {
+      let sel = read(plain);
+      for (const [n, value] of subs.entries()) {
+        const inner = read(value), mark = JSON.stringify(`__qa_has${n}__`);
+        if (!sel || !inner || !sel.includes(mark)) return '';
+        sel = sel.replace(mark, () => JSON.stringify(inner));
+      }
+      return sel;
+    }
+    const cut = combinator(text);
+    if (!cut) return readOne(text);
+    const [i, op, j] = cut;
+    const left = read(text.slice(0, i)), right = read(text.slice(i + op.length + 2, j));
+    if (!left || !right) return '';
+    const joined = `${left} >> internal:${op}=${JSON.stringify(right)}`;
+    const rest = text.slice(j + 1);
+    if (!rest) return joined;
+    const mark = '__qa_joined__', more = read(`locator('${mark}')${rest}`);
+    return more.startsWith(mark) ? joined + more.slice(mark.length) : '';
   };
   const match = sel => inj.querySelectorAll(inj.parseSelector(sel), document);
   const index = els => { const all = [...document.querySelectorAll('*')]; return els.map(e => all.indexOf(e)); };

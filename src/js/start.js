@@ -48,6 +48,18 @@ async function boot() {
   prepare(list);
   showSaveError();
   go('home');
+  openFromAddress();
   document.documentElement.dataset.ready = '1';
 }
+// Addresses other pages link to (docs/phase4-spec.md): #q0158 opens that question in Learn, #locators the Locators tab.
+// Anything else, or an unknown id, leaves home open.
+function openFromAddress() {
+  const h = location.hash.slice(1);
+  if (h === 'locators') { go('locators'); return; }
+  const i = /^q\d{4}$/.test(h) ? Q.findIndex(q => q.id === h) : -1;
+  if (i < 0) return;
+  go('learn', Q[i].file);
+  pick(i);
+}
+addEventListener('hashchange', () => { if (document.documentElement.dataset.ready === '1') openFromAddress(); });
 boot();

@@ -4,6 +4,7 @@
 //   worker  TS task q1019's worked solution runs in a worker and prints its ok line
 //   limit   the 5 s limit stops while (true) {}
 //   sql     SQL task q1030's worked answer is judged "match"
+//   locators  the Locators tab marks 3 Add buttons on the Shop page, and 2 elements for an .or() locator
 // Targets: file:// of dist/index.html, a local http server on dist/, and the GitHub Pages copy.
 // Whether Safari's automation may open file:// at all is recorded, not assumed; a refused file:// is a finding, not a failure.
 //
@@ -100,6 +101,19 @@ async function checks(url) {
     const v = await until('verdict', () => js("const v = document.querySelector('.verdict[data-verdict]'); return v ? v.dataset.verdict : null"), 20000);
     if (v !== 'match') throw new Error(`verdict "${v}"`);
     return 'ok, verdict match';
+  });
+  await step('locators', async () => {
+    // The Locators tab (phase 4): the trainer's frame reads locators with Playwright's engine and reports a count.
+    await js("eval('go')('locators')");
+    await until('trainer ready', () => js("const s = document.getElementById('loc-state'); return !!s && s.dataset.input === ''"), 20000);
+    const got = [];
+    for (const [text, want] of [["getByRole('button', { name: /^Add/ })", '3'], ["getByRole('link', { name: 'Reviews for Pen' }).or(getByRole('button', { name: 'Add Pen' }))", '2']]) {
+      await js("eval('locPick')('shop'); const i = document.getElementById('loc-input'); i.value = arguments[0]; eval('locSend')();", text);
+      const count = await until('locator result', () => js("const s = document.getElementById('loc-state'); return s.dataset.input === arguments[0] ? (s.dataset.count || s.dataset.state) : null", text), 15000);
+      if (count !== want) throw new Error(`${text}: ${count}, wanted ${want}`);
+      got.push(`${want} for ${text.slice(0, 24)}…`);
+    }
+    return `ok, ${got.join('; ')}`;
   });
   return out;
 }

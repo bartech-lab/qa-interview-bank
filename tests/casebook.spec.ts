@@ -1,7 +1,7 @@
 // Phase 4: links from Playwright questions to e2e-casebook cases (docs/phase4-spec.md, idea 51).
 // Written from the spec only. The linked and unlinked question are chosen from src/casebook.json at run time.
 // Not tested here: "the build fails on a bad link" (the maintainer's build check).
-import { test, expect, bankData, goTo, progress, quizThese } from './fixtures';
+import { test, expect, bankData, goTo, progress, quizThese, load, currentId, PAGE_URL } from './fixtures';
 import { openById } from './code-helpers';
 import type { Page } from '@playwright/test';
 import fs from 'node:fs';
@@ -112,4 +112,22 @@ test('51: an unlinked question in the quiz shows no block after Show answer', as
   await page.getByRole('button', { name: /Show answer/ }).click();
   await expect(page.getByRole('button', { name: /Knew it/ })).toBeVisible();
   await expect(page.locator('.casebook')).toHaveCount(0);
+});
+
+// ---------------------------------------------------------------- addresses (docs/phase4-spec.md, "Addresses")
+test('address #qNNNN opens that question in Learn; #locators opens the trainer; an unknown one leaves home', async ({ watched: page }) => {
+  const all = JSON.parse(fs.readFileSync('src/casebook.json', 'utf8')) as { links: Record<string, number[]> };
+  const id = Object.keys(all.links).at(-1)!;
+  await load(page, `${PAGE_URL}#${id}`);
+  await expect(page.locator('#learn')).toBeVisible();
+  expect(await currentId(page)).toBe(id);
+  await page.evaluate(() => { location.hash = '#locators'; });
+  await expect(page.locator('#locators')).toBeVisible();
+  await expect(page.locator('#tab-locators')).toHaveClass(/\bon\b/);
+  await page.evaluate(() => { location.hash = '#q0002'; });
+  await expect.poll(() => currentId(page)).toBe('q0002');
+  await page.goto('about:blank');  // a new load: changing only the # part would not reload the page
+  await load(page, `${PAGE_URL}#q9999`);
+  await expect(page.locator('#home')).toBeVisible();
+  await expect(page.locator('#learn')).toBeHidden();
 });

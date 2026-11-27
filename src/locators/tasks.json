@@ -32,6 +32,7 @@
   { "id": "notes-2", "page": "notes", "task": "Match the checkbox of the note Trip ideas.", "answer": "getByRole('checkbox', { name: 'Trip ideas' })" },
   { "id": "notes-3", "page": "notes", "task": "Match the list item that holds Book notes.", "answer": "getByRole('listitem').filter({ hasText: 'Book notes' })" },
   { "id": "notes-4", "page": "notes", "task": "Match the Archive heading, not the button.", "answer": "getByRole('heading', { name: 'Archive' })" },
+  { "id": "notes-5", "page": "notes", "task": "Match the Star and the Delete buttons with one locator.", "answer": "getByRole('button', { name: 'Star' }).or(page.getByRole('button', { name: 'Delete' }))" },
   { "id": "playlist-1", "page": "playlist", "task": "Match the move button of Slow Train.", "answer": "getByRole('button', { name: 'Move Slow Train' })" },
   { "id": "playlist-2", "page": "playlist", "task": "Match all five songs.", "answer": "getByRole('list', { name: 'Playlist' }).getByRole('listitem')" },
   { "id": "playlist-3", "page": "playlist", "task": "Match the second song.", "answer": "getByRole('list', { name: 'Playlist' }).getByRole('listitem').nth(1)" },

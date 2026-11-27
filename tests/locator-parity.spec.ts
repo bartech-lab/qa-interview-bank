@@ -1,5 +1,5 @@
 // Phase 4: parity of the locator trainer with real Playwright (docs/phase4-spec.md, "Parity with real Playwright").
-// Written from the spec only. The 48 rows below are copied from the spec table; every task answer comes from src/locators/tasks.json.
+// Written from the spec only. The 56 rows below are copied from the spec table; every task answer comes from src/locators/tasks.json.
 import { test, expect, goTo } from './fixtures';
 import type { Page, FrameLocator, Locator } from '@playwright/test';
 import fs from 'node:fs';
@@ -57,6 +57,14 @@ const PARITY: ParityRow[] = [
   [46, "playlist", "getByRole('link')", "role", "", false],
   [47, "shop", "page.getByRole('button', { name: 'Add Pen' });", "role", "prefix", false],
   [48, "signup", "await page.getByLabel('Name', { exact: true })", "label", "prefix", false],
+  [49, "notes", "getByRole('button', { name: 'Star' }).or(page.getByRole('button', { name: 'Archive' }))", "or", "", false],
+  [50, "notes", "getByRole('checkbox').and(page.getByLabel('Trip ideas'))", "and", "", false],
+  [51, "shop", "getByRole('link', { name: 'Reviews for Pen' }).or(page.getByRole('button', { name: 'Add Pen' })).first()", "or", "", false],
+  [52, "orders", "getByRole('row').filter({ hasText: 'Ann' }).and(page.getByRole('row').filter({ hasText: '1006' }))", "and", "", false],
+  [53, "shop", "getByRole('listitem').filter({ has: page.getByRole('button').or(page.getByRole('link')) })", "or", "", false],
+  [54, "orders", "getByRole('row').filter({ has: page.getByRole('cell', { name: 'Ann' }), hasText: '400' })", "filter", "", false],
+  [55, "orders", "getByRole('row').filter({ hasNotText: 'ann', hasText: /Ewa|Ola/ }).first()", "filter", "case", false],
+  [56, "playlist", "getByRole('listitem').filter({ visible: true, hasText: 'slow' })", "filter", "case", false],
 ];
 
 type Entry = { label: string; page: string; text: string; zero: boolean };
@@ -106,12 +114,12 @@ for (const p of info.pages) {
   });
 }
 
-test('FM15 mix rule: the 48 rows hold every kind, at least 10 typed ones, and at most a third use only getByRole', () => {
-  expect(PARITY).toHaveLength(48);
-  expect(PARITY.map(r => r[0])).toEqual(Array.from({ length: 48 }, (_, i) => i + 1));
+test('FM15 mix rule: the 56 rows hold every kind, at least 10 typed ones, and at most a third use only getByRole', () => {
+  expect(PARITY).toHaveLength(56);
+  expect(PARITY.map(r => r[0])).toEqual(Array.from({ length: 56 }, (_, i) => i + 1));
   for (const r of PARITY) expect(info.pages.map(p => p.id), `row ${r[0]} names a known page`).toContain(r[1]);
   const kinds = new Set(PARITY.map(r => r[3]));
-  for (const k of ['text', 'label', 'placeholder', 'testid', 'alt', 'title', 'css', 'xpath', 'filter', 'nth', 'first', 'last', 'role']) expect(kinds, `kind ${k} present`).toContain(k);
+  for (const k of ['text', 'label', 'placeholder', 'testid', 'alt', 'title', 'css', 'xpath', 'filter', 'nth', 'first', 'last', 'role', 'or', 'and']) expect(kinds, `kind ${k} present`).toContain(k);
   expect(PARITY.filter(r => r[4] !== '').length).toBeGreaterThanOrEqual(10);
   // Role-only: every call of the chain is getByRole (string contents do not count as calls).
   const calls = (text: string) => new Set([...text.replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, "''").matchAll(/([A-Za-z]\w*)\(/g)].map(m => m[1]));

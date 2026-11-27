@@ -159,8 +159,22 @@ test('FM1 empty box and spaces only: state empty with the hint', async ({ bank }
   await expect(state(bank)).toHaveText(MSG.empty);
 });
 
-const notLocators = ['foo()', "getByRole(", "getByRole('button').click()", "getByRole('button').or(getByRole('link'))", "frameLocator('#x').getByRole('button')",
-  "getByRole('button').and(getByRole('link'))"];
+const notLocators = ['foo()', "getByRole(", "getByRole('button').click()", "getByRole('button').or(foo())", "frameLocator('#x').getByRole('button')",
+  "getByRole('button').and(getByRole('link')"];
+
+test('FM2 .or(), .and() and a filter with two options are read, also inside has:', async ({ bank }) => {
+  await openOn(bank, 'notes');
+  await typeLoc(bank, "page.getByRole('button', { name: 'Star' }).or(page.getByRole('button', { name: 'Archive' }))");
+  await expect(state(bank)).toHaveAttribute('data-state', 'many');
+  await expect(state(bank)).toHaveAttribute('data-count', '2');
+  await typeLoc(bank, "getByRole('checkbox').and(getByLabel('Trip ideas'))");
+  await expect(state(bank)).toHaveAttribute('data-count', '1');
+  await expect(frameOf(bank).getByRole('checkbox', { name: 'Trip ideas', exact: true })).toHaveAttribute('data-qa-match', '');
+  await typeLoc(bank, "getByRole('listitem').filter({ hasText: 'ideas', has: getByRole('checkbox', { name: 'Gift ideas' }) })");
+  await expect(state(bank)).toHaveAttribute('data-count', '1');
+  await typeLoc(bank, "getByRole('listitem').filter({ has: getByRole('checkbox', { name: 'Book notes' }).or(getByRole('checkbox', { name: 'Gift ideas' })) })");
+  await expect(state(bank)).toHaveAttribute('data-count', '2');
+});
 for (const text of notLocators) {
   test(`FM2 not a locator: ${text}`, async ({ bank }) => {
     await openOn(bank, 'signup');
