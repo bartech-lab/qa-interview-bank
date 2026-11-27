@@ -83,15 +83,22 @@ export async function upgraded(page: Page) {
 }
 
 // Writes the code into the saved progress, reloads and opens the question in Learn.
+// Chromium can drop a localStorage write made from the test right before a reload (seen once in CI: the page showed the
+// starter), so the write is repeated until the reloaded page reads it back. This is the test's seeding, not the page.
 export async function task(page: Page, id: string, code?: string) {
   if (code !== undefined) {
-    await page.evaluate(([k, i, c]) => {
-      const s = JSON.parse(localStorage.getItem(k) || 'null') || { v: 2, known: {}, shaky: {}, missed: {}, notes: {}, code: {}, srs: {}, exam: null, backup: null };
-      s.code = s.code || {};
-      s.code[i] = c;
-      localStorage.setItem(k, JSON.stringify(s));
-    }, [KEY, id, code]);
-    await reload(page);
+    for (let attempt = 1; ; attempt++) {
+      await page.evaluate(([k, i, c]) => {
+        const s = JSON.parse(localStorage.getItem(k) || 'null') || { v: 2, known: {}, shaky: {}, missed: {}, notes: {}, code: {}, srs: {}, exam: null, backup: null };
+        s.code = s.code || {};
+        s.code[i] = c;
+        localStorage.setItem(k, JSON.stringify(s));
+      }, [KEY, id, code]);
+      await reload(page);
+      const seen = await page.evaluate(([k, i]) => (JSON.parse(localStorage.getItem(k) || '{}').code || {})[i], [KEY, id]);
+      if (seen === code) break;
+      if (attempt === 3) throw new Error(`the page did not read the seeded code for ${id} after 3 reloads`);
+    }
   }
   await openById(page, id);
 }

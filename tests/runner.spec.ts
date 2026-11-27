@@ -559,7 +559,8 @@ test('TS 5: the run ends when timers are done and the microtask queue is empty, 
   const code = [
     "console.log('sync');",
     "setTimeout(() => console.log('timer 0'), 0);",
-    "setTimeout(() => { console.log('timer 30'); setTimeout(() => console.log('nested 30'), 30); }, 30);",
+    // Far apart on purpose: timers due at the same moment may fire in either order under load, in Node and in the page.
+    "setTimeout(() => { console.log('timer 30'); setTimeout(() => console.log('nested 30'), 30); }, 400);",
     "let n = 0;",
     "const h = setInterval(() => { console.log('tick', ++n); if (n === 3) clearInterval(h); }, 15);",
     "Promise.resolve().then(() => { console.log('micro 1'); return Promise.resolve(); }).then(() => console.log('micro 2'));",
