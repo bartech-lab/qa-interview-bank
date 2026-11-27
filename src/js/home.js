@@ -1,18 +1,17 @@
 // ---------- home ----------
 function renderHome() {
   if (!store.mix || store.mix.day !== today()) update(() => {});  // save today's daily mix, so every tab and reload sees the same set
-  const count = t => Q.filter(q => q.tier === t).length, step = { Core: 'Start here', Standard: 'Next', Niche: 'Only if needed' };
-  $('home').innerHTML = `
-    <div class="hero"><h1>Get ready for your QA interview</h1>
-      <p>${Q.length} interview questions. Each one has a short answer to say out loud, a common trap, the full explanation and likely follow-ups. Pick a topic to read, or switch to <b>Quiz</b> to test yourself.</p></div>
-    ${todayCard()}
-    <div class="tiers">${Object.entries(TIERS).map(([t, d]) => `<div class="card">${tierBadge(t)} <span class="muted small">${count(t)} questions</span><b>${step[t]}</b><span class="muted small">${d}</span></div>`).join('')}</div>
-    <div class="grid">${files.map(f => { const qs = Q.filter(q => q.file === f), k = qs.filter(known).length, c = qs.filter(q => q.tier === 'Core').length;
-      return `<button class="card topic" onclick="go('learn','${f}')"><span class="ico">${fileMeta(f)[0]}</span><span class="name">${esc(fileMeta(f)[1])}</span>
-        <span class="muted small">${qs.length} questions · ${c} Core</span><span class="meter"><i style="width:${100 * k / qs.length}%"></i></span>
-        <span class="muted small">${k ? `${k} known` : 'Not started'}</span></button>`; }).join('')}</div>
-    <div id="backuprow">${backupRow()}</div>
-    <div class="resetrow" id="resetrow">${resetRow(false)}</div>`;
+  $('home').innerHTML = `${todayCard()}
+    <section class="toc" aria-labelledby="toc-title"><h2 id="toc-title">Topics</h2>
+      <div class="toc-list">${files.map(topicRow).join('')}</div>
+      <div class="toc-note">Each bar shows the questions you know, find shaky or didn't know, out of all questions in the topic. ${tierBadge('Core')} questions are the most asked in QA job ads. ${infoTiers()}</div></section>
+    <footer class="homefoot"><div id="backuprow">${backupRow()}</div><div class="resetrow" id="resetrow">${resetRow(false)}</div></footer>`;
+}
+function topicRow(f) {
+  const qs = Q.filter(q => q.file === f), n = m => qs.filter(q => store[m][q.k]).length, w = m => (100 * n(m) / qs.length).toFixed(1) + '%';
+  return `<button class="topic" onclick="go('learn','${f}')"><span class="t-name">${esc(fileMeta(f))}</span>
+    <span class="bar" aria-hidden="true"><i class="k" style="width:${w('known')}"></i><i class="s" style="width:${w('shaky')}"></i><i class="m" style="width:${w('missed')}"></i></span>
+    <span class="t-n">${n('known')} / ${qs.length}</span></button>`;
 }
 // Reset is confirmed in the page: a browser confirm() dialog is blocked in some embedded viewers.
 function resetRow(asking) {

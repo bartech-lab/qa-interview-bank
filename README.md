@@ -82,4 +82,4 @@ npm test                        # builds the page and runs the browser tests
 
 ## Licence
 
-Code: MIT ([LICENSE](LICENSE)). Questions and answers: CC BY-SA 4.0 ([LICENSE-CONTENT.md](LICENSE-CONTENT.md)).
+Code: MIT ([LICENSE](LICENSE)). Questions and answers: CC BY-SA 4.0 ([LICENSE-CONTENT.md](LICENSE-CONTENT.md)). Fonts: SIL Open Font License 1.1 ([src/fonts/OFL.txt](src/fonts/OFL.txt)).

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Build dist/index.html (one offline file) and dist/qa-interview-bank.zip from topics/*.md and the page sources in src/:
-src/index.html (the shell), src/style.css and src/js/*.js in the order of SCRIPTS. The scripts share one
+src/index.html (the shell), src/style.css with the fonts in src/fonts as data: URIs, and src/js/*.js in the order of SCRIPTS. The scripts share one
 classic <script> tag, so every top-level name stays global, as the inline onclick handlers need.
 
 Usage: python3 tools/build.py
 Exit 1 when a question has no id, an id repeats, a question has no Topic line, or dist/index.html
 is larger than BUDGET bytes (the size budget in docs/feasibility.md).
 """
+import base64
 import json
 import re
 import shutil
@@ -19,6 +20,7 @@ TOPICS, DIST = ROOT / "topics", ROOT / "dist"
 SRC = ROOT / "src"
 SCRIPTS = ("data", "markdown", "answer", "editor", "review", "backup", "navigation", "home", "learn", "quiz", "start")
 BUDGET = 4_500_000  # bytes for dist/index.html, docs/feasibility.md
+FONT = re.compile(r"url\(fonts/([\w.-]+\.woff2)\)")
 TOPIC = re.compile(r"^Topic: (\S+) \| (Core|Standard|Niche) \| id: (q\d{4})$", re.M)
 
 
@@ -50,7 +52,12 @@ def page_source() -> str:
     if on_disk != sorted(SCRIPTS):
         raise SystemExit(f"src/js holds {on_disk}; list every file in SCRIPTS in tools/build.py, in load order")
     page = (SRC / "index.html").read_text(encoding="utf-8")
-    parts = {"/*STYLE*/\n": (SRC / "style.css").read_text(encoding="utf-8"),
+    if page.count("</body>") != 1:
+        raise SystemExit("src/index.html must hold </body> exactly once")
+    # Third-party licences: one comment at the end of the page (docs/feasibility.md, rule 5).
+    page = page.replace("</body>", "<!--\n" + (SRC / "fonts" / "OFL.txt").read_text(encoding="utf-8") + "-->\n</body>")
+    font = lambda m: "url(data:font/woff2;base64," + base64.b64encode((SRC / "fonts" / m.group(1)).read_bytes()).decode() + ")"
+    parts = {"/*STYLE*/\n": FONT.sub(font, (SRC / "style.css").read_text(encoding="utf-8")),
              "/*SCRIPTS*/\n": "".join((SRC / "js" / f"{n}.js").read_text(encoding="utf-8") for n in SCRIPTS),
              "/*DATA*/": "/*DATA*/"}
     for mark, text in parts.items():

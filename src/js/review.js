@@ -72,18 +72,29 @@ function examLines() {
     unseenCore ? `To see every unseen Core question: ${Math.ceil(unseenCore / left)} a day` : ''];
 }
 
-// ---------- Today card on home ----------
+// ---------- Today on home: the daily mix as a deck of cards ----------
+// What the rest of today's mix holds. A question to review has a mark or a review entry; a new one has neither.
+function mixIntro(mix) {
+  const left = mix.filter(q => !doneToday(q)), review = left.filter(q => markOf(store, q.k) || store.srs[q.k]).length;
+  if (!left.length) return "Today's mix is done. A new one is ready tomorrow.";
+  if (!hasProgress(store)) return `Today's ${mix.length} questions are Core questions, taken from the topics in turn.`;
+  if (review === left.length) return "Today's mix is questions to review.";
+  return review ? "Today's mix starts with questions to review, then new ones." : "Today's mix is new questions, taken from the topics in turn.";
+}
 function todayCard() {
-  const mix = todayMix(), done = mix.filter(doneToday).length, due = dueList(store, today()).length, [line, pace] = examLines();
-  return `<section id="today" class="card today" aria-label="Today">
-    <div class="trow"><div class="tmain"><b>Daily mix</b><span id="mix-progress" class="muted small">${done} / ${mix.length} done today</span></div>
-      <select id="mix-size" aria-label="Questions in the daily mix" onchange="setMixSize(+this.value)">${[5, 10, 20].map(n => `<option value="${n}" ${store.mixSize === n ? 'selected' : ''}>${n} a day</option>`).join('')}</select>
-      <button class="btn primary" id="mix-start" ${done < mix.length ? '' : 'disabled'} onclick="startQuiz(todayMix().filter(q => !doneToday(q)))">${done < mix.length ? (done ? 'Continue the daily mix' : 'Start the daily mix') : 'Daily mix done'}</button></div>
-    <div class="trow"><div class="tmain"><b>Due for review</b><span class="muted small"><span id="due-count">${due}</span> question${due === 1 ? '' : 's'} today</span></div>
-      <button class="btn" onclick="go('review')">Open review</button></div>
-    <div class="trow"><div class="tmain"><label for="exam-date"><b>Interview date</b></label><span id="exam-line" class="muted small">${line}</span><span id="exam-pace" class="muted small" ${pace ? '' : 'hidden'}>${pace}</span></div>
-      <input type="date" id="exam-date" value="${store.exam || ''}" onchange="setExam(this.value)">
-      <button class="btn" id="exam-clear" ${store.exam ? '' : 'disabled'} onclick="setExam('')">Clear</button></div>
+  const mix = todayMix(), done = mix.filter(doneToday).length, next = mix.find(q => !doneToday(q)), [line, pace] = examLines();
+  return `<section id="today" class="deck" aria-label="Today">
+    <div class="deck-head"><h1>Daily mix</h1><p id="mix-intro">${mixIntro(mix)}</p></div>
+    <div class="stack"><div id="mix-card" class="icard">${next
+      ? `<div class="icard-head"><span>${esc(fileMeta(next.file))}</span>${tierBadge(next.tier)}</div><p class="icard-q">${inline(next.q)}</p>`
+      : `<div class="icard-head"><span>Daily mix</span></div><p class="icard-q icard-done">That's every card for today.</p>`}</div></div>
+    <div class="deck-act"><p id="mix-progress">${done} / ${mix.length} done today</p>
+      <div class="deck-ctl"><button class="btn primary" id="mix-start" ${next ? '' : 'disabled'} onclick="startQuiz(todayMix().filter(q => !doneToday(q)), true)">${next ? (done ? 'Continue the daily mix' : 'Start the daily mix') : 'Daily mix done'}</button>
+        <select id="mix-size" aria-label="Questions in the daily mix" onchange="setMixSize(+this.value)">${[5, 10, 20].map(n => `<option value="${n}" ${store.mixSize === n ? 'selected' : ''}>${n} a day</option>`).join('')}</select></div>
+      <div class="exam"><label for="exam-date">Interview date</label>
+        <input type="date" id="exam-date" value="${store.exam || ''}" onchange="setExam(this.value)">
+        <button class="btn" id="exam-clear" ${store.exam ? '' : 'disabled'} onclick="setExam('')">Clear</button>
+        <span class="exam-txt"><span id="exam-line">${line}</span><span id="exam-pace" ${pace ? '' : 'hidden'}>${pace}</span></span></div></div>
   </section>`;
 }
 
@@ -102,9 +113,9 @@ function renderReview() {
   $('review').innerHTML = `<div class="wrap"><div class="card setup review">
     <h2>Review</h2><p class="muted" style="margin:0">Questions that are due again, that you rated Shaky or Didn't know, or that carry your note.</p>
     <div class="chips rq-filters">${['All', ...Object.keys(WHY)].map(w => `<button class="chip ${rf.by === w ? 'on' : ''}" aria-pressed="${rf.by === w}" onclick="rf.by='${w}';renderReview()">${label(w)}</button>`).join('')}</div>
-    <select id="rq-topic" aria-label="Topic" onchange="rf.topic=this.value;renderReview()"><option value="">All topics</option>${files.map(f => `<option value="${f}" ${rf.topic === f ? 'selected' : ''}>${esc(fileMeta(f)[1])}</option>`).join('')}</select>
+    <select id="rq-topic" aria-label="Topic" onchange="rf.topic=this.value;renderReview()"><option value="">All topics</option>${files.map(f => `<option value="${f}" ${rf.topic === f ? 'selected' : ''}>${esc(fileMeta(f))}</option>`).join('')}</select>
     ${list.length ? `<div class="startrow"><button class="btn primary" onclick="startQuiz(queue())">Quiz these ${list.length}</button></div>
-      <div class="rq-list">${list.map(q => `<button class="rq-row" data-id="${q.k}" onclick="openQuestion(${q.i})"><span class="rq-q">${inline(q.q)}</span><span class="rq-meta">${tags(q)}<span class="muted small">${fileMeta(q.file)[0]} ${esc(fileMeta(q.file)[1])}</span></span></button>`).join('')}</div>`
+      <div class="rq-list">${list.map(q => `<button class="rq-row" data-id="${q.k}" onclick="openQuestion(${q.i})"><span class="rq-q">${inline(q.q)}</span><span class="rq-meta">${tags(q)}<span class="muted small">${esc(fileMeta(q.file))}</span></span></button>`).join('')}</div>`
     : `<p class="empty">Nothing to review here yet. Questions you rate Shaky or Didn't know, or write a note on, show up here, and so do questions due again.</p>
        <button class="btn" onclick="go('setup')">Start a quiz</button>`}</div></div>`;
 }

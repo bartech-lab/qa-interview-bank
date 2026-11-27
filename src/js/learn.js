@@ -15,7 +15,7 @@ function renderLearn() {
   if (!list.some(q => q.i === current)) current = list[0] ? list[0].i : null;
   $('side').innerHTML = `<div class="side-head">
       <button class="back" onclick="go('home')">← All topics</button>
-      <div class="side-title">${fileMeta(topic)[0]} ${esc(fileMeta(topic)[1])}</div>
+      <div class="side-title">${esc(fileMeta(topic))}</div>
       <input class="search" id="lsearch" type="search" placeholder="Search in this topic…" value="${esc(filter.text)}">
       <label class="switch"><input type="checkbox" id="lcore" ${filter.core ? 'checked' : ''}> Core questions only</label>
       <span class="muted small" style="line-height:1.4">${tierBadge('Core')} = most asked: in 30%+ of QA job ads, or set by hand.</span>
