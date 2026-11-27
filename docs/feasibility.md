@@ -58,10 +58,10 @@ Each probe page reports into `window.__result`. "file" means the page was opened
 
     The MIT licences of sql.js, CodeMirror and Sucrase go beside them, in one comment at the end of the page.
 
-17. **A part stored gzip-compressed and base64-encoded in the page unpacks on first use** with `DecompressionStream('gzip')`, by file:// and by http, in Chromium and Firefox (phase 3, 2026-11-27). WebKit: not run yet (see the end).
+17. **A part stored gzip-compressed and base64-encoded in the page unpacks on first use** with `DecompressionStream('gzip')`, by file:// and by http, in Chromium 159, Firefox 159 and WebKit 27.2 (phase 3, 2026-11-27). The WebKit run is Playwright's Linux build inside Playwright's Docker image (`mcr.microsoft.com/playwright:v1.65.0-noble`, 2 CPUs) on the maintainer's laptop, not GitHub Actions.
     - Each part sits in a `<script type="application/x-gzip-base64">` tag, which the browser does not run. The page decodes the base64 (`Uint8Array.fromBase64`, present in both; an `atob` loop as the fallback) and pipes the bytes through `DecompressionStream`.
     - Every part worked after unpacking: the 1,057 questions parsed, CodeMirror mounted an editor, Sucrase stripped types, and sql.js started inside a blob worker with the wasm bytes posted in, then ran a window function (SQLite 3.54.1).
-    - Time, median of 5 cold loads, from reading the tag to a usable part: questions (unpack plus `JSON.parse`) 8 ms in Chromium and 19 ms in Firefox, 30 to 33 ms in Chromium with the CPU slowed 4x; CodeMirror 27 / 38 ms (108 ms slowed); Sucrase 9 / 12 ms; sql.js loader plus wasm, started in a worker, 18 / 15 ms. Of the questions' 8 ms in Chromium, decoding the base64 takes 2 ms and gunzip 3.5 ms. File and http times are within 1 ms of each other.
+    - Time, median of 5 cold loads, from reading the tag to a usable part: questions (unpack plus `JSON.parse`) 8 ms in Chromium and 19 ms in Firefox, 30 to 33 ms in Chromium with the CPU slowed 4x; CodeMirror 27 / 38 ms (108 ms slowed); Sucrase 9 / 12 ms; sql.js loader plus wasm, started in a worker, 18 / 15 ms. WebKit: questions 13 to 14 ms, CodeMirror 26 to 27 ms, Sucrase 14 ms, sql.js 13 ms. Of the questions' 8 ms in Chromium, decoding the base64 takes 2 ms and gunzip 3.5 ms. File and http times are within 1 ms of each other.
     - In Firefox the questions took 19 ms with `fromBase64` and 9 ms with `atob` in the same page. The `atob` step ran second, so the difference may be warm-up; both are far under the 150 ms gate set before the probe.
     - With `DecompressionStream` removed, the page shows its message and throws nothing.
     - sql.js as loader plus a separate wasm file packs to 478,112 bytes of base64, against 595,352 for the single-file build that already holds the wasm as base64. The page uses the split form.
@@ -199,4 +199,4 @@ WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the
 - Real Safari on a Mac or an iPhone: no such device is available. Linux WebKit passed probes 1, 2, 5, 6, 8 and 9, but Safari's file rules may differ.
 - Start time on a real phone (probe 4).
 - Probes 13 to 16 belong to later phases.
-- Probe 17 in WebKit: waits for the repository to go public, so the WebKit run does not draw on private Actions minutes.
+- Probe 17 in WebKit on GitHub Actions: it ran in Docker on the maintainer's laptop instead (same Playwright WebKit build).
