@@ -275,6 +275,8 @@ Topic: ai-tools | Standard | id: q0791
 
 **Trap:** promising "AI runs all testing". Say where it stops and how you measure it.
 
+**Source:** https://playwright.dev/docs/test-agents
+
 ### How would you audit our current QA process and decide where AI helps?
 
 Topic: test-strategy | Core | id: q0792
@@ -834,6 +836,8 @@ Topic: ai-testing | Niche | id: q0823
 ### What is prompt injection, and how do you test for it?
 
 Topic: ai-testing | Niche | id: q0824
+
+**Say:** Prompt injection is when input changes the model's behaviour in a way the owner did not intend. Direct: the user types "ignore your rules and do X". Indirect: the model reads a web page, file or email that contains hidden instructions. OWASP ranks it first in its LLM Top 10. A test case has the setup, the hostile input, the channel (direct or indirect), the forbidden outcome, and a pass rule that code can check, such as "no tool call was made" or "the secret string is not in the reply".
 
 **Full process:**
 1. List assets and actions at risk: system prompt, user data, tools such as email or database.

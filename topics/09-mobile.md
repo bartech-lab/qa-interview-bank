@@ -901,6 +901,7 @@ Topic: mobile-appium | Niche | id: q0876
 
 **Say:** State how long you used Appium and in which language. A concrete answer: start the Appium server with the Android and iOS drivers installed, create sessions with capabilities for the app build, and locate elements mainly by accessibility id, with native selectors where needed. Write tests as a page object layer plus specs, wait on conditions, and on failure keep a screenshot and the logs. Use Appium Inspector to find locators. Be honest about the scale: a regression suite for critical flows is not a large device-farm setup.
 
+**Full process:** The setup, step by step.
 1. Install: Node, Appium, the UiAutomator2 and XCUITest drivers, Android Studio for the emulators, Xcode for the simulators.
 2. Start the server: `appium`.
 3. Build the app, point `appium:app` at it, and create the session in a test hook.

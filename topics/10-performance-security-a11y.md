@@ -77,6 +77,8 @@ Topic: performance | Core | id: q0887
 
 Topic: performance | Core | id: q0888
 
+**Say:** I narrow it down in layers. First I confirm the problem is reproducible and find which request or flow is slow. Then I check whether the time goes to the network, the application server, a downstream service or the database. I compare the slow request with a fast one, look at server metrics and logs at the same time, and then change one thing and measure again. For a database cause I read the query plan.
+
 **Full process:** The approach, step by step.
 1. Reproduce with a load test and note the load level where the response time starts to rise (the knee).
 2. Split the response time per transaction. Which request type is slow?
@@ -808,6 +810,8 @@ Topic: a11y | Niche | id: q0918
 ### How do you use axe in Playwright, and what does the CI setup look like?
 
 Topic: a11y | Niche | id: q0919
+
+**Say:** I add the `@axe-core/playwright` package and run axe on the key pages and states inside normal Playwright tests, then assert that the violations list is empty. I limit the rules to the WCAG tags the product commits to, and scan after the page is in the right state, for example after opening a menu. In CI, the scan runs with the other E2E tests, and results are attached to the report. Axe finds a part of the problems, so it is a regression guard, not a proof of accessibility.
 
 **Full process:**
 1. Install: `npm i -D @axe-core/playwright`.
