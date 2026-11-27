@@ -5,6 +5,7 @@
 //   limit   the 5 s limit stops while (true) {}
 //   sql     SQL task q1030's worked answer is judged "match"
 //   locators  the Locators tab marks 3 Add buttons on the Shop page, and 2 elements for an .or() locator
+//   address   a fresh load of the page with #q0018 opens that question in Learn
 // Targets: file:// of dist/index.html, a local http server on dist/, and the GitHub Pages copy.
 // Whether Safari's automation may open file:// at all is recorded, not assumed; a refused file:// is a finding, not a failure.
 //
@@ -114,6 +115,16 @@ async function checks(url) {
       got.push(`${want} for ${text.slice(0, 24)}…`);
     }
     return `ok, ${got.join('; ')}`;
+  });
+  await step('address', async () => {
+    // A fresh load of <page>#q0018 opens that question in Learn (the casebook learning path links this way).
+    await wd('POST', '/session/:s/url', { url: 'about:blank' });
+    await wd('POST', '/session/:s/url', { url: url + '#q0018' });
+    await until('data-ready', () => js("return document.documentElement.dataset.ready === '1'"), 20000);
+    const r = await js(`const learn = document.getElementById('learn'), q = eval('Q').find(x => x.id === 'q0018');
+      return { shown: !learn.classList.contains('hidden'), has: learn.innerText.includes(q.q.replace(/\`/g, '')) };`);
+    if (!r.shown || !r.has) throw new Error(`Learn shown ${r.shown}, question text present ${r.has}`);
+    return 'ok, #q0018 opened that question in Learn';
   });
   return out;
 }
