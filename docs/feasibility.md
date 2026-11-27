@@ -58,6 +58,24 @@ Each probe page reports into `window.__result`. "file" means the page was opened
 
     The MIT licences of sql.js, CodeMirror and Sucrase go beside them, in one comment at the end of the page.
 
+17. **A part stored gzip-compressed and base64-encoded in the page unpacks on first use** with `DecompressionStream('gzip')`, by file:// and by http, in Chromium and Firefox (phase 3, 2026-11-27). WebKit: not run yet (see the end).
+    - Each part sits in a `<script type="application/x-gzip-base64">` tag, which the browser does not run. The page decodes the base64 (`Uint8Array.fromBase64`, present in both; an `atob` loop as the fallback) and pipes the bytes through `DecompressionStream`.
+    - Every part worked after unpacking: the 1,057 questions parsed, CodeMirror mounted an editor, Sucrase stripped types, and sql.js started inside a blob worker with the wasm bytes posted in, then ran a window function (SQLite 3.54.1).
+    - Time, median of 5 cold loads, from reading the tag to a usable part: questions (unpack plus `JSON.parse`) 8 ms in Chromium and 19 ms in Firefox, 30 to 33 ms in Chromium with the CPU slowed 4x; CodeMirror 27 / 38 ms (108 ms slowed); Sucrase 9 / 12 ms; sql.js loader plus wasm, started in a worker, 18 / 15 ms. Of the questions' 8 ms in Chromium, decoding the base64 takes 2 ms and gunzip 3.5 ms. File and http times are within 1 ms of each other.
+    - In Firefox the questions took 19 ms with `fromBase64` and 9 ms with `atob` in the same page. The `atob` step ran second, so the difference may be warm-up; both are far under the 150 ms gate set before the probe.
+    - With `DecompressionStream` removed, the page shows its message and throws nothing.
+    - sql.js as loader plus a separate wasm file packs to 478,112 bytes of base64, against 595,352 for the single-file build that already holds the wasm as base64. The page uses the split form.
+    - Runner: `tools-local/probe17.mjs` (`setup`, `run <browser>`), WebKit workflow `tools-local/probe17.yml`.
+
+| Part | Raw bytes | Gzip bytes | Base64 of the gzip, as stored |
+|---|---|---|---|
+| Questions (JSON) | 2,016,374 | 581,359 | 775,148 |
+| CodeMirror 6, JavaScript/TypeScript and SQL | 539,521 | 181,656 | 242,208 |
+| Sucrase | 206,226 | 47,343 | 63,124 |
+| sql.js loader (`sql-wasm.js`) | 63,692 | 22,180 | 29,576 |
+| SQLite wasm (`sql-wasm.wasm`) | 688,280 | 336,401 | 448,536 |
+| sql.js single file, not used | 981,105 | 446,512 | 595,352 |
+
 ## Table
 
 WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the same runner code; Firefox rows from the runner with stock file:// rules restored. The table is rendered from the JSON results.
@@ -173,9 +191,12 @@ WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the
 |---|---|---|---|
 | 1 | 2026-11-27 | 2,049,203 | page split, no change in behaviour |
 | 2 | 2026-11-27 | 2,073,604 | + 24,401: shaky marks, notes, review queue, spaced review, export and import, interview date, daily mix, theme switch |
+| 3b | 2026-11-27 | 2,169,803 | + 96,199: redesign, two embedded fonts |
+| 3 | 2026-11-27 | 1,812,066 | - 357,737: editor, TS/JS and SQL runners, judging, predict, Run buttons; the questions and the three engines are stored compressed (probe 17) |
 
 ## Not checked
 
 - Real Safari on a Mac or an iPhone: no such device is available. Linux WebKit passed probes 1, 2, 5, 6, 8 and 9, but Safari's file rules may differ.
 - Start time on a real phone (probe 4).
 - Probes 13 to 16 belong to later phases.
+- Probe 17 in WebKit: waits for the repository to go public, so the WebKit run does not draw on private Actions minutes.
