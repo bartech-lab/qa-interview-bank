@@ -42,6 +42,8 @@ async function setup() {
     cm: `export { EditorView, basicSetup } from 'codemirror'; export { javascript } from '@codemirror/lang-javascript';
          export { sql } from '@codemirror/lang-sql'; export { yaml } from '@codemirror/lang-yaml';`,
     pwi: `export { InjectedScript, getByRoleSelector, getAriaRole, getElementAccessibleName } from 'playwright-injected';`,
+    // size only: what a locator trainer also needs, the parsers between locator text and selectors
+    pwiTrainer: `export { InjectedScript, getByRoleSelector, getAriaRole, getElementAccessibleName, asLocator, locatorOrSelectorAsSelector, parseSelector } from 'playwright-injected';`,
     sucrase: `export { transform } from 'sucrase';`,
     qjs: `export { newQuickJSWASMModuleFromVariant, shouldInterruptAfterDeadline } from 'quickjs-emscripten-core';
           export { default as variant } from '@jitl/quickjs-singlefile-browser-release-sync';`,
@@ -297,7 +299,8 @@ async function run(names) {
   const probes = fs.readdirSync(PAGES).filter(f => /^p\d\d-.*\.html$/.test(f)).sort();
   try {
     for (const name of names) {
-      const browser = await ENGINES[name].launch();
+      // Playwright's Firefox ships security.fileuri.strict_origin_policy=false; put back the stock file:// rules.
+      const browser = await ENGINES[name].launch(name === 'firefox' ? { firefoxUserPrefs: { 'security.fileuri.strict_origin_policy': true, 'privacy.file_unique_origin': true } } : {});
       const rows = [];
       try {
         const version = browser.version();
