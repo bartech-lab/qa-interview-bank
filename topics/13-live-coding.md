@@ -1495,7 +1495,7 @@ CREATE TABLE orders (
 1. Ask: "Does a cancelled order count as an order?" Here yes. If not, the status filter belongs in the `ON` clause of the join, not in `WHERE`, or the left join turns into an inner join.
 2. Version one, `LEFT JOIN`:
 
-```sql
+```sql answer
 SELECT c.id, c.name
 FROM customers AS c
 LEFT JOIN orders AS o ON o.customer_id = c.id
@@ -1552,7 +1552,7 @@ CREATE TABLE orders (
 1. Clarify "latest": by date, with ties broken by id. Say the rule.
 2. The query:
 
-```sql
+```sql answer
 SELECT customer_id, id AS order_id, total, created_at
 FROM (
   SELECT o.*,
@@ -1612,7 +1612,7 @@ HAVING COUNT(*) > 1;
 2. Result: `ann@example.com` appears 2 times (customers 1 and 4).
 3. Delete and show what is left. Customers 1, 2, 3 and 5 stay, customer 4 goes:
 
-```sql
+```sql answer
 DELETE FROM customers
 WHERE id NOT IN (
   SELECT MIN(id) FROM customers GROUP BY email
@@ -1660,7 +1660,7 @@ CREATE TABLE orders (
 1. Clarify: which statuses count, which time zone the dates are in, and whether months with no sales must appear with zero (that needs a calendar table and a `LEFT JOIN`).
 2. The query:
 
-```sql
+```sql answer ordered
 SELECT strftime('%Y-%m', created_at) AS month,
        COUNT(*) AS paid_orders,
        SUM(total) AS revenue
@@ -1712,7 +1712,7 @@ CREATE TABLE orders (
 1. Choose the partition (per customer) and the order (date, then id).
 2. The query:
 
-```sql
+```sql answer ordered
 SELECT customer_id, id AS order_id, created_at, total,
        SUM(total) OVER (PARTITION BY customer_id ORDER BY created_at, id) AS running_total,
        total - LAG(total) OVER (PARTITION BY customer_id ORDER BY created_at, id) AS change_from_previous

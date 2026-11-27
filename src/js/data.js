@@ -1,5 +1,5 @@
 // ---------- data ----------
-const Q = JSON.parse(document.getElementById('data').textContent);
+let Q = [], files = [];  // filled by prepare() once the questions are unpacked (boot in start.js)
 const META = {
   '01-playwright': 'Playwright', '02-typescript-javascript': 'TypeScript & JavaScript', '03-api': 'API testing',
   '04-sql-databases': 'SQL & databases', '05-testing-fundamentals': 'Testing fundamentals', '06-framework-and-flaky': 'Framework design & flaky tests',
@@ -12,13 +12,18 @@ const TIERS = {
   Niche: 'Rare: under 10% of the ads. Read it only when a job ad names the topic.',
 };
 const fileMeta = f => META[f] || f;  // topic name
-Q.forEach((q, i) => {
-  q.i = i; q.k = q.id;  // stable id from the Markdown, so saved progress survives edits
-  q.tier = (q.body.match(/^Topic: .*?\| (Core|Standard|Niche)/m) || [])[1] || 'Niche';
-  q.sec = (q.section || 'General').replace(/^Section \d+:\s*/i, '').replace(/\s*\(`?[\w-]+`?\)$/, '');
-  q.f = fields(q.body);
-});
-const files = [...new Set(Q.map(q => q.file))];
+function prepare(list) {
+  Q = list;
+  Q.forEach((q, i) => {
+    q.i = i; q.k = q.id;  // stable id from the Markdown, so saved progress survives edits
+    q.tier = (q.body.match(/^Topic: .*?\| (Core|Standard|Niche)/m) || [])[1] || 'Niche';
+    q.sec = (q.section || 'General').replace(/^Section \d+:\s*/i, '').replace(/\s*\(`?[\w-]+`?\)$/, '');
+    q.f = fields(q.body);
+  });
+  files = [...new Set(Q.map(q => q.file))];
+  byId = Object.fromEntries(Q.map(q => [q.k, q]));
+  store = read() || blank();
+}
 const $ = id => document.getElementById(id);
 
 // ---------- saved progress ----------
@@ -83,7 +88,7 @@ function read() {
   }
   return s;
 }
-let store = read() || blank();
+let store = blank();
 function showSaveError() { const box = $('save-error'); if (box) box.hidden = !(saveFailed || readFailed); }
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); saveFailed = false; } catch (e) { saveFailed = true; }

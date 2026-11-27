@@ -2,6 +2,7 @@
 let view = 'home', topic = null, current = null;
 const filter = { text: '', core: false };
 function go(v, arg) {
+  stopRuns();  // another view hides the old one without removing it, so its runs are stopped here
   view = v;
   $('tab-learn').classList.toggle('on', v === 'home' || v === 'learn');
   $('tab-quiz').classList.toggle('on', v === 'setup' || v === 'quiz');

@@ -38,5 +38,16 @@ function cycleTheme() {
   showTheme();
 }
 showTheme();
-showSaveError();
-go('home');
+// The questions are packed in the page: unpack them, then draw home and flag the page as ready (docs/phase3-spec.md).
+async function boot() {
+  let list;
+  try { list = JSON.parse(await unpackText('data')); } catch (e) {
+    $('home').innerHTML = '<p class="boot-error" role="alert">This browser cannot unpack the questions. Use a current Chrome, Edge, Firefox or Safari.</p>';
+    return;
+  }
+  prepare(list);
+  showSaveError();
+  go('home');
+  document.documentElement.dataset.ready = '1';
+}
+boot();

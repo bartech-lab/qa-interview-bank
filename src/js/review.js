@@ -34,7 +34,7 @@ function pickOrder(s, t, tiers) {
   return [...new Set(picked)];
 }
 const buildMix = (s, t) => pickOrder(s, t, ['Core', 'Standard']).slice(0, s.mixSize);
-const byId = Object.fromEntries(Q.map(q => [q.k, q]));
+let byId = {};  // id -> question, set by prepare()
 function todayMix() {
   const t = today(), ids = store.mix && store.mix.day === t ? store.mix.ids : buildMix(store, t);
   return ids.map(id => byId[id]).filter(Boolean);

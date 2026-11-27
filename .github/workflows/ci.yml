@@ -16,6 +16,8 @@ jobs:
       - name: Content check (personal-history patterns)
         run: python3 tools/leak_check.py
       - run: npm ci
+      - name: Vendor parts match the pinned packages
+        run: node tools/vendor.mjs && git status --porcelain vendor/ && test -z "$(git status --porcelain vendor/)"
       - name: Install browsers
         run: npx playwright install --with-deps chromium firefox webkit
       - name: Build and browser tests

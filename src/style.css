@@ -204,6 +204,55 @@
   .edbar .clock:empty { display:none; }
   .edbar .clock.over { color:var(--bad); }
   .cmp { margin-top:14px; }
+  /* Code editor (CodeMirror), output, verdicts: docs/phase3-spec.md */
+  .editor .cm-editor { background:var(--code-bg); color:var(--code-fg); border:1px solid var(--line); border-radius:4px; font:13.5px/1.55 var(--mono); min-height:300px; }
+  .editor .cm-editor.cm-focused { outline:2px solid var(--acc); outline-offset:1px; }
+  .editor .cm-scroller { font:inherit; min-height:300px; }
+  .editor .cm-content { caret-color:var(--code-fg); padding:12px 0; }
+  .editor .cm-cursor { border-left-color:var(--code-fg); }
+  .editor .cm-gutters { background:var(--code-bg); color:#7d8799; border-right:1px solid #2c3440; }
+  .editor .cm-activeLine, .editor .cm-activeLineGutter { background:rgba(255,255,255,.05); }
+  .editor .cm-selectionBackground, .editor .cm-focused .cm-selectionBackground, .editor ::selection { background:#3a4a6b !important; }
+  .editor .cm-matchingBracket { background:#3a4a6b; color:inherit; outline:none; }
+  .editor .cm-tooltip { background:var(--card); color:var(--fg); border:1px solid var(--line); }
+  .editor .cm-tooltip-autocomplete ul li[aria-selected] { background:var(--acc); color:var(--on-acc); }
+  .tok-keyword, .tok-operatorKeyword, .tok-modifier { color:#c4a7ff; }
+  .tok-string, .tok-string2 { color:#9fe0a8; }
+  .tok-number, .tok-bool, .tok-atom { color:#ffc48a; }
+  .tok-comment { color:#86efac; opacity:.85; font-style:italic; }
+  .tok-typeName, .tok-className, .tok-namespace { color:#7dd3fc; }
+  .tok-variableName.tok-definition, .tok-propertyName.tok-definition { color:#e2e8f0; font-weight:600; }
+  .tok-propertyName { color:#c7d2fe; }
+  .tok-punctuation, .tok-operator { color:#aab4c4; }
+  .out { font:13.5px/1.55 var(--mono); }
+  .out:empty { display:none; }
+  .out, .judge > .out-status { margin-top:10px; }
+  .out { background:var(--soft); border:1px solid var(--line); border-radius:4px; padding:10px 14px; overflow-x:auto; }
+  .out-line { white-space:pre-wrap; word-break:break-word; }
+  .out-error { white-space:pre-wrap; word-break:break-word; color:var(--bad); font:13.5px/1.55 var(--mono); }
+  .out-status { font:13px/1.5 var(--sans); color:var(--muted); margin-top:4px; }
+  .out-status[data-status="timeout"], .out-status[data-status="capped"] { color:var(--warn); font-weight:600; }
+  .out-set { margin:6px 0; }
+  .out-scroll { overflow-x:auto; }
+  .out table, .judge table { border-collapse:collapse; font:13px/1.45 var(--mono); margin:4px 0; }
+  .out th, .out td, .judge th, .judge td { border:1px solid var(--line); padding:3px 9px; text-align:left; vertical-align:top; }
+  .out th, .judge th { background:var(--card); font-family:var(--sans); font-weight:600; }
+  td.null { color:var(--muted); font-style:italic; }
+  .out-count { margin:2px 0 0; font:13px/1.5 var(--sans); color:var(--muted); }
+  .judge:empty { display:none; }
+  .verdict, .predict-verdict { margin-top:10px; padding:9px 13px; border-radius:4px; font-weight:600; background:var(--bad-soft); color:var(--bad); }
+  .verdict[data-verdict="match"], .predict-verdict[data-verdict="match"] { background:var(--ok-soft); color:var(--ok); }
+  .verdict[data-verdict="order"], .verdict[data-verdict="empty"], .verdict[data-verdict="columns"], .verdict[data-verdict="noresult"] { background:var(--warn-soft); color:var(--warn); }
+  .two-sets { display:flex; flex-wrap:wrap; gap:18px; margin-top:8px; }
+  .two-sets .out-set { min-width:0; max-width:100%; }
+  .seed-note { margin:8px 0 0; }
+  .predict textarea.prediction { display:block; width:100%; min-height:90px; font:13.5px/1.55 var(--mono); padding:10px 12px; border:1px solid var(--line); border-radius:4px; background:var(--card); color:var(--fg); resize:vertical; }
+  .predict textarea.prediction:focus { outline:2px solid var(--acc); outline-offset:1px; }
+  .runblock { margin:0 0 14px; }
+  .runblock pre { margin-bottom:0; }
+  .runblock .edbar { margin-top:6px; }
+  .runblock .edbar .btn { padding:4px 12px; font-size:13px; }
+  .boot-error { padding:24px; font-weight:600; color:var(--bad); }
 
   /* quiz setup and review: one panel */
   .setup { max-width:720px; margin:0 auto; padding:28px 32px; }

@@ -32,7 +32,7 @@ function refresh() {  // re-filter without rebuilding the search box, so typing 
 function renderArticle() {
   if (current === null) { $('reader').innerHTML = '<div class="article muted">No question matches.</div>'; return; }
   const list = learnList(), q = Q[current], idx = list.indexOf(q), prev = list[idx - 1], next = list[idx + 1];
-  $('reader').innerHTML = `<article class="article">${crumbs(q)}<h2>${inline(q.q)}</h2>${given(q)}${answer(q)}
+  $('reader').innerHTML = `<article class="article">${crumbs(q)}<h2>${inline(q.q)}</h2>${given(q)}${isPredict(q) ? `<details class="block predict-answer"><summary>Show the answer <span class="hint">run it first</span></summary><div class="inner">${answer(q)}</div></details>` : answer(q)}
     <div class="navrow">
       <button class="btn known-btn ${known(q) ? 'on' : ''}" aria-pressed="${known(q)}" onclick="toggleMark('known')">${known(q) ? '✓ I know this' : 'Mark as known'}</button>
       <button class="btn shaky-btn ${store.shaky[q.k] ? 'on' : ''}" aria-pressed="${!!store.shaky[q.k]}" onclick="toggleMark('shaky')">${store.shaky[q.k] ? '✓ Shaky' : 'Shaky'}</button>

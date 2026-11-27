@@ -13,8 +13,12 @@ function md(text) {
   const out = [], L = text.split('\n'); let i = 0;
   while (i < L.length) {
     const l = L[i];
-    if (/^\s*```/.test(l)) { const b = []; i++; while (i < L.length && !/^\s*```/.test(L[i])) b.push(L[i++]); i++;
-      out.push(`<pre><code>${esc(b.join('\n')).replace(/(^|\s)(\/\/.*|#\s.*|--\s.*)$/gm, '$1<span class="c">$2</span>')}</code></pre>`); continue; }
+    if (/^\s*```/.test(l)) { const b = [], info = l.trim().slice(3).split(/\s+/).filter(Boolean); i++; while (i < L.length && !/^\s*```/.test(L[i])) b.push(L[i++]); i++;
+      const pre = `<pre><code>${esc(b.join('\n')).replace(/(^|\s)(\/\/.*|#\s.*|--\s.*)$/gm, '$1<span class="c">$2</span>')}</code></pre>`;
+      // "run" in the fence (added by the build, idea 39): a Run button under the block. "seed=ID": SQL runs on that question's seed.
+      const seed = (info.find(w => w.startsWith('seed=')) || '').slice(5);
+      out.push(info.includes('run') ? `<div class="runblock">${pre}<div class="edbar"><button class="btn run-block" data-lang="${esc(info[0])}"${seed ? ` data-seed="${esc(seed)}"` : ''} onclick="runBlock(this)">Run</button></div><div class="out" aria-live="polite"></div></div>` : pre);
+      continue; }
     if (/^\|/.test(l)) { const rows = []; while (i < L.length && /^\|/.test(L[i])) rows.push(L[i++]);
       out.push('<table>' + rows.filter(r => !/^\|[\s:|-]+\|$/.test(r)).map((r, n) => '<tr>' + r.replace(/^\||\|$/g, '').split('|')
         .map(c => `<${n ? 'td' : 'th'}>${inline(c.trim())}</${n ? 'td' : 'th'}>`).join('') + '</tr>').join('') + '</table>'); continue; }

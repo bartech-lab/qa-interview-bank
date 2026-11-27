@@ -1,4 +1,4 @@
-// ---------- editor: a plain typing box, like an interview tool. It does not run code. ----------
+// ---------- editor: a typing box like an interview tool; CodeMirror replaces it once unpacked (run.js) ----------
 function starterCode(q) {
   const m = (q.f.Starter || '').match(/```\w*\n([\s\S]*?)```/);
   return m ? m[1].replace(/\n$/, '') : null;
@@ -6,6 +6,7 @@ function starterCode(q) {
 function taskMinutes(q) { const m = q.q.match(/(\d+) min\b/); return m ? +m[1] : 0; }
 function edSave(i, value) { update(s => { s.code[Q[i].k] = value; }); }
 function edKey(e, i) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { const b = e.target.closest('.editor').querySelector('.run-btn'); if (b) { e.preventDefault(); b.click(); } return; }
   if (e.key !== 'Tab' || e.shiftKey) return;
   e.preventDefault();
   e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end');
@@ -13,12 +14,12 @@ function edKey(e, i) {
 }
 function edReset(btn, i) {
   update(s => { delete s.code[Q[i].k]; });
-  btn.closest('.editor').querySelector('.ed').value = starterCode(Q[i]);
+  setEditorCode(btn.closest('.editor'), starterCode(Q[i]));
 }
 function compare(btn, i) {
   const box = btn.closest('.editor').querySelector('.cmp'), f = Q[i].f;
   if (box.innerHTML) { box.innerHTML = ''; return; }
-  const full = (f['Full process'] || '').match(/```\w*\n[\s\S]*?```/g);
+  const full = (f['Full process'] || '').match(/```[^\n]*\n[\s\S]*?```/g);
   const ans = f['In the slot'] || (full ? full[full.length - 1] : '');
   box.innerHTML = `<div class="lbl">${f['In the slot'] ? 'Enough for the time limit' : 'Worked solution'}</div>${md(ans)}`;
 }

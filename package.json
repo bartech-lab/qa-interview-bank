@@ -7,6 +7,12 @@
     "test": "python3 tools/build.py && playwright test"
   },
   "devDependencies": {
-    "@playwright/test": "1.65.1"
+    "@codemirror/lang-javascript": "6.2.5",
+    "@codemirror/lang-sql": "6.10.0",
+    "@playwright/test": "1.65.1",
+    "codemirror": "6.0.2",
+    "esbuild": "0.28.2",
+    "sql.js": "1.17.0",
+    "sucrase": "3.35.1"
   }
 }
