@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TOPICS, DIST = ROOT / "topics", ROOT / "dist"
 SRC = ROOT / "src"
-SCRIPTS = ("data", "markdown", "answer", "editor", "navigation", "home", "learn", "quiz", "start")
+SCRIPTS = ("data", "markdown", "answer", "editor", "review", "backup", "navigation", "home", "learn", "quiz", "start")
 BUDGET = 4_500_000  # bytes for dist/index.html, docs/feasibility.md
 TOPIC = re.compile(r"^Topic: (\S+) \| (Core|Standard|Niche) \| id: (q\d{4})$", re.M)
 

@@ -34,13 +34,17 @@ function renderArticle() {
   const list = learnList(), q = Q[current], idx = list.indexOf(q), prev = list[idx - 1], next = list[idx + 1];
   $('reader').innerHTML = `<article class="article">${crumbs(q)}<h2>${inline(q.q)}</h2>${given(q)}${answer(q)}
     <div class="navrow">
-      <button class="btn known-btn ${known(q) ? 'on' : ''}" onclick="toggleKnown()">${known(q) ? '✓ I know this' : 'Mark as known'}</button>
+      <button class="btn known-btn ${known(q) ? 'on' : ''}" aria-pressed="${known(q)}" onclick="toggleMark('known')">${known(q) ? '✓ I know this' : 'Mark as known'}</button>
+      <button class="btn shaky-btn ${store.shaky[q.k] ? 'on' : ''}" aria-pressed="${!!store.shaky[q.k]}" onclick="toggleMark('shaky')">${store.shaky[q.k] ? '✓ Shaky' : 'Shaky'}</button>
       <div class="grow"></div>
       <button class="btn" ${prev ? '' : 'disabled'} onclick="pick(${prev ? prev.i : ''})">← Previous</button>
       <button class="btn primary" ${next ? '' : 'disabled'} onclick="pick(${next ? next.i : ''})">Next →</button>
-    </div><p class="muted small" style="text-align:right">Tip: the ← and → keys work too</p></article>`;
+    </div><p class="muted small" style="text-align:right">Tip: the ← and → keys work too</p>
+    <label class="notebox"><span>My note</span><textarea class="note" aria-label="My note" rows="3" placeholder="What to remember, an example from your own work, a link" oninput="noteSave(${q.i}, this.value)">${esc(store.notes[q.k] || '')}</textarea></label></article>`;
   $('reader').scrollTop = 0;
 }
 function pick(i) { current = i; renderSide(); renderArticle(); const el = $('side').querySelector('.qlink.on'); if (el) el.scrollIntoView({ block: 'nearest' }); }
-function toggleKnown() { const q = Q[current]; if (known(q)) delete store.known[q.k]; else store.known[q.k] = 1; save(); overall(); renderSide(); renderArticle(); }
+// Marks made while reading count for spaced review like quiz answers; pressing a pressed mark again clears it.
+function toggleMark(m) { const q = Q[current]; update(s => { if (s[m][q.k]) unmark(s, q.k); else grade(s, q.k, m); }); overall(); renderSide(); renderArticle(); }
+function noteSave(i, value) { update(s => { if (value.trim()) s.notes[Q[i].k] = value; else delete s.notes[Q[i].k]; }); }
 

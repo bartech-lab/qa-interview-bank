@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QA Interview Bank</title>
+<script>try { const t = localStorage.getItem('qa-bank-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <style>
 /*STYLE*/
 </style>
@@ -12,16 +13,20 @@
 <header>
   <div class="logo" onclick="go('home')"><span>🎯</span> QA Interview Bank</div>
   <div class="seg">
-    <button id="tab-learn" class="on" onclick="go('home')">📖 Learn</button>
-    <button id="tab-quiz" onclick="go('setup')">⚡ Quiz</button>
+    <button id="tab-learn" class="on" onclick="go('home')"><span class="ti">📖 </span>Learn</button>
+    <button id="tab-quiz" onclick="go('setup')"><span class="ti">⚡ </span>Quiz</button>
+    <button id="tab-review" onclick="go('review')"><span class="ti">🔁 </span>Review</button>
   </div>
   <div class="grow"></div>
+  <button id="theme-btn" class="iconbtn" onclick="cycleTheme()"></button>
   <div class="overall" title="Questions you marked as known. Saved in this browser only."><span id="ov-text"></span><span class="meter"><i id="ov-bar"></i></span></div>
 </header>
 
 <div id="home" class="wrap"></div>
 <div id="learn" class="hidden"><nav id="side"></nav><main id="reader"></main></div>
 <div id="quiz" class="hidden"></div>
+<div id="review" class="hidden"></div>
+<div id="save-error" role="alert" hidden>This browser could not save or read your progress: its storage is full or blocked. Your progress stays in this tab until you close it. Use Export progress on the home page to keep a copy.</div>
 
 <script id="data" type="application/json">/*DATA*/</script>
 <script>

@@ -4,7 +4,7 @@ function starterCode(q) {
   return m ? m[1].replace(/\n$/, '') : null;
 }
 function taskMinutes(q) { const m = q.q.match(/(\d+) min\b/); return m ? +m[1] : 0; }
-function edSave(i, value) { store.code[Q[i].k] = value; save(); }
+function edSave(i, value) { update(s => { s.code[Q[i].k] = value; }); }
 function edKey(e, i) {
   if (e.key !== 'Tab' || e.shiftKey) return;
   e.preventDefault();
@@ -12,7 +12,7 @@ function edKey(e, i) {
   edSave(i, e.target.value);
 }
 function edReset(btn, i) {
-  delete store.code[Q[i].k]; save();
+  update(s => { delete s.code[Q[i].k]; });
   btn.closest('.editor').querySelector('.ed').value = starterCode(Q[i]);
 }
 function compare(btn, i) {
@@ -63,7 +63,8 @@ const crumbs = q => `<div class="crumbs">${tierBadge(q.tier)}<span>${fileMeta(q.
 const infoTiers = () => `<span class="info" tabindex="0">?<span class="tip"><b>What do Core, Standard and Niche mean?</b>${Object.entries(TIERS).map(([n, d]) => `<p>${tierBadge(n)} ${d}</p>`).join('')}</span></span>`;
 
 function overall() {
-  const n = Q.filter(known).length;
-  $('ov-text').textContent = `${n} / ${Q.length} known`; $('ov-bar').style.width = (100 * n / Q.length) + '%';
+  const n = Q.filter(known).length, due = dueList(store, today()).length;
+  $('ov-text').innerHTML = `${n} / ${Q.length}<span class="ov-word"> known</span>`; $('ov-bar').style.width = (100 * n / Q.length) + '%';
+  $('tab-review').innerHTML = `<span class="ti">🔁 </span>Review${due ? ` <span class="badge" title="Due today">${due}</span>` : ''}`;
 }
 

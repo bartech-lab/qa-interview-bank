@@ -167,6 +167,12 @@ WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the
 - When a change would pass the budget, sql.js (981,105 bytes, the largest part) moves to a classic script file beside the HTML. It loads only when a SQL task opens. Probe 5 shows a classic script beside the page loads on double-click in all three engines; a module, `fetch()` or a worker from a file does not.
 - The zip should grow by about 0.72 MB, the gzip size of the new parts, to roughly 1.9 MB. This is estimated, not measured.
 - Each phase checks the built size against this budget and records it here.
+- Since phase 2, `tools/build.py` fails the build above the budget.
+
+| Phase | Date | `dist/index.html` bytes | Change |
+|---|---|---|---|
+| 1 | 2026-11-27 | 2,049,203 | page split, no change in behaviour |
+| 2 | 2026-11-27 | 2,073,604 | + 24,401: shaky marks, notes, review queue, spaced review, export and import, interview date, daily mix, theme switch |
 
 ## Not checked
 
