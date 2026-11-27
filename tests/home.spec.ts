@@ -1,4 +1,4 @@
-import { test, expect, ymd, addDays, bankData, goTo, progress, marks, ratingButton, type Q } from './fixtures';
+import { test, expect, ymd, addDays, bankData, goTo, progress, marks, ratingButton, type Q, reload } from './fixtures';
 import type { Page } from '@playwright/test';
 
 // Fixed local "today" for every clocked test: 2026-01-15 12:00.
@@ -19,7 +19,7 @@ async function openWith(open: (o?: import('./fixtures').OpenOpts) => Promise<Pag
   const page = await open({ time: NOW });
   const { bank, ids } = await pick(page, n);
   await page.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress(build(bank, ids))]);
-  await page.reload();
+  await reload(page);
   return { page, bank, ids };
 }
 const done = (id: string) => ({ box: 0, last: D(0), due: D(1) });
@@ -196,7 +196,7 @@ test('12 topic buttons in bank order show the name and K / N, and open Learn for
   const inFile = (f: string) => bank.filter(q => q.file === f);
   const knownIds = [...inFile(files[0]).slice(0, 3), ...inFile(files[5]).slice(0, 2)].map(q => q.id);
   await page.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({ known: marks(knownIds) })]);
-  await page.reload();
+  await reload(page);
   expect(files).toHaveLength(12);
   const topics = page.locator('.topic');
   await expect(topics).toHaveCount(12);

@@ -1,6 +1,5 @@
 import {
-  test, expect, ymd, addDays, saved, bankData, goTo, openQuestion, progress, marks, quizThese, rateOne,
-} from './fixtures';
+  test, expect, ymd, addDays, saved, bankData, goTo, openQuestion, progress, marks, quizThese, rateOne, reload } from './fixtures';
 import type { Page } from '@playwright/test';
 
 // Written from docs/phase2-spec.md ("Interview date": pulling reviews forward) only.
@@ -38,7 +37,7 @@ async function openWith(open: (o?: import('./fixtures').OpenOpts) => Promise<Pag
   for (const id of Object.keys(srs).reverse()) reversed[id] = srs[id];
   const known = marks(Object.keys(srs).filter(i => bankIds.has(i)));
   await probe.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, progress({ known, srs: reversed, ...extra })]);
-  await probe.reload();
+  await reload(probe);
   return probe;
 }
 const e = (due: number | string, box = 2, last = -5): Entry => ({ box, last: D(last), due: typeof due === 'number' ? D(due) : due });
@@ -217,8 +216,8 @@ test('two tabs: stale tab B sets the date after tab A rated; the pull uses stora
     [all[3]]: { box: 1, last: T(-5), due: T(2) },
   };
   await a.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, progress({ known: marks(Object.keys(srs)), srs })]);
-  await a.reload();
-  await b.reload();
+  await reload(a);
+  await reload(b);
   // A rates all[0] "Shaky" (it is marked known, so this is one box down: box 1 -> 0, due tomorrow).
   await openQuestion(a, all[0]);
   await a.locator('.shaky-btn').click();

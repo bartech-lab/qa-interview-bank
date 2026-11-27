@@ -1,4 +1,4 @@
-import { test, expect, PAGE_URL } from './fixtures';
+import { test, expect, load, reload, bankData } from './fixtures';
 
 const saved = (page: import('@playwright/test').Page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem('qa-bank') || '{"known":{},"code":{}}'));
@@ -19,13 +19,11 @@ test('marking a question as known counts it and saves it under the question id',
 });
 
 test('progress saved by the old version (file and question text) is kept and moved to the id', async ({ page }) => {
-  await page.goto(PAGE_URL);
-  const first = await page.evaluate(() => {
-    const d = JSON.parse(document.getElementById('data')!.textContent!);
-    return { key: d[0].file + '|' + d[0].q, id: d[0].id };
-  });
+  await load(page);
+  const d = await bankData(page);
+  const first = { key: d[0].file + '|' + d[0].q, id: d[0].id };
   await page.evaluate(k => localStorage.setItem('qa-bank', JSON.stringify({ known: { [k]: 1 }, code: { [k]: '// old edit' } })), first.key);
-  await page.reload();
+  await reload(page);
   await expect(page.locator('#ov-text')).toHaveText(/^1 \//);
   await page.locator('.topic').first().click();
   await page.locator('.known-btn').click();
@@ -37,8 +35,10 @@ test('progress saved by the old version (file and question text) is kept and mov
 
 test('the live-coding editor saves an edit', async ({ bank, fitsScreen }) => {
   await bank.evaluate(() => (window as unknown as { go: (v: string, a: string) => void }).go('learn', '13-live-coding'));
-  for (let i = 0; i < 60 && !(await bank.locator('textarea.ed').count()); i++) await bank.getByRole('button', { name: 'Next →' }).click();
-  await bank.locator('textarea.ed').first().fill('// my edit');
+  for (let i = 0; i < 60 && !(await bank.locator('.editor').count()); i++) await bank.getByRole('button', { name: 'Next →' }).click();
+  // The editor's editable part is named "Code editor": a text box first, CodeMirror once unpacked (docs/phase3-spec.md).
+  await expect(bank.locator('.editor .cm-editor')).toBeVisible();
+  await bank.getByRole('textbox', { name: 'Code editor' }).first().fill('// my edit');
   await expect.poll(async () => Object.keys((await saved(bank)).code).length).toBe(1);
   await fitsScreen();
 });
@@ -64,7 +64,7 @@ test('reset asks in the page, Cancel keeps progress, Yes clears it for good', as
   await bank.locator('#reset-btn').click();
   await bank.locator('#reset-yes').click();
   await expect(bank.locator('#ov-text')).toHaveText(/^0 \//);
-  await bank.reload();
+  await reload(bank);
   await expect(bank.locator('#ov-text')).toHaveText(/^0 \//);
   const s = await saved(bank);  // opening the page saves today's daily mix, so check the progress parts only
   expect(s.known).toEqual({});

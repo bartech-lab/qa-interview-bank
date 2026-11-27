@@ -2,7 +2,15 @@ import { test as base, expect, type Page } from '@playwright/test';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
-export const PAGE_URL = pathToFileURL(path.resolve('dist/index.html')).href;
+// QIB_PAGE points the tests at another built page, for example a copy from before a change, to watch new tests fail.
+export const PAGE_URL = pathToFileURL(path.resolve(process.env.QIB_PAGE || 'dist/index.html')).href;
+
+// The page unpacks its questions after load and sets <html data-ready="1"> once home is drawn (docs/phase3-spec.md).
+// Pages built before phase 3 have no packed parts and are ready at load.
+export const ready = (page: Page) => page.waitForFunction(() => document.documentElement.dataset.ready === '1' || !document.getElementById('pack-data'));
+// goto and reload that wait for the ready flag.
+export async function load(page: Page, url = PAGE_URL) { await page.goto(url); await ready(page); }
+export async function reload(page: Page) { await page.reload(); await ready(page); }
 
 export type OpenOpts = {
   time?: Date;                       // page.clock.install before goto
@@ -15,6 +23,7 @@ type Fixtures = {
   fitsScreen: () => Promise<void>;
   secondTab: Page;
   open: (o?: OpenOpts) => Promise<Page>;
+  watched: Page;
 };
 
 function watch(page: Page, problems: string[]) {
@@ -31,7 +40,7 @@ export const test = base.extend<Fixtures>({
     page.on('pageerror', e => problems.push('page error: ' + e.message));
     page.on('console', m => { if (m.type() === 'error') problems.push('console error: ' + m.text()); });
     page.on('dialog', d => { problems.push('browser dialog: ' + d.type()); void d.dismiss(); });
-    await page.goto(PAGE_URL);
+    await load(page);
     await use(page);
     expect(problems, 'errors on the page').toEqual([]);
   },
@@ -40,7 +49,7 @@ export const test = base.extend<Fixtures>({
     const problems: string[] = [];
     const tab = await bank.context().newPage();
     watch(tab, problems);
-    await tab.goto(PAGE_URL);
+    await load(tab);
     await use(tab);
     await tab.close();
     expect(problems, 'errors on the second tab').toEqual([]);
@@ -67,15 +76,23 @@ export const test = base.extend<Fixtures>({
           Storage.prototype.getItem = function () { throw new DOMException('blocked', 'SecurityError'); };
         });
       }
-      await page.goto(PAGE_URL);
+      await load(page);
       // Seed by writing storage from the page, then reload: Firefox refuses localStorage inside an init script on file://.
       if (o.seed) {
         await page.evaluate((seed: Record<string, string>) => { for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v); }, o.seed);
-        await page.reload();
+        await reload(page);
       }
       return page;
     });
     expect(problems, 'errors on the page').toEqual([]);
+  },
+  // The page with the same error checks as `bank`, but not opened yet: the test adds init scripts, then calls load(page).
+  watched: async ({ page }, use) => {
+    const problems: string[] = [];
+    watch(page, problems);
+    await use(page);
+    // Firefox logs a failed gzip read itself when a test corrupts a packed part on purpose; that is the browser, not the page.
+    expect(problems.filter(p => !/ReadableStream|incorrect header check/.test(p)), 'errors on the page').toEqual([]);
   },
   fitsScreen: async ({ page }, use) => {
     await use(async () => {
@@ -98,7 +115,12 @@ export const saved = (page: Page) => page.evaluate(() => JSON.parse(localStorage
 export const store = (page: Page, key: string) => page.evaluate(k => localStorage.getItem(k), key);
 
 export async function bankData(page: Page): Promise<Q[]> {
-  const rows: Omit<Q, 'tier'>[] = await page.evaluate(() => JSON.parse(document.getElementById('data')!.textContent!));
+  // Pages before phase 3 keep the questions in #data; later pages unpack them into the global Q.
+  const rows: Omit<Q, 'tier'>[] = await page.evaluate(() => {
+    const el = document.getElementById('data');
+    if (el) return JSON.parse(el.textContent!);
+    return (window as unknown as { eval: (s: string) => Omit<Q, 'tier'>[] }).eval('Q').map(({ id, file, topic, section, q, body }) => ({ id, file, topic, section, q, body }));
+  });
   return rows.map(r => ({ ...r, tier: (/\| (Core|Standard|Niche) \|/.exec(r.body)?.[1] ?? 'Standard') as Q['tier'] }));
 }
 
@@ -109,6 +131,11 @@ export const goTo = (page: Page, view: string, arg?: string) =>
 export async function currentId(page: Page): Promise<string | null> {
   const href = await page.getByRole('link', { name: 'Report a problem with this answer' }).first().getAttribute('href');
   return href ? /^\[(q\d+)\]/.exec(new URL(href).searchParams.get('title') || '')?.[1] ?? null : null;
+}
+
+// Opens the Learn view on one question directly: its topic, then pick(index). Faster than openQuestion.
+export async function openById(page: Page, id: string) {
+  await page.evaluate(id => (window as unknown as { eval: (s: string) => (id: string) => void }).eval('(id) => { const q = Q.find(x => x.id === id); go("learn", q.file); pick(q.i); }')(id), id);
 }
 
 // Opens the Learn view on one question through the UI (topic file, then Next until the id matches).

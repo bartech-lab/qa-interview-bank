@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import {
   test, expect, PAGE_URL, ymd, addDays, raw, saved, store, bankData, goTo, currentId, openQuestion,
-  progress, marks, ratingButton, rateOne, rateAll, quizThese, rowIds, importFile, exportFile,
-} from './fixtures';
+  progress, marks, ratingButton, rateOne, rateAll, quizThese, rowIds, importFile, exportFile, reload } from './fixtures';
 import type { Page } from '@playwright/test';
 
 // Fixed local "today" for every clocked test: 2026-01-15 12:00 (local time; January avoids DST edges).
@@ -47,7 +46,7 @@ test('mode 0: known marks saved before v get a first review spread over 14 days,
   const page = await open({ time: NOW });
   const known = (await ids(page)).slice(0, 16);
   await page.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, JSON.stringify({ known: marks(known), code: {} })]);
-  await page.reload();
+  await reload(page);
   await expect.poll(async () => Object.keys((await saved(page)).srs ?? {}).length).toBe(16);
   const s = await saved(page);
   known.forEach((id, i) => expect(s.srs[id]).toEqual({ box: 1, last: D(0), due: D(3 + (i % 14)) }));
@@ -66,7 +65,7 @@ test('mode 0: progress that already has v keeps a known mark without an srs entr
   const page = await open({ time: NOW });
   const id = (await ids(page))[0];
   await page.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({ known: marks([id]) })]);
-  await page.reload();
+  await reload(page);
   await expect(page.locator('#ov-text')).toHaveText(/^1 \//);
   await goTo(page, 'review');
   await goTo(page, 'home');
@@ -85,7 +84,7 @@ test('mode 3: corrupt JSON loads empty, copies the broken text once, and later s
   await page.locator('.known-btn').click();
   expect(Object.keys((await saved(page)).known)).toEqual(['q0001']);
   expect(await store(page, 'qa-bank-broken')).toBe(broken);
-  await page.reload();
+  await reload(page);
   await expect(page.locator('#ov-text')).toHaveText(/^1 \//);
   expect(await store(page, 'qa-bank-broken')).toBe(broken);
 });
@@ -184,7 +183,7 @@ for (const [name, , file, msg] of badFiles) {
     await expect(bank.locator('#import-ask')).toBeHidden();
     await expect(bank.locator('#import-yes')).toBeHidden();
     expect(await raw(bank)).toBe(before);
-    await bank.reload();
+    await reload(bank);
     expect(await raw(bank)).toBe(before);
   });
 }
@@ -196,7 +195,7 @@ test('mode 14: choosing a valid file and pressing No changes nothing', async ({ 
   await bank.locator('#import-no').click();
   await expect(bank.locator('#import-ask')).toBeHidden();
   expect(await raw(bank)).toBe(before);
-  await bank.reload();
+  await reload(bank);
   expect(await raw(bank)).toBe(before);
 });
 
@@ -267,7 +266,7 @@ test('export then import in the same browser round-trips the progress', async ({
   const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#export-btn').click()]);
   const file = JSON.parse(fs.readFileSync((await download.path())!, 'utf8'));
   await page.evaluate(() => localStorage.removeItem('qa-bank'));
-  await page.reload();
+  await reload(page);
   await page.locator('#import-input').setInputFiles(importFile(file));
   await page.locator('#import-yes').click();
   const s = await saved(page);
@@ -356,7 +355,7 @@ test('mode 16: when saving works again the next change saves every change made w
   await expect(page.locator('#save-error')).toBeHidden();
   const s = await saved(page);
   expect(sorted(Object.keys(s.known))).toEqual(sorted([first, second, third]));
-  await page.reload();
+  await reload(page);
   await expect(page.locator('#ov-text')).toHaveText(/^3 \//);
 });
 
@@ -493,7 +492,7 @@ test('mode 22: after tab A resets, stale tab B marking one question leaves only 
   await openQuestion(a, all[0]);
   await a.locator('.known-btn').click();
   await a.locator('#tab-learn').click();
-  await b.reload();
+  await reload(b);
   await expect(b.locator('#ov-text')).toHaveText(/^1 \//);
   await openQuestion(b, all[2]);
   await a.locator('#reset-btn').click();
@@ -502,7 +501,7 @@ test('mode 22: after tab A resets, stale tab B marking one question leaves only 
   await b.locator('.known-btn').click();
   const s = await saved(a);
   expect(Object.keys(s.known)).toEqual([all[2]]);
-  await a.reload();
+  await reload(a);
   await expect(a.locator('#ov-text')).toHaveText(/^1 \//);
 });
 
@@ -543,7 +542,7 @@ test('two tabs: a stale tab shaky mark and an exam date from the other tab both 
 });
 
 test('daily mix: both tabs see the same set on the same day', async ({ bank: a, secondTab: b }) => {
-  await b.reload();
+  await reload(b);
   const fromA = (await saved(a)).mix;
   const fromB = (await saved(b)).mix;
   expect(fromA.ids).toHaveLength(10);
@@ -620,7 +619,7 @@ for (const [name, n, line] of examLines) {
     expect((await saved(page)).exam).toBe(D(n));
     if (n <= 0) await expect(page.locator('#exam-pace')).toBeHidden();
     else await expect(page.locator('#exam-pace')).toBeVisible();
-    await page.reload();
+    await reload(page);
     await expect(page.locator('#exam-line')).toHaveText(line);
     await expect(page.locator('#exam-date')).toHaveValue(D(n));
   });
@@ -651,7 +650,7 @@ test('mode 26: clearing the interview date resets the line, the pace and the sav
   await expect(page.locator('#exam-pace')).toBeHidden();
   await expect(page.locator('#exam-date')).toHaveValue('');
   expect((await saved(page)).exam ?? null).toBeNull();
-  await page.reload();
+  await reload(page);
   await expect(page.locator('#exam-line')).toHaveText('No interview date set');
 });
 
@@ -661,7 +660,7 @@ test('interview pace: unseen Core questions divided by days left, rounded up', a
   expect(core.length).toBeGreaterThan(10);
   const seen = core.slice(0, 3);
   await probe.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({ known: marks(seen) })]);
-  await probe.reload();
+  await reload(probe);
   const unseen = core.length - seen.length;
   for (const days of [1, 2, 3, 7, 10]) {
     await probe.locator('#exam-date').fill(D(days));
@@ -673,7 +672,7 @@ test('interview pace is hidden when every Core question has been seen', async ({
   const probe = await open({ time: NOW });
   const core = (await bankData(probe)).filter(q => q.tier === 'Core').map(q => q.id);
   await probe.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({ known: marks(core), exam: D(10) })]);
-  await probe.reload();
+  await reload(probe);
   await expect(probe.locator('#exam-line')).toHaveText('Interview in 10 days');
   await expect(probe.locator('#exam-pace')).toBeHidden();
 });
@@ -793,7 +792,7 @@ test('learn: pressing Mark as known twice makes the question new again; a first 
 test('learn: the shaky mark survives a reload and lands in Review under Shaky', async ({ bank }) => {
   await firstTopicFirstQuestion(bank);
   await bank.locator('.shaky-btn').click();
-  await bank.reload();
+  await reload(bank);
   await firstTopicFirstQuestion(bank);
   await expect(bank.locator('.shaky-btn')).toHaveAttribute('aria-pressed', 'true');
   await goTo(bank, 'review');
@@ -807,7 +806,7 @@ test('learn: a note is saved on input, removed when emptied, and shows after rel
   const text = 'check "quotes", <tags> & line\nbreak';
   await note.fill(text);
   await expect.poll(async () => (await saved(bank)).notes?.q0001).toBe(text);
-  await bank.reload();
+  await reload(bank);
   await firstTopicFirstQuestion(bank);
   await expect(note).toHaveValue(text);
   await goTo(bank, 'review');
@@ -871,7 +870,7 @@ async function seedQueue(open: (o?: import('./fixtures').OpenOpts) => Promise<Pa
       [f4]: { box: 2, last: D(0), due: D(7) },      // future: not due, no note: not listed
     },
   })]);
-  await probe.reload();
+  await reload(probe);
   await goTo(probe, 'review');
   return { page: probe, files, f0, f0b, f1, f2, f3, f4, bankOrder };
 }
@@ -923,7 +922,7 @@ test("words: the reset confirm counts questions you didn't know", async ({ open 
   await expect(page.locator('#reset-ask')).toHaveText("Delete 2 known marks, 1 question you didn't know and 1 note? This cannot be undone.");
   await page.locator('#reset-no').click();
   await page.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({ missed: marks(['q0003', 'q0005']) })]);
-  await page.reload();
+  await reload(page);
   await page.locator('#reset-btn').click();
   await expect(page.locator('#reset-ask')).toHaveText("Delete 2 questions you didn't know? This cannot be undone.");
 });
@@ -1010,11 +1009,11 @@ test('daily mix: default 10 distinct questions, one topic at a time, stable acro
   const files = mix.ids.map((id: string) => byId.get(id)!.file);
   expect(mix.ids.every((id: string) => byId.get(id)!.tier === 'Core')).toBe(true);
   expect(new Set(files).size).toBe(Math.min(10, coreTopics.size));
-  await page.reload();
+  await reload(page);
   expect((await saved(page)).mix).toEqual(mix);
   await page.locator('#mix-start').click();
   await rateOne(page, 'known');
-  await page.reload();
+  await reload(page);
   expect((await saved(page)).mix).toEqual(mix);
   await expect(page.locator('#mix-progress')).toHaveText('1 / 10 done today');
 });
@@ -1028,7 +1027,7 @@ for (const size of [5, 20]) {
     expect(s.mixSize).toBe(size);
     expect(s.mix.ids).toHaveLength(size);
     expect(new Set(s.mix.ids).size).toBe(size);
-    await page.reload();
+    await reload(page);
     await expect(page.locator('#mix-size')).toHaveValue(String(size));
     expect((await saved(page)).mix).toEqual(s.mix);
   });
@@ -1057,7 +1056,7 @@ test('daily mix: a question that is both due and shaky appears once; a small poo
   await probe.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({
     known: marks(rest), shaky: marks(three), srs: { [three[0]]: { box: 0, last: D(-3), due: D(-1) } }, mixSize: 20,
   })]);
-  await probe.reload();
+  await reload(probe);
   const mix = (await saved(probe)).mix;
   expect(mix.day).toBe(D(0));
   expect(sorted(mix.ids)).toEqual(sorted(three));
@@ -1072,7 +1071,7 @@ test('daily mix: unseen Core before unseen Standard, and unseen Niche is never p
   const open_ = new Set([...core, ...std, ...niche]);
   const rest = data.map(q => q.id).filter(i => !open_.has(i));
   await probe.evaluate(([k, v]) => localStorage.setItem(k, v), [BOX_KEY, progress({ known: marks(rest), mixSize: 20 })]);
-  await probe.reload();
+  await reload(probe);
   const mixIds = (await saved(probe)).mix.ids as string[];
   expect(sorted(mixIds)).toEqual(sorted([...core, ...std]));
   expect(sorted(mixIds.slice(0, 3))).toEqual(sorted(core));
@@ -1189,7 +1188,7 @@ test('theme: the choice persists across a reload', async ({ bank }) => {
   await bank.emulateMedia({ colorScheme: 'light' });
   await bank.locator('#theme-btn').click();
   await bank.locator('#theme-btn').click(); // Dark
-  await bank.reload();
+  await reload(bank);
   await expect(bank.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect(bank.locator('#theme-btn')).toHaveAccessibleName(/Theme: Dark/);
   expect(await bgOf(bank)).toBe(DARK);
@@ -1203,7 +1202,7 @@ test('theme: it is already set when the document finishes parsing (no flash of t
       (window as unknown as { __themeAtParse: string }).__themeAtParse = document.documentElement.getAttribute('data-theme') ?? 'none';
     });
   });
-  await page.reload();
+  await reload(page);
   expect(await page.evaluate(() => (window as unknown as { __themeAtParse: string }).__themeAtParse)).toBe('dark');
 });
 
@@ -1218,7 +1217,7 @@ test('theme: Reset my progress does not touch the theme; the theme is not part o
   await expect(bank.locator('#ov-text')).toHaveText(/^0 \//);
   expect(await store(bank, 'qa-bank-theme')).toBe('dark');
   await expect(bank.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await bank.reload();
+  await reload(bank);
   await expect(bank.locator('html')).toHaveAttribute('data-theme', 'dark');
   expect(await store(bank, 'qa-bank')).not.toMatch(/theme|dark/);
 });
@@ -1235,7 +1234,7 @@ test('reset clears every kind of progress, notes, marks, exam and backup', async
   for (const k of ['known', 'shaky', 'missed', 'notes', 'code', 'srs']) expect(s[k] ?? {}).toEqual({});
   expect(s.exam ?? null).toBeNull();
   expect(s.backup ?? null).toBeNull();
-  await page.reload();
+  await reload(page);
   await expect(page.locator('#ov-text')).toHaveText(/^0 \//);
   await expect(page.locator('#backup-line')).toContainText('Last backup: never');
 });
