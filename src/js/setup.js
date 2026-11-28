@@ -39,7 +39,8 @@ function adPanel() {
           onchange="adTick('${t.slug}', this.checked)"> <span>${esc(t.name)}</span> <span class="muted small">${t.n} ${t.n === 1 ? 'match' : 'matches'}: ${t.words.map(esc).join(', ')}</span></label>`).join('')}</div>`}</div>`;
 }
 async function adMatch() {
-  const box = $('ad-text');
+  const box = $('ad-text'), btn = $('ad-match');
+  if (btn) { btn.disabled = true; btn.setAttribute('aria-busy', 'true'); }  // renderSetup() below draws it enabled again
   ad.text = (box ? box.value : ad.text).slice(0, AD_MAX);
   let rules;
   try { rules = await keywordsLoad(); ad.error = ''; } catch (e) { ad.error = 'This browser cannot unpack the topic keywords. Use a current Chrome, Edge, Firefox or Safari.'; renderSetup(); return; }

@@ -170,7 +170,7 @@ A question is in a role when its file is in the role's files or its topic slug i
 ### Job-ad paste (idea 59)
 
 - **Input:** `#ad-text`, a text box named `Paste a job ad`, at most 50,000 characters. Under it: `The ad stays in this browser.`
-- **Matching:** the button `#ad-match`, named `Find topics`, matches the ad against `src/topic-keywords.json`. That file holds, for each of the 85 bank topic slugs, its name and keyword patterns.
+- **Matching:** the button `#ad-match`, named `Find topics`, matches the ad against `src/topic-keywords.json`. While it matches, the button is disabled (`aria-busy="true"`); it is enabled again once the result shows, so a second ad typed meanwhile is never overwritten by the first result. That file holds, for each of the 85 bank topic slugs, its name and keyword patterns.
 - **Pattern rules** are those of the maintainer's scorer:
   - A pattern is a regular expression fragment, matched as a whole word, ignoring case.
   - A leading `cs:` makes it case-sensitive.

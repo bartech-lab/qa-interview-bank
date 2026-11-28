@@ -5,11 +5,17 @@ import { NOW, topicRows, ROLES, inRole, openSetup, modeBtn, startBtn, setupRoot,
 import type { Page } from '@playwright/test';
 
 const adBox = (p: Page) => p.locator('#ad-text');
+// Press Find topics and wait until the match is drawn: the button is disabled while it runs (docs/phase6-spec.md, section 3).
+// Without the wait, the first match could redraw the ad box while the next fill types into it (CI run 46145293624, FM17).
+async function findTopics(p: Page) {
+  await p.locator('#ad-match').click();
+  await expect(p.locator('#ad-match')).toBeEnabled();
+}
 async function useAd(p: Page, text: string) {
   await openSetup(p);
   await p.locator('#src-ad').click();
   await adBox(p).fill(text);
-  await p.locator('#ad-match').click();
+  await findTopics(p);
 }
 const nameOf = (slug: string) => keywords[slug].name;
 const NO_MATCH = 'No topic matched this ad. Pick topics from the Topic list instead.';
@@ -235,7 +241,7 @@ test('job ad: #ad-count says "N topics matched, M questions"; unticking a topic 
   await skipKnown(bank).uncheck();
   await bank.locator('#src-ad').click();
   await adBox(bank).fill(ad);
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   const qs = (slugs: string[]) => topicRows.filter(t => slugs.includes(t.slug)).length;
   await expect(bank.locator('#ad-count')).toHaveText(`${want.length} topics matched, ${qs(want)} questions`);
   expect(await poolOf(bank)).toBe(qs(want));
@@ -255,7 +261,7 @@ test('job ad: the quiz started from an ad asks only questions of the ticked topi
   await tierBtn(bank, 'all').click();
   await bank.locator('#src-ad').click();
   await adBox(bank).fill('We test with Scrum and Agile.');
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   const slugs = Object.keys(matchAd('We test with Scrum and Agile.'));
   const total = topicRows.filter(t => slugs.includes(t.slug)).length;
   await sizeBtn(bank, 'All').click();
@@ -274,9 +280,22 @@ test('FM14 a matching ad enables Start again, and an empty one disables it again
   await useAd(bank, 'Playwright');
   await expect(startBtn(bank)).toBeEnabled();
   await adBox(bank).fill('');
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(bank.locator('#ad-result')).toHaveText(NO_MATCH);
   await expect(startBtn(bank)).toBeDisabled();
+});
+
+test('Find topics is disabled while a match runs, so a second ad typed meanwhile is not overwritten by the first result', async ({ bank }) => {
+  // A slow first unpack (as on a busy CI machine) is made certain by delaying the page's keyword loader.
+  await openSetup(bank);
+  await bank.evaluate(() => { const load = (window as any).keywordsLoad; (window as any).keywordsLoad = async () => { await new Promise(r => setTimeout(r, 1500)); return load(); }; });
+  await bank.locator('#src-ad').click();
+  await adBox(bank).fill('we run the ci in the morning');
+  await bank.locator('#ad-match').click();
+  await expect(bank.locator('#ad-match')).toBeDisabled();
+  await expect(bank.locator('#ad-match')).toHaveAttribute('aria-busy', 'true');
+  await expect(bank.locator('#ad-match')).toBeEnabled();
+  await expect(bank.locator('#ad-result')).toHaveText(NO_MATCH);
 });
 
 test('FM15 60,000 characters pasted: cut at 50,000 (a word after the cut is not matched), and no freeze over 2 s', async ({ bank }) => {
@@ -293,13 +312,13 @@ test('FM15 60,000 characters pasted: cut at 50,000 (a word after the cut is not 
   const gap = await gapMonitor(bank);
   await adBox(bank).fill(after);
   const t0 = Date.now();
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(bank.locator('#ad-result')).toHaveText(NO_MATCH, { timeout: 2000 });
   expect(Date.now() - t0).toBeLessThan(2000);
   expect(await gap(), 'longest gap between page timer ticks (ms)').toBeLessThan(2000);
   expect((await adBox(bank).inputValue()).length).toBeLessThanOrEqual(50_000);
   await adBox(bank).fill(before);
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(adTopics(bank)).toHaveCount(slugs.length, { timeout: 2000 });
 });
 
@@ -308,7 +327,7 @@ test('FM15 a long run of one letter and a long repeated word is answered within 
   await bank.locator('#src-ad').click();
   await adBox(bank).fill('a'.repeat(30_000) + ' ' + 'prompt'.repeat(3_000));
   const t0 = Date.now();
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(bank.locator('#ad-result')).not.toBeEmpty({ timeout: 2000 });
   expect(Date.now() - t0).toBeLessThan(2500);
 });
@@ -322,14 +341,14 @@ test('FM16 Polish ad: "testów automatycznych" matches whole, not inside a longe
     const want = matchAd(bad);
     expect(want['fw-automation'], 'reference: ' + bad).toBeUndefined();
     await adBox(bank).fill(bad);
-    await bank.locator('#ad-match').click();
+    await findTopics(bank);
     if (Object.keys(want).length === 0) await expect(bank.locator('#ad-result')).toHaveText(NO_MATCH);
     else await expect(adTopics(bank)).toHaveCount(Object.keys(want).length);
     await expect(bank.locator('#ad-result').getByRole('checkbox', { name: auto, exact: true }), bad).toBeHidden();
   }
   // control: punctuation and a line break around the phrase still count as boundaries
   await adBox(bank).fill('(testów automatycznych), nic więcej\ntestów automatycznych;');
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(bank.locator('#ad-result').getByRole('checkbox', { name: auto, exact: true })).toBeChecked();
 });
 
@@ -350,16 +369,16 @@ test('FM17 a cs: pattern does not match a lowercase word, and does match the exa
   await useAd(bank, lower);
   await expect(bank.locator('#ad-result').getByRole('checkbox', { name: nameOf('ci-cd'), exact: true })).toBeHidden();
   await adBox(bank).fill(upper);
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(bank.locator('#ad-result').getByRole('checkbox', { name: nameOf('ci-cd'), exact: true })).toBeChecked();
   // "Go" (a language) must not match the verb "go"
   expect(keywords['java-dotnet'].patterns).toContain('cs:Go');
   const verb = 'we go to the office';
   await adBox(bank).fill(verb);
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(bank.locator('#ad-result').getByRole('checkbox', { name: nameOf('java-dotnet'), exact: true })).toBeHidden();
   await adBox(bank).fill('services written in Go and Kotlin');
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(bank.locator('#ad-result').getByRole('checkbox', { name: nameOf('java-dotnet'), exact: true })).toBeChecked();
 });
 
@@ -395,7 +414,7 @@ test('no reach: matching an ad makes no network request, by file://', async ({ b
   await useAd(bank, 'Our confidential ad mentions Playwright and secret-project-x.');
   await expect(adTopics(bank).first()).toBeVisible();
   await adBox(bank).fill('another ad with Scrum');
-  await bank.locator('#ad-match').click();
+  await findTopics(bank);
   await expect(adTopics(bank).first()).toBeVisible();
   expect(seen).toEqual([]);
 });
