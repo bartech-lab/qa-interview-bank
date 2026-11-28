@@ -4,11 +4,19 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  # One job per browser, side by side: one job for all three took up to 29.2 of its 30 minutes (run 46127813922).
   check:
+    name: check (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # the data version's date is the last commit that touched topics/
       - uses: actions/setup-node@v5
         with:
           node-version: 26
@@ -20,19 +28,21 @@ jobs:
       - run: npm ci
       - name: Vendor parts match the pinned packages
         run: node tools/vendor.mjs && git status --porcelain vendor/ && test -z "$(git status --porcelain vendor/)"
-      - name: Install browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Tool tests (content check, release notes, questions.json)
+        if: matrix.browser == 'chromium'
         run: python3 -m unittest discover -s tests/tools -t .
       - name: Build and browser tests
-        run: npm test
+        run: npm test -- --project=${{ matrix.browser }}-desktop --project=${{ matrix.browser }}-mobile
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
           retention-days: 7
       - uses: actions/upload-artifact@v4
+        if: matrix.browser == 'chromium'
         with:
           name: qa-interview-bank
           path: dist/qa-interview-bank.zip
