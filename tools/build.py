@@ -32,7 +32,7 @@ PACKS = {"codemirror": "codemirror.js", "sucrase": "sucrase.js", "sqljs": "sql-w
 LOCATORS = SRC / "locators"  # frozen e2e-casebook pages and the trainer's tasks (docs/phase4-spec.md)
 CASEBOOK = SRC / "casebook.json"  # links from questions to e2e-casebook cases (idea 51)
 KEYWORDS = SRC / "topic-keywords.json"  # keyword patterns per topic slug, for the job-ad paste (idea 59)
-OFFLINE = ("sw.js", "manifest.webmanifest", "icon.svg")  # served beside the page on Pages only (docs/phase6-spec.md, section 6)
+OFFLINE = ("sw.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png")  # served beside the page on Pages only (docs/phase6-spec.md, section 6)
 REPO_URL = "https://github.com/bartech-lab/qa-interview-bank"
 BUDGET = 4_500_000  # bytes for dist/index.html, docs/feasibility.md
 FONT = re.compile(r"url\(fonts/([\w.-]+\.woff2)\)")
@@ -245,7 +245,10 @@ def main() -> int:
     (DIST / "index.html").write_text(page, encoding="utf-8")
     (DIST / "questions.json").write_text(questions_json(qs, version), encoding="utf-8")
     for name in OFFLINE:
-        (DIST / name).write_text((SRC / name).read_text(encoding="utf-8").replace("/*DATA_VERSION*/", json.dumps(version)), encoding="utf-8")
+        if name.endswith(".png"):
+            shutil.copyfile(SRC / name, DIST / name)
+        else:
+            (DIST / name).write_text((SRC / name).read_text(encoding="utf-8").replace("/*DATA_VERSION*/", json.dumps(version)), encoding="utf-8")
     size = (DIST / "index.html").stat().st_size
     if size > BUDGET:
         print(f"dist/index.html is {size:,} bytes, over the {BUDGET:,}-byte budget in docs/feasibility.md", file=sys.stderr)

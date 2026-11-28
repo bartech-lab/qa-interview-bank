@@ -5,9 +5,11 @@ let offlineReady = false;
 const offlineNote = () => offlineReady ? '<p class="small" id="offline-note">This copy works offline in this browser after this visit.</p>' : '';
 function offlineSetup() {
   if (!/^https?:$/.test(location.protocol) || !('serviceWorker' in navigator)) return;
-  const link = document.createElement('link');
-  link.rel = 'manifest'; link.href = 'manifest.webmanifest';
-  document.head.append(link);
+  for (const [rel, href] of [['manifest', 'manifest.webmanifest'], ['apple-touch-icon', 'apple-touch-icon.png']]) {
+    const link = document.createElement('link');
+    link.rel = rel; link.href = href;
+    document.head.append(link);
+  }
   navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(() => {
     offlineReady = true;
     const foot = document.querySelector('.homefoot');

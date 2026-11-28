@@ -85,6 +85,7 @@ Below Topics, a section `#my-cards` with the heading `My cards`:
   - It has a button `#card-edit` named `Edit card`, and a button `#card-delete` named `Delete card`.
   - It has no `Report a problem with this answer` link and no e2e-casebook block. Card text must never reach a public issue.
 - **Company note:** when the card has a company, the article shows a text box `.company-note`, named `Note for <company>`. It holds `store.companies[<company>]` and is shared by all cards of that company. Emptying it deletes the note.
+- **Search** (`#lsearch`, in every topic and in My cards) matches, ignoring case, the question title, the answer text the article shows, and for a card its company. The hidden `Topic: … | <tier> | id: …` line is not searched, so `topic`, `core` or `my-cards` match only questions whose shown text holds the word. A question's id (`q0042`, or a card id) typed whole still finds that question.
 - **Rendering:** card text goes through the same Markdown reader as bank answers. HTML in it shows as text. A link is a link only when it starts with `http://` or `https://`.
 
 ### Add and edit form
@@ -104,6 +105,13 @@ Messages go to `#card-msg` (`role="alert"`). Each message below appears when its
 | A field over its limit | `<Field> is too long: at most N characters.` |
 | 500 cards already, adding one more | `You have 500 cards, the most this page keeps. Delete one to add another.` |
 | 50 company notes already, a new company with a note | `You have notes for 50 companies, the most this page keeps.` |
+
+**Changing a card's company.** Saving a card with another company (any change, case included) when it was the only card of its old company, and that company has a note:
+- **The new company has no note:** the note moves to the new company's name.
+- **The new company has a note:** the old note is added after it, separated by one empty line (`<new note>\n\n<old note>`). If the joined note would pass 10,000 characters, nothing is saved and `#card-msg` says `The two company notes together are too long: at most 10,000 characters.`
+- **The company field is now empty:** the first `Save card` saves nothing and `#card-msg` says `This was the last card for <old company>, so its note will be deleted. Press Save card again to save.` A second `Save card` with the same company field saves the card and deletes the note. Changing the company field in between asks again.
+
+No other case changes a company note. In particular, no note is ever left under a company name that no card uses.
 
 After saving, Learn shows the saved card. New ids are `u` plus the time in base 36 plus 4 random characters, and never repeat an existing id.
 
@@ -250,10 +258,12 @@ Code typed in a rehearsal is saved like code typed in Learn.
 1. **Build files.** The build writes beside `dist/index.html`:
    - `dist/sw.js`: a service worker with the data version in its cache name;
    - `dist/manifest.webmanifest`: name `QA Interview Bank`, `display: standalone`, start URL `./`;
-   - `dist/icon.svg`.
-   The Pages workflow publishes all four. The zip does not need them.
+   - `dist/icon.svg`, and the PNG icons `dist/icon-192.png` (192×192), `dist/icon-512.png` (512×512) and `dist/apple-touch-icon.png` (180×180), all opaque. Safari before version 26 and some Android launchers do not use SVG icons.
+   - The manifest lists `icon.svg` (`sizes: "any"`), `icon-192.png` and `icon-512.png`, each with `purpose: "any"` and its real size.
+   The Pages workflow publishes all these files. The zip does not need them. The worker caches every icon on install.
 2. **Over http(s) only**, the page:
-   - adds `<link rel="manifest" href="manifest.webmanifest">`;
+   - adds `<link rel="manifest" href="manifest.webmanifest">` and `<link rel="apple-touch-icon" href="apple-touch-icon.png">`;
+   - is installable in Chromium: `Page.getInstallabilityErrors` lists nothing in a normal (not incognito) profile;
    - registers `sw.js`;
    - once the worker is active, shows `#offline-note` in the home footer: `This copy works offline in this browser after this visit.`
 3. **By file://**, the page adds no manifest link, registers nothing, shows no `#offline-note`, and logs no console error.
@@ -336,3 +346,11 @@ Each has at least one test, seen failing on the page before this phase.
 | 30 | Release notes | Unknown tag | Exit 1 |
 | 31 | Content check | Planted duplicate title, missing Say, `Source: www.x.com` | Exit 1 naming each |
 | 32 | questions.json | Run marks | No `run` or `seed=` in any body fence |
+| 33 | Cards | Last card of `Acme` (note `A`) moved to `Globex` (no note) | `store.companies` is `{ Globex: 'A' }`; Globex cards show note `A` |
+| 34 | Cards | Last card of `Acme` (note `A`) moved to `Globex` (note `G`) | Globex note is `G\n\nA`; no `Acme` key |
+| 35 | Cards | Same, joined notes over 10,000 characters | Joined-notes message; card and both notes unchanged |
+| 36 | Cards | Company field emptied on the last card of `Acme` with a note | First save: warning, nothing saved; second save: card saved without company, `Acme` note gone |
+| 37 | Cards | A card of `Acme` moved while another `Acme` card remains | `Acme` note unchanged; no note for the new company |
+| 38 | Search | `core`, `topic` or `my-cards` typed in Learn search | Only questions whose shown text holds the word; a question's whole id still finds it |
+| 39 | Offline | Manifest icons over http | Each listed icon is served, is a PNG or SVG as typed, and a PNG's real size equals its `sizes`; `apple-touch-icon.png` is 180×180 and opaque |
+| 40 | Offline | Chromium install check over http | `Page.getInstallabilityErrors` is empty in a persistent profile |

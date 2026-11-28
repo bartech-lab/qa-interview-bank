@@ -1,6 +1,6 @@
 // Phase 6, sections 6 and 7: offline copy on Pages and the data-version footer line (docs/phase6-spec.md, ideas 69, 12).
 // "FMn" is failure mode n. The http tests use the `site` fixture (tests/fixtures.ts): a server for the page's folder.
-import { test, expect, testWithSite, bankData, ready, load } from './fixtures';
+import { test, expect, testWithSite, testWithProfile, bankData, ready, load } from './fixtures';
 import type { Page } from '@playwright/test';
 import fs from 'node:fs';
 
@@ -45,9 +45,9 @@ testWithSite('build files: sw.js, manifest.webmanifest and icon.svg sit beside i
   expect(problems).toEqual([]);
 });
 
-test('the Pages workflow publishes all four files', async () => {
+test('the Pages workflow publishes the page, the worker, the manifest and every icon', async () => {
   const wf = fs.readFileSync('.github/workflows/pages.yml', 'utf8');
-  for (const name of ['index.html', 'sw.js', 'manifest.webmanifest', 'icon.svg']) expect(wf, name).toContain(name);
+  for (const name of ['index.html', 'sw.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png']) expect(wf, name).toContain(name);
 });
 
 // ---------------------------------------------------------------- section 6, over http
@@ -200,4 +200,93 @@ test('footer: the data version is the same on every load (it comes from the ques
   await bank.reload();
   await ready(bank);
   expect((await bank.locator('#data-version').textContent())!).toBe(a);
+});
+
+// ---------------------------------------------------------------- FM39, FM40: icons and installability
+const pngSize = (b: Buffer) => {
+  expect(b.subarray(0, 8).toString('hex'), 'PNG signature').toBe('89504e470d0a1a0a');
+  expect(b.subarray(12, 16).toString('latin1'), 'first chunk').toBe('IHDR');
+  return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+};
+// true when the four corner pixels of the image are fully opaque (a transparent corner shows black or white on iOS)
+const opaqueCorners = (page: Page, url: string) => page.evaluate(async u => {
+  const bmp = await createImageBitmap(await (await fetch(u)).blob());
+  const c = new OffscreenCanvas(bmp.width, bmp.height);
+  const g = c.getContext('2d')!;
+  g.drawImage(bmp, 0, 0);
+  const at = (x: number, y: number) => g.getImageData(x, y, 1, 1).data[3];
+  return [at(0, 0), at(bmp.width - 1, 0), at(0, bmp.height - 1), at(bmp.width - 1, bmp.height - 1), at(bmp.width >> 1, bmp.height >> 1)];
+}, url);
+
+testWithSite('FM39 manifest icons over http: icon.svg, icon-192.png and icon-512.png are listed, served as typed, and a PNG is the size it says', async ({ site, page }) => {
+  const problems = collect(page);
+  await visit(page, site.url + '/');
+  const res = await page.request.get(`${site.url}/manifest.webmanifest`);
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toMatch(/json/);
+  const m = await res.json();
+  const icons: { src: string; sizes: string; type?: string; purpose?: string }[] = m.icons ?? [];
+  const bySrc = (name: string) => icons.filter(i => new URL(i.src, `${site.url}/manifest.webmanifest`).pathname === `/${name}`);
+  for (const [name, sizes] of [['icon.svg', 'any'], ['icon-192.png', '192x192'], ['icon-512.png', '512x512']] as const) {
+    const hit = bySrc(name);
+    expect(hit, `${name} is listed once in the manifest`).toHaveLength(1);
+    expect(hit[0].sizes, `${name} sizes`).toBe(sizes);
+    expect(hit[0].purpose, `${name} purpose`).toBe('any');
+  }
+  for (const icon of icons) {
+    const url = new URL(icon.src, `${site.url}/manifest.webmanifest`).href;
+    const r = await page.request.get(url);
+    expect(r.status(), `${icon.src} is served`).toBe(200);
+    const type = r.headers()['content-type'].split(';')[0];
+    const body = await r.body();
+    if (/\.png$/.test(icon.src)) {
+      expect(type, `${icon.src} content-type`).toBe('image/png');
+      const { w, h } = pngSize(body);
+      expect(`${w}x${h}`, `${icon.src} real size`).toBe(icon.sizes);
+      expect(icon.type ?? 'image/png', `${icon.src} type field`).toBe('image/png');
+      expect(await opaqueCorners(page, url), `${icon.src} is opaque in the corners and the middle`).toEqual([255, 255, 255, 255, 255]);
+    } else {
+      expect(/\.svg$/.test(icon.src), `${icon.src} is a PNG or an SVG`).toBe(true);
+      expect(type, `${icon.src} content-type`).toBe('image/svg+xml');
+      expect(body.toString('utf8')).toContain('<svg');
+      expect(icon.type ?? 'image/svg+xml', `${icon.src} type field`).toBe('image/svg+xml');
+    }
+  }
+  expect(problems).toEqual([]);
+});
+
+testWithSite('FM39 over http the page links apple-touch-icon.png, a 180x180 opaque PNG', async ({ site, page }) => {
+  collect(page);
+  await visit(page, site.url + '/');
+  await expect(page.locator('link[rel="apple-touch-icon"][href="apple-touch-icon.png"]')).toHaveCount(1);
+  const url = `${site.url}/apple-touch-icon.png`;
+  const r = await page.request.get(url);
+  expect(r.status()).toBe(200);
+  expect(r.headers()['content-type'].split(';')[0]).toBe('image/png');
+  expect(pngSize(await r.body())).toEqual({ w: 180, h: 180 });
+  expect(await opaqueCorners(page, url)).toEqual([255, 255, 255, 255, 255]);
+});
+
+testWithSite('FM39 the worker caches icon-192.png, icon-512.png and apple-touch-icon.png', async ({ site, page }) => {
+  collect(page);
+  await visit(page, site.url + '/');
+  expect(await swReady(page)).toBe(true);
+  const names = ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'icon.svg'];
+  await expect.poll(() => page.evaluate(async ns => {
+    const out: string[] = [];
+    for (const n of ns) if (await caches.match(new URL(n, location.href).href)) out.push(n);
+    return out;
+  }, names), { timeout: 15_000 }).toEqual(names);
+});
+
+testWithProfile('FM40 over http in a normal profile Chromium reports no installability errors', async ({ site, profilePage: page }) => {
+  collect(page);
+  await visit(page, site.url + '/');
+  expect(await swReady(page)).toBe(true);
+  const cdp = await page.context().newCDPSession(page);
+  try {
+    await expect.poll(async () => (await cdp.send('Page.getInstallabilityErrors')).installabilityErrors.map(e => e.errorId), { timeout: 15_000, message: 'installability errors' }).toEqual([]);
+  } finally {
+    await cdp.detach();
+  }
 });

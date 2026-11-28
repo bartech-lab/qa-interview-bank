@@ -133,3 +133,37 @@ test('FM15 mix rule: the 57 rows hold every kind, at least 10 typed ones, and at
   // A task answer is also checked: every one must be a locator of a known page.
   for (const t of info.tasks) expect(info.pages.map(p => p.id), `task ${t.id}`).toContain(t.page);
 });
+
+// getByTitle: no frozen page carries a title attribute since phase 6 (the case menu held the only ones), so this test
+// plants some in the frame, then compares the trainer with real Playwright on the same DOM, as the rows above do.
+const TITLE_ROWS: [text: string, zero: boolean][] = [
+  ["getByTitle('Due Friday')", false],
+  ["getByTitle('due fri')", false],
+  ["getByTitle('Due', { exact: true })", true],
+  ["getByTitle('Due Friday', { exact: true })", false],
+  ["getByTitle(/^Due (Fri|Mon)day$/)", false],
+  ["getByTitle('  due   friday ')", true],  // attribute matching keeps spaces as typed, unlike getByText
+  ["getByRole('listitem').filter({ has: page.getByTitle('Shared with Ewa') })", false],
+];
+test('FM15 parity for getByTitle on planted title attributes', async ({ bank }) => {
+  await goTo(bank, 'locators');
+  await bank.locator('#loc-page').selectOption('notes');
+  const frame = bank.frameLocator('#loc-frame');
+  await expect(frame.locator('li').first()).toBeAttached();
+  await frame.locator('body').evaluate(() => {
+    const items = document.querySelectorAll('li');
+    const add = (li: Element, title: string, text: string) => { const s = document.createElement('span'); s.title = title; s.textContent = text; li.append(s); };
+    add(items[0], 'Due Friday', '!');
+    add(items[1], 'Due Monday', '!');
+    add(items[items.length - 1], 'Shared with Ewa', '@');
+    const abbr = document.createElement('abbr'); abbr.title = 'due friday, team'; abbr.textContent = 'DF'; document.body.append(abbr);
+  });
+  for (const [text, zero] of TITLE_ROWS) {
+    await typeAndWait(bank, text);
+    const trainer = await indexes(frame.locator('[data-qa-match]'));
+    const expected = await indexes(real(frame, text));
+    expect.soft(trainer, text).toEqual(expected);
+    if (zero) expect.soft(expected.length, `${text}: real Playwright matches nothing`).toBe(0);
+    else expect.soft(expected.length, `${text}: real Playwright matches at least one element`).toBeGreaterThan(0);
+  }
+});

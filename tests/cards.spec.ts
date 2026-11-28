@@ -688,3 +688,189 @@ test('a second tab sees a deleted card go: Learn on cards in tab A updates after
   await b.locator('#card-delete-yes').click();
   await expect(a.locator('#my-cards .card-company')).toBeHidden();
 });
+
+// ---------------------------------------------------------------- changing a card's company (FM33-37)
+test.describe('company change', () => {
+  const G1 = 'u0ggg', Z1 = 'u0zzz';
+  const only = (company = 'Acme') => ({ [A]: card('Moving question?', 'Moving answer', company, '2026-01-01') });
+  const withBystander = (cards: Record<string, unknown>) => ({ ...cards, [Z1]: card('Bystander question?', 'Bystander answer', 'Zeta', '2026-01-03') });
+  async function openForm(page: Page, q: string) {
+    await openCards(page);
+    await pickCard(page, q);
+    await page.locator('#card-edit').click();
+    await expect(page.locator('#card-form')).toBeVisible();
+  }
+  const keep = async (page: Page) => { const s = await store(page); return { cards: s.cards, companies: s.companies }; };
+
+  test('FM33 last card of Acme (note A) moved to Globex (no note): the note moves, Globex cards show it', async ({ open }) => {
+    const page = await withCards(open, withBystander(only()), { companies: { Acme: 'A', Zeta: 'Z' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('Globex');
+    await page.locator('#card-save').click();
+    const note = page.getByRole('textbox', { name: 'Note for Globex' });
+    await expect(note).toHaveValue('A');
+    const s = await store(page);
+    expect(s.cards[A].company).toBe('Globex');
+    expect(s.companies).toEqual({ Globex: 'A', Zeta: 'Z' });
+    // reload: the note is still on the Globex card
+    await reload(page);
+    await openCards(page);
+    await pickCard(page, 'Moving question?');
+    await expect(page.getByRole('textbox', { name: 'Note for Globex' })).toHaveValue('A');
+  });
+
+  test('FM33 a change of case only counts as another company: the note follows the new spelling', async ({ open }) => {
+    const page = await withCards(open, only(), { companies: { Acme: 'A' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('ACME');
+    await page.locator('#card-save').click();
+    await expect(page.getByRole('textbox', { name: 'Note for ACME' })).toHaveValue('A');
+    expect((await store(page)).companies).toEqual({ ACME: 'A' });
+  });
+
+  test('FM33 the new company already has a card but no note: the note still moves', async ({ open }) => {
+    const page = await withCards(open, { ...only(), [G1]: card('Globex question?', '', 'Globex', '2026-01-02') }, { companies: { Acme: 'A' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('Globex');
+    await page.locator('#card-save').click();
+    await expect(page.getByRole('textbox', { name: 'Note for Globex' })).toHaveValue('A');
+    expect((await store(page)).companies).toEqual({ Globex: 'A' });
+  });
+
+  test('FM34 last card of Acme (note A) moved to Globex (note G): Globex note is "G", empty line, "A"; no Acme key', async ({ open }) => {
+    const page = await withCards(open, { ...only(), [G1]: card('Globex question?', '', 'Globex', '2026-01-02') }, { companies: { Acme: 'A', Globex: 'G' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('Globex');
+    await page.locator('#card-save').click();
+    await expect(page.getByRole('textbox', { name: 'Note for Globex' })).toHaveValue('G\n\nA');
+    const s = await store(page);
+    expect(s.companies).toEqual({ Globex: 'G\n\nA' });
+    expect(s.cards[A].company).toBe('Globex');
+    // the other Globex card shows the same joined note
+    await pickCard(page, 'Globex question?');
+    await expect(page.getByRole('textbox', { name: 'Note for Globex' })).toHaveValue('G\n\nA');
+  });
+
+  test('FM35 joined notes over 10,000 characters: the message shows, nothing changes in the card or in either note', async ({ open }) => {
+    const g = 'g'.repeat(6000), a = 'a'.repeat(5000);   // each is allowed alone; with the empty line they make 11,002
+    const page = await withCards(open, { ...only(), [G1]: card('Globex question?', '', 'Globex', '2026-01-02') }, { companies: { Acme: a, Globex: g } });
+    await openForm(page, 'Moving question?');
+    const before = await keep(page);
+    await page.locator('#card-company').fill('Globex');
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-msg')).toHaveText('The two company notes together are too long: at most 10,000 characters.');
+    await expect(page.locator('#card-form')).toBeVisible();
+    expect(await keep(page)).toEqual(before);
+    expect((await store(page)).companies).toEqual({ Acme: a, Globex: g });
+    expect((await store(page)).cards[A].company).toBe('Acme');
+    // after a reload the data is the same
+    await reload(page);
+    expect(await keep(page)).toEqual(before);
+  });
+
+  test('FM35 the joined note is saved when it is exactly 10,000 characters (the empty line counts as 2) and refused at 10,001', async ({ open }) => {
+    const fits = await withCards(open, { ...only(), [G1]: card('Globex question?', '', 'Globex', '2026-01-02') }, { companies: { Acme: 'a'.repeat(5000), Globex: 'g'.repeat(4998) } });
+    await openForm(fits, 'Moving question?');
+    await fits.locator('#card-company').fill('Globex');
+    await fits.locator('#card-save').click();
+    await expect(fits.locator('#card-form')).toBeHidden();
+    expect((await store(fits)).companies).toEqual({ Globex: 'g'.repeat(4998) + '\n\n' + 'a'.repeat(5000) });
+    // one character more
+    await fits.evaluate(([k, a, g]) => {
+      const s = JSON.parse(localStorage.getItem(k)!);
+      s.cards.u0aaa.company = 'Acme';
+      s.companies = { Acme: a, Globex: g };
+      localStorage.setItem(k, JSON.stringify(s));
+    }, [KEY, 'a'.repeat(5000), 'g'.repeat(4999)] as const);
+    await reload(fits);
+    await openForm(fits, 'Moving question?');
+    const before = await keep(fits);
+    await fits.locator('#card-company').fill('Globex');
+    await fits.locator('#card-save').click();
+    await expect(fits.locator('#card-msg')).toHaveText('The two company notes together are too long: at most 10,000 characters.');
+    expect(await keep(fits)).toEqual(before);
+  });
+
+  test('FM36 company emptied on the last card of Acme with a note: first Save warns and saves nothing, the second saves and deletes the note', async ({ open }) => {
+    const page = await withCards(open, withBystander(only()), { companies: { Acme: 'A', Zeta: 'Z' } });
+    await openForm(page, 'Moving question?');
+    const before = await keep(page);
+    await page.locator('#card-company').fill('');
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-msg')).toHaveText('This was the last card for Acme, so its note will be deleted. Press Save card again to save.');
+    await expect(page.locator('#card-form')).toBeVisible();
+    expect(await keep(page), 'the first press saves nothing').toEqual(before);
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-form')).toBeHidden();
+    await expect(page.locator('#learn')).toContainText('Moving question?');
+    await expect(page.locator('.company-note'), 'the card has no company now').toBeHidden();
+    const s = await store(page);
+    expect(s.cards[A].company).toBe('');
+    expect(s.companies).toEqual({ Zeta: 'Z' });
+  });
+
+  test('FM36 changing the company field between the two presses asks again', async ({ open }) => {
+    const page = await withCards(open, only(), { companies: { Acme: 'A' } });
+    await openForm(page, 'Moving question?');
+    const before = await keep(page);
+    const WARN = 'This was the last card for Acme, so its note will be deleted. Press Save card again to save.';
+    await page.locator('#card-company').fill('');
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-msg')).toHaveText(WARN);
+    // the learner types a name and takes it out again: the field changed in between
+    await page.locator('#card-company').fill('Globex');
+    await page.locator('#card-company').fill('');
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-form')).toBeVisible();
+    await expect(page.locator('#card-msg')).toHaveText(WARN);
+    expect(await keep(page), 'still nothing saved').toEqual(before);
+    // a press right after that, with the field unchanged, saves
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-form')).toBeHidden();
+    expect((await store(page)).companies).toEqual({});
+  });
+
+  test('FM36 the warning is only for an emptied company: moving to a new name saves at once and moves the note', async ({ open }) => {
+    const page = await withCards(open, only(), { companies: { Acme: 'A' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('Initech');
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-form')).toBeHidden();
+    expect((await store(page)).companies).toEqual({ Initech: 'A' });
+  });
+
+  test('FM37 a card of Acme moved while another Acme card remains: the Acme note stays, the new company gets none', async ({ open }) => {
+    const page = await withCards(open, { [A]: card('Moving question?', '', 'Acme', '2026-01-01'), [B]: card('Staying question?', '', 'Acme', '2026-01-02') }, { companies: { Acme: 'A' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('Globex');
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-form')).toBeHidden();
+    await expect(page.getByRole('textbox', { name: 'Note for Globex' })).toHaveValue('');
+    const s = await store(page);
+    expect(s.cards[A].company).toBe('Globex');
+    expect(s.cards[B].company).toBe('Acme');
+    expect(s.companies).toEqual({ Acme: 'A' });
+    await pickCard(page, 'Staying question?');
+    await expect(page.getByRole('textbox', { name: 'Note for Acme' })).toHaveValue('A');
+  });
+
+  test('FM37 moving a card of Acme to Globex (which has a note) while another Acme card remains changes neither note', async ({ open }) => {
+    const page = await withCards(open, { [A]: card('Moving question?', '', 'Acme', '2026-01-01'), [B]: card('Staying question?', '', 'Acme', '2026-01-02'), [G1]: card('Globex question?', '', 'Globex', '2026-01-03') }, { companies: { Acme: 'A', Globex: 'G' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('Globex');
+    await page.locator('#card-save').click();
+    await expect(page.getByRole('textbox', { name: 'Note for Globex' })).toHaveValue('G');
+    expect((await store(page)).companies).toEqual({ Acme: 'A', Globex: 'G' });
+  });
+
+  test('FM37 emptying the company of one of two Acme cards saves at once, without a warning, and keeps the note', async ({ open }) => {
+    const page = await withCards(open, { [A]: card('Moving question?', '', 'Acme', '2026-01-01'), [B]: card('Staying question?', '', 'Acme', '2026-01-02') }, { companies: { Acme: 'A' } });
+    await openForm(page, 'Moving question?');
+    await page.locator('#card-company').fill('');
+    await page.locator('#card-save').click();
+    await expect(page.locator('#card-form')).toBeHidden();
+    const s = await store(page);
+    expect(s.cards[A].company).toBe('');
+    expect(s.companies).toEqual({ Acme: 'A' });
+  });
+});

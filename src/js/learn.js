@@ -1,8 +1,11 @@
 // ---------- learn ----------
 function learnList() {
   const s = filter.text.toLowerCase();
-  return Q.filter(q => q.file === topic && (!filter.core || q.tier === 'Core') && (!s || q.q.toLowerCase().includes(s) || q.body.toLowerCase().includes(s)));
+  return Q.filter(q => q.file === topic && (!filter.core || q.tier === 'Core') && (!s || q.k === s || searchText(q).includes(s)));
 }
+// What a search looks in: the title, the shown answer and a card's company. The hidden "Topic: … | id: …" line is left out,
+// so "core" or "my-cards" does not match every question. Cached on the question; syncCards() makes new card objects.
+const searchText = q => q.find ??= `${q.q}\n${q.body.replace(/^Topic: .*$/m, '')}\n${q.company || ''}`.toLowerCase();
 function renderSide() {
   const list = learnList(), cur = Q[current], secs = [...new Set(list.map(q => q.sec))];
   $('side-list').innerHTML = secs.map(sec => { const qs = list.filter(q => q.sec === sec), open = (cur && cur.sec === sec) || filter.text || topic === CARDS;  // card lists are short: every company stays open

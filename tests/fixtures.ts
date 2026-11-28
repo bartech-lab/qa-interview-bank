@@ -1,6 +1,7 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, chromium, type Page } from '@playwright/test';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+import os from 'node:os';
 
 // QIB_PAGE points the tests at another built page, for example a copy from before a change, to watch new tests fail.
 export const PAGE_URL = pathToFileURL(path.resolve(process.env.QIB_PAGE || 'dist/index.html')).href;
@@ -189,7 +190,7 @@ export type Site = {
   start: () => Promise<void>;                           // listens again on the same port
   swap: (o: { index?: string; sw?: (text: string) => string }) => void;  // a "new deploy": other index.html and sw.js text
 };
-const MIME: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml' };
+const MIME: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png' };
 
 // Serves the folder of the page under test (QIB_PAGE or dist/) with the caching headers GitHub Pages sends, so an
 // implementation that trusts the HTTP cache shows an old page after a deploy. Closed in teardown.
@@ -226,5 +227,22 @@ export const testWithSite = test.extend<{ site: Site }>({
     };
     await use(site);
     await stop();
+  },
+});
+
+// The site server plus a page of a persistent (not incognito) Chromium profile in a temp folder, as the install check needs.
+// The browser opens and closes here, never in a test body; the folder is removed afterwards. Other browsers skip the test.
+export const testWithProfile = testWithSite.extend<{ profilePage: Page }>({
+  profilePage: async ({ browserName }, use) => {
+    base.skip(browserName !== 'chromium', 'the install check is Chromium only');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qib-profile-'));
+    // channel 'chromium' is the full browser: the headless shell never reports installability errors (it passes with no icons at all).
+    const context = await chromium.launchPersistentContext(dir, { channel: 'chromium', headless: true });
+    try {
+      await use(context.pages()[0] ?? await context.newPage());
+    } finally {
+      await context.close();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   },
 });

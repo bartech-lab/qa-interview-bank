@@ -2,7 +2,7 @@
 // so a new deploy changes this file, the browser installs the new worker, and older caches are deleted.
 // Network first: whenever the server answers, the newest page wins; the cache serves only when the network fails.
 const CACHE = 'qa-bank-' + /*DATA_VERSION*/;
-const START = ['./', 'manifest.webmanifest', 'icon.svg'];
+const START = ['./', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(START)).then(() => self.skipWaiting()));
 });

@@ -1,9 +1,11 @@
 // ---------- own cards and company notes (docs/phase6-spec.md, section 2, idea 63) ----------
 // Cards live in store.cards; Q holds the bank questions first (BANK of them), then one entry per card, rebuilt by syncCards().
 const CARDS = 'my-cards', NO_COMPANY = 'No company';
-let cardEdit = null, cardAsk = false;  // cardEdit: null, or { id } (id null for a new card); cardAsk: the delete question is showing
+let cardEdit = null, cardAsk = false, cardWarned = false;  // cardEdit: null, or { id } (id null for a new card); cardAsk: the delete question is showing;
+// cardWarned: the form said the old company's note will be deleted, and the company field has not changed since
 const byName = (a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' });
 const companyOf = c => (c.company || '').trim();
+const noteOf = (s, name) => Object.hasOwn(s.companies, name) ? s.companies[name] : null;  // own keys only: a company may be called "constructor"
 function syncCards() {
   Q.length = BANK;
   const ids = Object.keys(store.cards).sort((a, b) => {
@@ -40,9 +42,9 @@ function openCards(company) {
 function cardNew() {
   cardAsk = false;
   if (view !== 'learn' || topic !== CARDS) go('learn', CARDS);
-  cardEdit = { id: null }; renderArticle();
+  cardEdit = { id: null }; cardWarned = false; renderArticle();
 }
-function cardEditOpen() { cardAsk = false; cardEdit = { id: Q[current].k }; renderArticle(); }
+function cardEditOpen() { cardAsk = false; cardWarned = false; cardEdit = { id: Q[current].k }; renderArticle(); }
 
 // Learn: the add and edit form, shown instead of the article.
 function cardForm() {
@@ -52,7 +54,7 @@ function cardForm() {
     <p class="muted small">Cards stay in this browser and go into Export progress. They are never sent anywhere.</p>
     <label class="field">Question<textarea id="card-q" rows="3">${esc(c.q || '')}</textarea></label>
     <label class="field">Answer<textarea id="card-a" rows="8">${esc(c.a || '')}</textarea></label>
-    <label class="field">Company (optional)<input id="card-company" type="text" list="card-companies" autocomplete="off" value="${esc(c.company || '')}"></label>
+    <label class="field">Company (optional)<input id="card-company" type="text" list="card-companies" autocomplete="off" value="${esc(c.company || '')}" oninput="cardWarned=false"></label>
     <datalist id="card-companies">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
     <p id="card-msg" role="alert"></p>
     <div class="navrow"><button class="btn primary" id="card-save" type="submit">Save card</button><button class="btn" id="card-cancel" type="button" onclick="cardCancel()">Cancel</button></div></form>`;
@@ -64,12 +66,26 @@ function cardSave() {
   for (const [name, v, max] of [['Question', qv, CARD_MAX], ['Answer', av, CARD_MAX], ['Company', cv, COMPANY_MAX]])
     if (v.length > max) return say(`${name} is too long: at most ${max.toLocaleString('en')} characters.`);
   if (!id && Object.keys(store.cards).length >= MAX_CARDS) return say(`You have ${MAX_CARDS} cards, the most this page keeps. Delete one to add another.`);
+  // The company's note follows its last card to the new company name, so no note is left under a name no card uses.
+  const old = id && store.cards[id], was = old ? companyOf(old) : '';
+  const moving = was && was !== cv && noteOf(store, was) !== null && cardsOf(was).length === 1;
+  if (moving && noteOf(store, cv) !== null && (noteOf(store, cv) + '\n\n' + noteOf(store, was)).length > CARD_MAX)
+    return say(`The two company notes together are too long: at most ${CARD_MAX.toLocaleString('en')} characters.`);
+  if (moving && !cv && !cardWarned) {
+    cardWarned = true;
+    return say(`This was the last card for ${was}, so its note will be deleted. Press Save card again to save.`);
+  }
   let newId = id;  // an edit keeps its id, so marks and notes stay on the card
   while (!newId || (!id && byId[newId])) newId = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6).padEnd(4, '0');
-  const old = id && store.cards[id];
-  update(s => { s.cards[newId] = { q: qv, a: av, company: cv, created: old ? old.created : today() }; });
+  update(s => {
+    s.cards[newId] = { q: qv, a: av, company: cv, created: old ? old.created : today() };
+    const from = noteOf(s, was), to = noteOf(s, cv);
+    if (!moving || from === null) return;
+    if (cv) s.companies[cv] = to === null ? from : to + '\n\n' + from;
+    delete s.companies[was];
+  });
   syncCards();
-  cardEdit = null;
+  cardEdit = null; cardWarned = false;
   current = byId[newId].i;
   overall(); renderSide(); renderArticle();
 }
@@ -83,7 +99,7 @@ function cardCancel() {
 function cardTools(q) {
   const last = q.company && cardsOf(q.company).length === 1;
   return `${q.company ? `<label class="notebox"><span>Note for ${esc(q.company)}</span><textarea class="note company-note" aria-label="Note for ${esc(q.company)}" rows="3"
-      placeholder="What this company asked, who you talked to, what to prepare" oninput="companyNoteSave(${esc(JSON.stringify(q.company))}, this.value)">${esc(store.companies[q.company] || '')}</textarea></label>
+      placeholder="What this company asked, who you talked to, what to prepare" oninput="companyNoteSave(${esc(JSON.stringify(q.company))}, this.value)">${esc(noteOf(store, q.company) || '')}</textarea></label>
       <p id="card-msg" role="alert"></p>` : ''}
     <div class="navrow card-tools">${cardAsk
       ? `<span id="card-delete-ask">Delete this card? Its marks and note go too.${last ? ` It is the last card for ${esc(q.company)}, so its company note goes too.` : ''}</span>
@@ -92,7 +108,7 @@ function cardTools(q) {
 }
 function companyNoteSave(company, value) {
   const msg = $('card-msg');
-  if (value.trim() && !(company in store.companies) && Object.keys(store.companies).length >= MAX_COMPANIES) {
+  if (value.trim() && noteOf(store, company) === null && Object.keys(store.companies).length >= MAX_COMPANIES) {
     if (msg) msg.textContent = `You have notes for ${MAX_COMPANIES} companies, the most this page keeps.`;
     return;
   }

@@ -360,8 +360,9 @@
   .card-tools { margin-top:12px; } #card-delete-ask { font-size:14px; }
   .drill-row { margin:14px 0 0; } .drill-open { margin-top:6px; align-self:flex-start; }
   .modes { margin:14px 0 12px; } .srcs { margin-bottom:12px; }
-  .ad-topics { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
-  .ad-topic-row { display:flex; gap:8px; align-items:baseline; font-size:15px; }
+  .ad-topics { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+  .ad-topic-row { display:grid; grid-template-columns:auto 1fr; column-gap:8px; align-items:baseline; font-size:15px; }
+  .ad-topic-row .small { grid-column:2; line-height:1.35; }  /* the matched words sit under the topic name, so long names do not push them about */
   #ad-match { margin-top:8px; } #ad-result > p { margin:10px 0 0; }
   .mock-timer { font:600 20px/1 var(--sans); color:var(--fg); font-variant-numeric:tabular-nums; min-width:3.2em; text-align:right; }
   .mock-timer.over { color:var(--warn); }
