@@ -83,6 +83,7 @@ Each probe page reports into `window.__result`. "file" means the page was opened
     - Server closed: a reload showed the last page in 13 ms (Chromium), 37 ms (Firefox) and 11 ms (WebKit), and a new tab on the same address showed it too.
     - By file:// a page cannot register a worker, so the built page adds the worker and the install file only over http(s) (docs/phase6-spec.md, section 6).
     - Runner: `tools-local/probe18.mjs <dir> <browser>`.
+    - The live Pages copy (commit 1b53316, 2026-11-28): after one visit Chromium 159 showed `#offline-note` and, with the context offline, reloaded the page with its questions; a control request for an address never cached failed, so the network was really off. In Firefox, Playwright's offline switch does not reach the service worker (the control request got the server's 404), so the live run proves nothing there; the server-stopped run above covers Firefox. Runner: `tools-local/live-offline.mjs`.
 
 ## Table
 
@@ -219,6 +220,8 @@ Checked on 2026-11-27 in GitHub Actions with the manual Safari workflow (`.githu
 The first run (46060470961, commit 1e97dcf) gave the same http and Pages results; it tried file:// from the checkout folder only.
 
 The Locators tab (phase 4), run 46070135094 on commit c85841a, same Safari and macOS, Pages serving the same bytes as the local build: over http and on Pages the trainer marked 3 elements for `getByRole('button', { name: /^Add/ })` and 2 for an `.or()` locator on the Shop page, as real Playwright does. The other four checks passed again there; file:// was refused again. Run 46077731572 on commit fabbcba also loaded the page fresh at `#q0018`: Safari opened that question in Learn, over http and on Pages.
+
+Phase 6, run 46127695586 on commit 1b53316 (start-up now adds the offline worker over http, and the drill opens from Learn): all five checks passed again over http and on Pages, the drill included (3 and 2 marks); file:// was refused again.
 
 ## Not checked
 
