@@ -76,7 +76,7 @@ Below Topics, a section `#my-cards` with the heading `My cards`:
 - **No cards:** the text `Add your own questions, for example one a company asked you. They stay in this browser and go into Export progress.` and a button `#card-add` named `Add a card`.
 - **Cards:**
   - One row per company, with class `card-company`, in name order, then `No company` last if any card has none.
-  - Each row is a button named `<company> · N card(s)`. It opens Learn on the cards, at that company's first card.
+  - Each row is a button named `<company> · N card(s)`. It opens Learn on the cards, at that company's first card. It shows the name on the left and the count on the right, as the topic rows do.
   - The button `#card-add` named `Add a card`.
 
 ### Learn on cards

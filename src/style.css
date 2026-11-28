@@ -62,6 +62,7 @@
   .btn.small { padding:6px 14px; font-size:14px; }
   .btn.miss { background:var(--bad-soft); border-color:transparent; color:var(--bad); }
   .kbd { font:12px var(--mono); border:1px solid currentColor; border-bottom-width:2px; border-radius:4px; padding:0 5px; margin-left:6px; opacity:.65; }
+  .btn.primary .kbd { opacity:.85; }  /* .65 of white on the navy button read faint */
   .tier { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:1px 8px; border-radius:99px; }
   .tier::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
   .tier.Core { color:var(--core); background:color-mix(in srgb, var(--core) 13%, transparent); }
@@ -156,7 +157,7 @@
   #reader { overflow:auto; }
   .article { max-width:760px; margin:0 auto; padding:36px 32px 120px; }
   .crumbs { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:13px; color:var(--muted); margin-bottom:12px; }
-  .crumbs > span:not(:last-child):not(.tier)::after { content:"/"; margin-left:8px; color:var(--line); }
+  .crumbs > span:not(.tier) + span::before { content:"/"; margin-right:8px; color:var(--line); }  /* on the next item, so a wrap never leaves "/" alone at a line end */
   .article h2, .qcard h2 { font:600 30px/1.25 var(--serif); margin:0 0 22px; letter-spacing:-.005em; text-wrap:pretty; }
   .navrow { display:flex; gap:10px; align-items:center; margin-top:28px; padding-top:20px; border-top:1px solid var(--line); }
   .known-btn.on { background:var(--ok-soft); border-color:var(--ok); color:var(--ok); }
@@ -296,7 +297,7 @@
     .deck { grid-template-columns:1fr; grid-template-areas:"head" "card" "act"; }
     .stack { margin-top:24px; }
     .toc-list { columns:1; }
-    #learn { grid-template-columns:1fr; height:auto; } #side { max-height:45vh; border-right:0; border-bottom:1px solid var(--line); }
+    #learn { grid-template-columns:1fr; height:auto; } #reader { scroll-margin-top:56px; } #side { max-height:45vh; border-right:0; border-bottom:1px solid var(--line); }
     .article { padding:24px 18px 100px; } .overall .meter { display:none; }
     .qcard { padding:0 20px 22px; } .qcard > .crumbs { margin:0 -20px 20px; padding:12px 20px; min-height:56px; }
     .rate .btn { min-width:0; flex:1; } header { gap:10px; padding:10px 12px; }
@@ -324,16 +325,16 @@
   .loc-wrap { display:grid; grid-template-columns:minmax(300px, 380px) 1fr; grid-template-rows:auto 1fr; gap:16px 20px; max-width:1800px; margin:0 auto; align-items:start; }
   .loc-wrap > .loc-panel:first-child { grid-column:1; grid-row:1; } .loc-tasks-panel { grid-column:1; grid-row:2; } .loc-stage { grid-column:2; grid-row:1 / span 2; }
   .loc-panel .back { margin:0 0 8px; padding:0; }
-  .loc-panel { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px 18px; box-shadow:var(--shadow); }
-  .loc-panel h2 { margin:0 0 4px; font-size:20px; } .loc-panel h3 { margin:0 0 6px; font-size:15px; }
+  .loc-panel { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; box-shadow:var(--shadow); }
+  .loc-panel h2 { margin:0 0 4px; font:600 21px/1.25 var(--serif); } .loc-panel h3 { margin:0 0 6px; font-size:15px; }
   .loc-field { display:block; margin:12px 0 0; font-weight:600; font-size:14px; }
   .loc-field select, .loc-field input { display:block; width:100%; margin-top:4px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:var(--bg); font-weight:400; }
   #loc-input { font-family:var(--mono); font-size:14px; }
   #loc-state { min-height:1.6em; margin:10px 0 0; font-size:14px; }
   #loc-state[data-state=unsupported], #loc-state[data-state=invalid] { color:var(--bad); }
   #loc-tasks { margin:0; padding-left:22px; }
-  #loc-tasks li { margin:4px 0; }
-  .loc-task { border:1px solid transparent; background:none; padding:3px 6px; border-radius:5px; text-align:left; font-size:14px; }
+  #loc-tasks li { margin:4px 0; font-size:14px; }
+  .loc-task { border:1px solid transparent; background:none; padding:3px 6px; border-radius:5px; text-align:left; font-size:14px; display:block; }  /* block: the number stays level with the first line */
   .loc-task[aria-pressed=true] { border-color:var(--acc); background:var(--acc-soft); }
   #loc-tasks li.passed .loc-task::after { content:''; display:inline-block; width:.5em; height:.85em; margin-left:8px; border:solid var(--ok); border-width:0 2px 2px 0; transform:rotate(45deg); }
   #loc-verdict { font-size:14px; margin:10px 0 0; } #loc-verdict[data-verdict=pass] { color:var(--ok); } #loc-verdict[data-verdict=count], #loc-verdict[data-verdict=other] { color:var(--warn); }
@@ -349,7 +350,9 @@
   #my-cards { margin-top:56px; }
   #my-cards h2 { font:600 30px/1.2 var(--serif); margin:0 0 14px; }
   .card-rows { border-top:2px solid var(--fg); padding-top:4px; margin-bottom:14px; columns:2; column-gap:64px; }
-  .card-company { display:block; width:100%; border:0; background:none; padding:9px 0; font-size:17px; text-align:left; break-inside:avoid; }
+  .card-company { display:flex; align-items:baseline; gap:12px; width:100%; border:0; border-bottom:1px solid var(--line); background:none; padding:9px 0; font-size:17px; text-align:left; break-inside:avoid; }
+  .card-company .n { margin-left:auto; color:var(--muted); font-size:15px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .sr-sep { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
   .card-company:hover .t-name { text-decoration:underline; text-underline-offset:3px; }
   #my-cards > p { margin:0 0 14px; max-width:60ch; }
   .field { display:flex; flex-direction:column; gap:6px; margin:14px 0 0; font-size:14px; font-weight:600; }
@@ -380,6 +383,7 @@
   .rh-prompt-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border:1px solid var(--line); border-left:3px solid var(--acc); border-radius:4px; background:var(--card); }
   .rh-prompt-row .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
   #rh-prompt { margin:0; flex:1; font:500 17px/1.4 var(--serif); }
+  @media (max-width:560px) { #loc-input { font-size:13px; padding-left:8px; padding-right:8px; } }  /* a typical locator fits a phone without scrolling */
   @media (max-width:560px) { .rh-prompt-row .lbl { flex:1; } #rh-prompt { order:3; flex-basis:100%; } }  /* label and button share the top line; the prompt gets the full width */
   #rh-timeup { color:var(--bad); font-weight:600; }
   @media (max-width: 760px) { .card-rows { columns:1; } }

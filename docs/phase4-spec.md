@@ -29,7 +29,7 @@ Phase 6 moved the drill out of the header into Learn (docs/phase6-spec.md, secti
 | View | `#locators`; hidden unless the view is open; `go('locators')` opens it |
 | Page picker | `#loc-page`, a `<select>` named `Frozen page`; one option per page in `pages` order, the option text is the page title, the value is the page id |
 | Frame | `#loc-frame`, an `<iframe>` with `sandbox="allow-scripts"` (nothing else), titled `Frozen page: <title>` |
-| Locator box | `#loc-input`, a text box named `Locator` |
+| Locator box | `#loc-input`, a text box named `Locator`. On a 390 px screen a 37-character locator fits without scrolling |
 | Result line | `#loc-state`, `role="status"` |
 | Task list | `#loc-tasks`, a list named `Tasks on this page`; one item per task of the page; each item holds a button whose name is the task text |
 | Task check | `#loc-verdict`, `role="status"`, empty while no task is chosen |

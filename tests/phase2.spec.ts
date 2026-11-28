@@ -1241,3 +1241,16 @@ test('reset clears every kind of progress, notes, marks, exam and backup', async
 
 // PAGE_URL is imported so the file fails to load if the fixture export disappears.
 void PAGE_URL;
+
+// Design review 2026-11-28: on a phone the side list sits above the question and took 380 of 844 px, so a question picked
+// from the list showed only its title at the bottom of the screen.
+test('mode 25b: a question picked from the side list scrolls to the top of the screen on a phone', { tag: '@narrow' }, async ({ bank }) => {
+  await firstTopicFirstQuestion(bank);
+  const link = bank.locator('#side .qlink').nth(4);
+  const title = (await link.innerText()).trim();
+  await link.click();
+  const heading = bank.locator('#reader .article h2');
+  await expect(heading).toHaveText(title);
+  await expect.poll(async () => (await heading.boundingBox())!.y).toBeLessThan(200);  // 128 px on a 1280 px screen (header and breadcrumb); 516 px on a phone before the fix
+  expect((await heading.boundingBox())!.y).toBeGreaterThanOrEqual(0);
+});

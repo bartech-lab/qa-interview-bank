@@ -617,3 +617,11 @@ test('FM13 no DecompressionStream: the alert shows, no page error', async ({ wat
   await page.evaluate(() => (window as unknown as { go: (v: string) => void }).go('locators'));
   await expect(page.locator('#locators').getByRole('alert')).toHaveText(MSG.unpack);
 });
+
+// Design review 2026-11-28: at 390 px the box scrolled a typical locator sideways and hid its first letter.
+test('drill: a typical 37-character locator fits the Locator box without scrolling', { tag: '@narrow' }, async ({ bank }) => {
+  await openOn(bank, 'billing-details');
+  await typeLoc(bank, "getByRole('radio', { checked: true })");
+  await bank.locator('#loc-input').evaluate(e => { (e as HTMLInputElement).setSelectionRange(0, 0); });
+  expect(await bank.locator('#loc-input').evaluate(e => e.scrollWidth <= e.clientWidth)).toBe(true);
+});

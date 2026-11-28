@@ -27,11 +27,11 @@ const cardsOf = company => cardList().filter(q => q.company === company);
 function myCardsSection() {
   const list = cardList(), groups = [...new Set(list.map(q => q.company))];
   const row = c => { const n = cardsOf(c).length;
-    return `<button class="card-company" onclick="openCards(${esc(JSON.stringify(c))})"><span class="t-name">${esc(c || NO_COMPANY)} · ${plural(n, 'card')}</span></button>`; };
+    return `<button class="card-company" onclick="openCards(${esc(JSON.stringify(c))})"><span class="t-name">${esc(c || NO_COMPANY)}</span><span class="sr-sep"> · </span><span class="n">${plural(n, 'card')}</span></button>`; };
   return `<section id="my-cards" aria-labelledby="my-cards-title"><h2 id="my-cards-title">My cards</h2>
     ${list.length ? `<div class="card-rows">${groups.map(row).join('')}</div>`
       : '<p class="muted">Add your own questions, for example one a company asked you. They stay in this browser and go into Export progress.</p>'}
-    <button class="btn" id="card-add" onclick="cardNew()">Add a card</button></section>`;
+    <button class="btn small" id="card-add" onclick="cardNew()">Add a card</button></section>`;
 }
 function openCards(company) {
   const first = cardsOf(company)[0];

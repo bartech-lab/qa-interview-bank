@@ -49,6 +49,7 @@ Correctness must not depend on the `storage` event. Every change re-reads `local
 ### Narrow screen and dates
 
 25. Home, Review, Learn and the quiz rating row fit a 390 px wide screen (no sideways scroll).
+25b. Up to 860 px wide, where Learn's list sits above the question, picking a question (from the list, Next, Previous or the arrow keys) scrolls the page so the question starts just below the header.
 26. Interview date in the past, today, tomorrow, in 10 days; and cleared.
 
 ## Saved progress

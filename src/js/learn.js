@@ -50,7 +50,8 @@ function renderArticle() {
     <label class="notebox"><span>My note</span><textarea class="note" aria-label="My note" rows="3" placeholder="What to remember, an example from your own work, a link" oninput="noteSave(${q.i}, this.value)">${esc(store.notes[q.k] || '')}</textarea></label>${q.own ? cardTools(q) : ''}</article>`;
   $('reader').scrollTop = 0;
 }
-function pick(i) { current = i; renderSide(); renderArticle(); const el = $('side').querySelector('.qlink.on'); if (el) el.scrollIntoView({ block: 'nearest' }); }
+function pick(i) { current = i; renderSide(); renderArticle(); const el = $('side').querySelector('.qlink.on'); if (el) el.scrollIntoView({ block: 'nearest' });
+  if (matchMedia('(max-width:860px)').matches) $('reader').scrollIntoView({ block: 'start' }); }  // phones: the list sits above; show the question
 // Marks made while reading count for spaced review like quiz answers; pressing a pressed mark again clears it.
 function toggleMark(m) { const q = Q[current]; update(s => { if (s[m][q.k]) unmark(s, q.k); else grade(s, q.k, m); }); overall(); renderSide(); renderArticle(); }
 function noteSave(i, value) { update(s => { if (value.trim()) s.notes[Q[i].k] = value; else delete s.notes[Q[i].k]; }); }

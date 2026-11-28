@@ -38,7 +38,7 @@ test('home: one row per company in name order, "No company" last, each named "<c
   const page = await withCards(open, { ...trio(), u0eee: card('Third Acme?', '', 'Acme') });
   const rows = page.locator('#my-cards .card-company');
   await expect(rows).toHaveCount(3);
-  expect(await rows.allInnerTexts()).toEqual(['Acme · 3 cards', 'Zeta · 1 card', 'No company · 1 card']);
+  for (const [i, name] of ['Acme · 3 cards', 'Zeta · 1 card', 'No company · 1 card'].entries()) await expect(rows.nth(i)).toHaveAccessibleName(name);
   await expect(rows.first()).toHaveRole('button');
   await expect(page.locator('#my-cards #card-add')).toHaveAccessibleName('Add a card');
 });
