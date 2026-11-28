@@ -69,7 +69,7 @@ test.describe('in My cards', () => {
   const cards = {
     [A]: card('Alpha question?', 'Use the retry budget wisely', 'Acme'),
     [B]: card('Beta question?', 'Plain beta answer', 'Globex'),
-    [C]: card('Gamma question?', 'Plain gamma answer', ''),
+    [C]: card('Gamma question?', 'Plain third answer', ''),  // "gamma" only in the title, so the title test can fail
   };
   async function open3(open: (o?: import('./fixtures').OpenOpts) => Promise<Page>) {
     const page = await open({ time: NOW, seed: seedWith({ cards }) });
