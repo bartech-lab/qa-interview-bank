@@ -63,6 +63,11 @@ Marks, notes, spaced review and saved code use the card id like a bank question 
 - A bad note is listed as `companies.<name>`.
 - More than 500 cards is listed as `cards`; more than 50 notes as `companies`.
 
+**Notes with no card.** `cleanProgress` drops a company note when no valid card has that company, compared after trimming the card's company, case included. Such a note could not be shown or deleted on the page; v0.3.0 left one behind when a company's last card moved to another company.
+- The drop is silent: it is not a bad part, so an import with such a note still goes ahead.
+- The drop comes before the 50-note limit, so dropped notes do not count toward it.
+- It runs on every read of saved progress and on import. The next save writes the cleaned progress; a backup file on disk is not changed.
+
 Import rejects a file with any bad part, as before. `FORMAT` stays 1, and saved progress keeps `v: 2`. A page from before this phase keeps keys it does not know, so cards survive a save by an older copy.
 
 ### Home
@@ -231,6 +236,7 @@ The view `#rh` shows:
   4. `Say how you would test it.`
   5. `Say what you would improve with more time.`
   - After stage 5 the button is disabled.
+  - Under 560 px wide, the prompt sits on its own full-width line below its label and the button.
 - the task's text and its editor with Run (and Check for SQL tasks), as in Learn;
 - `#rh-next`, named `Next task`, or `Finish` on the last task;
 - `#rh-end`, named `End rehearsal`.
@@ -354,3 +360,8 @@ Each has at least one test, seen failing on the page before this phase.
 | 38 | Search | `core`, `topic` or `my-cards` typed in Learn search | Only questions whose shown text holds the word; a question's whole id still finds it |
 | 39 | Offline | Manifest icons over http | Each listed icon is served, is a PNG or SVG as typed, and a PNG's real size equals its `sizes`; `apple-touch-icon.png` is 180×180 and opaque |
 | 40 | Offline | Chromium install check over http | `Page.getInstallabilityErrors` is empty in a persistent profile |
+| 41 | Cards | Saved progress with notes `Acme` (an `Acme` card exists) and `Initech` (no card) | After load and a save, `store.companies` is `{ Acme: … }`; Export holds no `Initech` |
+| 42 | Cards | Import file with an orphan note and nothing else wrong | Import goes ahead without a bad-part message; the orphan is not in the store |
+| 43 | Cards | Import file with 50 notes that have cards plus 1 orphan | Accepted: the orphan does not count toward the 50 limit |
+| 44 | Cards | A note `Acme` whose only card has company `  Acme ` (spaces) or `acme` | Spaces: the note stays. Different case: the note is dropped |
+| 45 | Rehearsal | 390 px wide, prompt `Say your plan before you type.` | The prompt takes at most two lines |

@@ -413,7 +413,9 @@ for (const [name, part, listed] of bad) {
 }
 for (const [name, part, listed] of [
   ['501 cards', { cards: cardsOf(501) }, 'cards'],
-  ['51 company notes', { companies: Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`F${i}`, 'n'])) }, 'companies'],
+  // each note has a card of its company: a note with no card is dropped before the limit (FM43)
+  ['51 company notes', { cards: Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`uf${i}`, card(`Q${i}?`, '', `F${i}`)])),
+    companies: Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`F${i}`, 'n'])) }, 'companies'],
 ] as const) {
   test(`FM8 import with ${name}: refused, naming ${listed}`, async ({ bank }) => {
     const before = await rawStore(bank);
@@ -424,15 +426,20 @@ for (const [name, part, listed] of [
   });
 }
 test('FM8 boundary: 500 cards and 50 company notes are accepted, with the longest allowed ids and texts', async ({ bank }) => {
-  const cards = { ...cardsOf(498), ['u' + 'z9'.repeat(8)]: card(str(10_000), str(10_000), str(80), '2026-02-28'), u0: card('Short id?', '', '', '2026-01-01') };
-  const companies = Object.fromEntries(Array.from({ length: 50 }, (_, i) => [`F${i}`, i === 0 ? str(10_000) : '']));
+  // 50 notes, each with a card of its company (a note with no card is dropped, FM41): the 80-character company and F1 to F49
+  const fCards = Object.fromEntries(Array.from({ length: 49 }, (_, i) => [`uf${i + 1}`, card(`F question ${i + 1}?`, '', `F${i + 1}`)]));
+  const cards = { ...cardsOf(449), ...fCards, ['u' + 'z9'.repeat(8)]: card(str(10_000), str(10_000), str(80), '2026-02-28'), u0: card('Short id?', '', '', '2026-01-01') };
+  const companies = { [str(80)]: str(10_000), ...Object.fromEntries(Array.from({ length: 49 }, (_, i) => [`F${i + 1}`, ''])) };
   await bank.locator('#import-input').setInputFiles(file(exportOf({ cards, companies })));
   await bank.locator('#import-yes').click();
   await expect(bank.locator('#import-msg')).toHaveAttribute('data-kind', 'ok');
   const s = await store(bank);
   expect(Object.keys(s.cards)).toHaveLength(500);
   expect(Object.keys(s.companies)).toHaveLength(50);
-  await expect(bank.locator('#my-cards .card-company')).toHaveText([`${'x'.repeat(80)} · 1 card`, 'No company · 499 cards']);
+  const rows = bank.locator('#my-cards .card-company');
+  await expect(rows).toHaveCount(51);
+  await expect(rows.nth(49)).toHaveText(`${'x'.repeat(80)} · 1 card`);
+  await expect(rows.nth(50)).toHaveText('No company · 450 cards');
 });
 
 test('FM9 import with good cards and marks, notes and code on them: imported, and not counted as "not in this version"', async ({ open }) => {
@@ -872,5 +879,77 @@ test.describe('company change', () => {
     const s = await store(page);
     expect(s.cards[A].company).toBe('');
     expect(s.companies).toEqual({ Acme: 'A' });
+  });
+});
+
+// ---------------------------------------------------------------- notes with no card (FM41 to FM44)
+test.describe('notes with no card', () => {
+  const acme = () => ({ [A]: card('Acme question?', 'Acme answer', 'Acme', '2026-01-01') });
+  // any saved change makes the page write the cleaned progress
+  async function saveSomething(page: Page) {
+    await goTo(page, 'learn', '01-playwright');
+    await page.locator('.known-btn').click();
+    await expect.poll(async () => Object.keys((await store(page)).known ?? {}).length).toBe(1);
+  }
+  const exportJson = async (page: Page) => {
+    await goTo(page, 'home');
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('#export-btn').click()]);
+    return JSON.parse(fs.readFileSync((await dl.path())!, 'utf8'));
+  };
+
+  test('FM41 saved notes for Acme (has a card) and Initech (no card): after load and a save only Acme is stored, and the export has no Initech', async ({ open }) => {
+    const page = await withCards(open, acme(), { companies: { Acme: 'acme note', Initech: 'orphan note' } });
+    await expect(page.locator('#my-cards .card-company')).toHaveText(['Acme · 1 card']);
+    await saveSomething(page);
+    expect((await store(page)).companies).toEqual({ Acme: 'acme note' });
+    const exported = await exportJson(page);
+    expect(exported.progress.companies).toEqual({ Acme: 'acme note' });
+    expect(JSON.stringify(exported)).not.toContain('Initech');
+    await reload(page);
+    expect((await store(page)).companies).toEqual({ Acme: 'acme note' });
+  });
+
+  test('FM42 an import whose only oddity is an orphan note goes ahead with no bad-part message, and the orphan is not stored', async ({ open }) => {
+    const page = await open({ time: NOW });
+    await page.locator('#import-input').setInputFiles(file(exportOf({ cards: acme(), companies: { Acme: 'acme note', Initech: 'orphan note' } })));
+    await expect(page.locator('#import-ask')).toBeVisible();
+    await expect(page.locator('#import-ask')).toContainText('Replace');
+    await expect(page.locator('#import-msg[data-kind="error"]')).toHaveCount(0);
+    await expect(page.locator('#import-ask')).not.toContainText(/companies|Initech/);
+    await page.locator('#import-yes').click();
+    await expect(page.locator('#import-msg')).toHaveAttribute('data-kind', 'ok');
+    const s = await store(page);
+    expect(s.cards).toEqual(acme());
+    expect(s.companies).toEqual({ Acme: 'acme note' });
+    expect(JSON.stringify(s)).not.toContain('Initech');
+  });
+
+  test('FM43 an import with 50 notes that have cards plus 1 orphan is accepted; exactly the 50 are stored', async ({ open }) => {
+    const page = await open({ time: NOW });
+    const names = Array.from({ length: 50 }, (_, i) => `Firm ${i}`);
+    const cards = Object.fromEntries(names.map((n, i) => [`u${i.toString(36).padStart(3, '0')}`, card(`Question ${i}?`, '', n)]));
+    const companies = { ...Object.fromEntries(names.map((n, i) => [n, `note ${i}`])), Orphan: 'no card' };
+    await page.locator('#import-input').setInputFiles(file(exportOf({ cards, companies })));
+    await expect(page.locator('#import-ask')).toBeVisible();
+    await expect(page.locator('#import-msg[data-kind="error"]')).toHaveCount(0);
+    await page.locator('#import-yes').click();
+    await expect(page.locator('#import-msg')).toHaveAttribute('data-kind', 'ok');
+    const s = await store(page);
+    expect(Object.keys(s.companies).sort()).toEqual([...names].sort());
+    expect(s.companies.Orphan).toBeUndefined();
+  });
+
+  test('FM44 a note Acme whose only card has company "  Acme " (spaces) stays', async ({ open }) => {
+    const page = await withCards(open, { [A]: card('Spaced question?', '', '  Acme ', '2026-01-01') }, { companies: { Acme: 'keep me' } });
+    await saveSomething(page);
+    expect((await store(page)).companies).toEqual({ Acme: 'keep me' });
+    expect((await exportJson(page)).progress.companies).toEqual({ Acme: 'keep me' });
+  });
+
+  test('FM44 a note Acme whose only card has company "acme" (other case) is dropped', async ({ open }) => {
+    const page = await withCards(open, { [A]: card('Lower question?', '', 'acme', '2026-01-01') }, { companies: { Acme: 'drop me' } });
+    await saveSomething(page);
+    expect((await store(page)).companies).toEqual({});
+    expect((await exportJson(page)).progress.companies).toEqual({});
   });
 });

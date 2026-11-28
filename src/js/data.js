@@ -72,6 +72,10 @@ function cleanProgress(raw) {
   map('cards', (x, id) => CARD_ID.test(id) && isObj(x) && str(x.q, 1, CARD_MAX) && x.q.trim() !== '' && str(x.a, 0, CARD_MAX)
     && (x.company === undefined || str(x.company, 0, COMPANY_MAX)) && isDay(x.created));
   map('companies', (x, name) => str(name, 1, COMPANY_MAX) && str(x, 0, CARD_MAX));
+  // A note whose company no card uses cannot be shown or deleted (v0.3.0 left one when a company's last card moved): drop it
+  // silently, before the 50-note limit, so such a backup still imports.
+  const used = new Set(Object.values(out.cards).map(c => (c.company || '').trim()));
+  for (const name of Object.keys(out.companies)) if (!used.has(name)) delete out.companies[name];
   if (Object.keys(out.cards).length > MAX_CARDS) bad.push('cards');
   if (Object.keys(out.companies).length > MAX_COMPANIES) bad.push('companies');
   for (const id of Object.keys(out.known)) { delete out.shaky[id]; delete out.missed[id]; }
