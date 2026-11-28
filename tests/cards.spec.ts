@@ -338,11 +338,13 @@ test('FM6 the 501st card is refused with the 500 message; the 500th is accepted'
 
 test('FM6 company notes: at 50 notes, a card for a company that already has a note is still accepted', async ({ open }) => {
   const companies = Object.fromEntries(Array.from({ length: 50 }, (_, i) => [`Firm ${i}`, `note ${i}`]));
-  const page = await withCards(open, { [A]: card('Existing?', '', 'Firm 0') }, { companies });
+  // each note has a card of its company: a note with no card is dropped on load (FM41)
+  const cards = Object.fromEntries(Array.from({ length: 50 }, (_, i) => [`uf${i}`, card(`Existing ${i}?`, '', `Firm ${i}`)]));
+  const page = await withCards(open, cards, { companies });
   await tryAdd(page, { q: 'Another for Firm 1?', company: 'Firm 1' });
   await expect(page.locator('#card-form')).toBeHidden();
   const s = await store(page);
-  expect(Object.keys(s.cards)).toHaveLength(2);
+  expect(Object.keys(s.cards)).toHaveLength(51);
   expect(Object.keys(s.companies)).toHaveLength(50);
 });
 
