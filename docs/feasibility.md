@@ -225,6 +225,8 @@ The Locators tab (phase 4), run 46070135094 on commit c85841a, same Safari and m
 
 Phase 6, run 46127695586 on commit 1b53316 (start-up now adds the offline worker over http, and the drill opens from Learn): all five checks passed again over http and on Pages, the drill included (3 and 2 marks); file:// was refused again.
 
+Phase 6 follow-ups, run 46144898980 on commit f3d4edf (start-up also adds the apple-touch-icon link over http): all five checks passed over http and on Pages; file:// was refused again.
+
 ## Not checked
 
 - Safari on an iPhone: no device is available.
