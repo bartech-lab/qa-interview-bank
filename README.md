@@ -4,9 +4,13 @@ About 1,000 interview questions for QA and test automation roles. Each one has a
 
 Topics: Playwright, TypeScript and JavaScript, API testing, SQL, testing fundamentals, framework design and flaky tests, CI/CD and Docker, AI in QA, mobile, performance, security and accessibility, agile and leadership, and live-coding tasks.
 
+**Try it now:** [bartech-lab.github.io/qa-interview-bank](https://bartech-lab.github.io/qa-interview-bank/). After one visit it also opens without a network.
+
+![Home: today's mix of questions, the interview-date plan, and progress per topic](https://raw.githubusercontent.com/bartech-lab/qa-interview-bank/main/docs/media/home.png)
+
 ## Open it
 
-The easiest way: download `qa-interview-bank.zip` from the latest [release](https://github.com/bartech-lab/qa-interview-bank/releases/latest), unzip it and double-click `index.html`.
+Or keep your own copy: download `qa-interview-bank.zip` from the latest [release](https://github.com/bartech-lab/qa-interview-bank/releases/latest), unzip it and double-click `index.html`.
 
 Or build it yourself. You need Python 3.9 or newer (`python3 --version` shows it). Nothing else.
 
@@ -31,6 +35,20 @@ On Windows, use `py tools/build.py` if `python3` is not found.
   - **Live-coding rehearsal**: up to five coding tasks against one clock, with prompts to think out loud.
 - **My cards**: add your own questions, for example from a company's interview, with a note per company. They go into Export progress.
 - **Locator drill** (in Learn, Playwright): type a Playwright locator and see what it matches on a real page.
+
+### What it looks like
+
+| Learn: a short answer to say out loud, the common trap, then the details | Quiz: rate each answer, and spaced review brings it back |
+|---|---|
+| ![A Playwright question in Learn](https://raw.githubusercontent.com/bartech-lab/qa-interview-bank/main/docs/media/learn.png) | ![A quiz question with its answer revealed and the three rating buttons](https://raw.githubusercontent.com/bartech-lab/qa-interview-bank/main/docs/media/quiz.png) |
+| **Job ad: paste an ad and the page picks its topics** | **Live-coding rehearsal: real tasks in an editor that runs the code** |
+| ![A pasted job ad with 11 matched topics](https://raw.githubusercontent.com/bartech-lab/qa-interview-bank/main/docs/media/job-ad.png) | ![A live-coding task with the clock, a think-aloud prompt and the editor](https://raw.githubusercontent.com/bartech-lab/qa-interview-bank/main/docs/media/live-coding.png) |
+
+**Locator drill**: type a locator and see what it matches. Here `getByLabel('Email')` also matches the checkbox label, and `exact: true` narrows it to the field.
+
+![Typing three Playwright locators in the drill; the matched elements light up](https://raw.githubusercontent.com/bartech-lab/qa-interview-bank/main/docs/media/locator-drill.gif)
+
+<img src="https://raw.githubusercontent.com/bartech-lab/qa-interview-bank/main/docs/media/phone-dark.png" width="260" alt="The home page on a phone, in dark mode">
 
 Your progress stays in this browser only. A copy opened from another folder or another browser starts empty.
 
