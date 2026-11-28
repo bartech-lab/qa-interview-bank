@@ -299,3 +299,13 @@ test('FM24 the clock is the time left by the clock, not by ticks: a 10-minute ju
   await expect.poll(() => left(page)).toBeLessThanOrEqual(35 * 60);
   await expect.poll(() => left(page)).toBeGreaterThanOrEqual(34 * 60 + 59);
 });
+
+// Design review 2026-11-28: at 390 px the prompt shrank to a 55 px column between its label and the button, five words on five lines.
+test('the think-aloud prompt keeps a readable width: a short prompt takes at most two lines', { tag: '@narrow' }, async ({ open }) => {
+  const page = await pausedRehearsal(open, [T1]);
+  await page.locator('#rh-next-prompt').click();
+  const prompt = page.locator('#rh-prompt');
+  await expect(prompt).toHaveText(PROMPTS[1]);
+  const lineHeight = await prompt.evaluate(e => parseFloat(getComputedStyle(e).lineHeight));
+  expect((await prompt.boundingBox())!.height).toBeLessThanOrEqual(2 * lineHeight + 1);
+});

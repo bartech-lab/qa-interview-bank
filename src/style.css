@@ -380,5 +380,6 @@
   .rh-prompt-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border:1px solid var(--line); border-left:3px solid var(--acc); border-radius:4px; background:var(--card); }
   .rh-prompt-row .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
   #rh-prompt { margin:0; flex:1; font:500 17px/1.4 var(--serif); }
+  @media (max-width:560px) { .rh-prompt-row .lbl { flex:1; } #rh-prompt { order:3; flex-basis:100%; } }  /* label and button share the top line; the prompt gets the full width */
   #rh-timeup { color:var(--bad); font-weight:600; }
   @media (max-width: 760px) { .card-rows { columns:1; } }
