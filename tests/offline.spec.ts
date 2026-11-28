@@ -134,7 +134,10 @@ testWithSite('FM27 new deploy while online: a reload shows the newest page, not 
   await page.reload();
   await ready(page);
   await expect(page.locator('meta[name="qib-deploy"]')).toHaveAttribute('content', 'three');
-  expect(problems).toEqual([]);
+  // Firefox loads the apple-touch-icon in the background, never through the page; when a reload cancels that load it logs
+  // this generic line (CI run 46178936203; locally 1 in 40 runs under a CPU limit). Any other console error still fails.
+  const cancelledIcon = /^console error: .*Failed to load ‘[^’]*\/apple-touch-icon\.png’\. A ServiceWorker intercepted the request and encountered an unexpected error\./;
+  expect(problems.filter(p => !cancelledIcon.test(p))).toEqual([]);
 });
 
 testWithSite('FM27 a new data version: the new worker activates and the older caches are deleted', async ({ site, page }) => {
