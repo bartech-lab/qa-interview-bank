@@ -1,0 +1,37 @@
+name: Improve a question
+description: A missing trap or source, an out-of-date fact, or a clearer answer for one question.
+title: "[qNNNN] "
+body:
+  - type: input
+    id: question
+    attributes:
+      label: Question id
+      description: Shown under every answer, for example q0308.
+      placeholder: q0308
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What would you add or fix?
+      options:
+        - A trap (the answer that sounds right but loses the point)
+        - A source (a link that shows the fact)
+        - A wrong or out-of-date fact
+        - A clearer or shorter answer
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: The change
+      description: The new text, or what is wrong and why.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source link
+      description: A page that shows the fact (official docs, a changelog, a standard).
+      placeholder: https://

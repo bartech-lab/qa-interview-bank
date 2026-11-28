@@ -1,0 +1,17 @@
+name: Links
+# Weekly and on manual start: every Source link in topics/ must not be gone (404, 410, or a name that does not resolve).
+# Sites that refuse automated requests (401, 403, 429, timeouts) are listed as blocked and do not fail the run.
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check Source links
+        run: python3 tools/link_check.py --workers 8

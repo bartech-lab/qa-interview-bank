@@ -1,0 +1,33 @@
+name: New question
+description: A question interviewers ask that the bank does not have yet.
+title: "New question: "
+body:
+  - type: input
+    id: title
+    attributes:
+      label: The question
+      placeholder: What is the difference between PUT and PATCH?
+    validations:
+      required: true
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      description: A topic from docs/tiers.md, if you know it.
+  - type: textarea
+    id: say
+    attributes:
+      label: Short answer
+      description: What a good candidate says in two or three sentences. Write it for anyone, not about your own career.
+    validations:
+      required: true
+  - type: textarea
+    id: trap
+    attributes:
+      label: Trap (optional)
+      description: The answer that sounds right but loses the point.
+  - type: input
+    id: source
+    attributes:
+      label: Source link
+      placeholder: https://
