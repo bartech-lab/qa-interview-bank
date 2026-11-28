@@ -14,16 +14,18 @@ Rules from phase 1 that apply (`docs/feasibility.md`): nothing beside the HTML; 
 ## Packed parts
 
 1. The built page holds two more packed parts (same format as phase 3, tags `#pack-pwi` and `#pack-frozen`): `pwi` (Playwright's locator engine from `vendor/playwright-injected.js`) and `frozen` (the frozen pages, their stylesheet and the tasks).
-2. Both are unpacked on the first visit to the Locators tab, at most once per page load. Opening the page, Learn, Quiz and Review unpack neither.
+2. Both are unpacked on the first visit to the locator drill, at most once per page load. Opening the page, Learn, Quiz and Review unpack neither.
 3. If unpacking fails, `#locators` shows `This browser cannot unpack the locator trainer. Use a current Chrome, Edge, Firefox or Safari.` with `role="alert"`. No page error.
 
-## Locators tab (idea 50)
+## Locator drill (idea 50)
+
+Phase 6 moved the drill out of the header into Learn (docs/phase6-spec.md, section 1). The rows below still hold, except the header tab.
 
 ### Parts, ids and names
 
 | Part | Id, role, name |
 |---|---|
-| Header tab | `#tab-locators`, a button named `Locators`; class `on` while the view is open |
+| Entry points | Since phase 6: `#drill-open` (`Locator drill`) in Learn's Playwright topic, `.drill-link` under `pw-locators` questions, and the address `#locators`; `#tab-learn` has class `on` while the view is open. No header tab |
 | View | `#locators`; hidden unless the view is open; `go('locators')` opens it |
 | Page picker | `#loc-page`, a `<select>` named `Frozen page`; one option per page in `pages` order, the option text is the page title, the value is the page id |
 | Frame | `#loc-frame`, an `<iframe>` with `sandbox="allow-scripts"` (nothing else), titled `Frozen page: <title>` |
@@ -151,7 +153,7 @@ Every locator of the parity set below (rows 49 to 57 added in phase 4's follow-u
 
 ## Addresses (for the e2e-casebook learning path)
 
-1. Opening the page with `#qNNNN` (an existing question id) shows that question in Learn, its topic open. `#locators` opens the Locators tab.
+1. Opening the page with `#qNNNN` (an existing question id) shows that question in Learn, its topic open. `#locators` opens the locator drill.
 2. Changing the address to such a value while the page is open does the same.
 3. An unknown id (`#q9999`), another value or no `#` part leaves home open, with no page error.
 4. `data-ready="1"` is set after the address was followed.
@@ -173,7 +175,7 @@ A regular expression that takes very long to match (for example `getByText(/(a+)
 9. The frame is sandboxed without same-origin; the page ignores a message that does not come from the frame (for example `window.postMessage` from the page itself with a fake result).
 10. Task: pass, wrong count, same count but other elements; saved, kept after reload, kept across two tabs, absent in old progress, bad `locators` on import.
 11. Show an answer reveals the answer only.
-12. Locators tab by file:// in Chromium, stock-rules Firefox and WebKit.
+12. The locator drill by file:// in Chromium, stock-rules Firefox and WebKit.
 13. Unpacking fails (no `DecompressionStream`): the alert shows, no page error.
 14. Casebook block: shown on a linked question with the exact links, absent on an unlinked one, present in the quiz after Show answer.
 15. Parity table above plus every task answer.

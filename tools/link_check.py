@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 URL = re.compile(r"https?://[^\s)>,\]]+")
 DEAD = {404, 410}
-AGENT = "qa-interview-bank-link-check/1.0 (+https://github.com/bartech-lab/qa-interview-bank)"
+AGENT = "Mozilla/5.0 (compatible; link-check)"  # a generic name: the checked sites learn nothing about who runs it
 
 
 def source_links() -> dict[str, list[str]]:
