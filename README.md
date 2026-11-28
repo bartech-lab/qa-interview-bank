@@ -25,7 +25,12 @@ On Windows, use `py tools/build.py` if `python3` is not found.
 ## Use it
 
 - **Learn**: pick a topic, then read question by question. The arrow keys move between questions. Press **Mark as known** when you can answer it.
-- **Quiz**: pick topics, which tiers and how many questions. Answer out loud, press Space to reveal, then 1 (didn't know) or 2 (knew it). At the end you can repeat the ones you missed.
+- **Quiz**: pick topics, which tiers and how many questions. Answer out loud, press Space to reveal, then 1 (didn't know), 2 (shaky) or 3 (knew it). At the end you can repeat the ones you missed.
+  - Pick topics from the list, by role (Manual QA, Automation, SDET, Lead), or paste a job ad: the page finds its topics. The ad stays in your browser.
+  - **Mock interview**: a clock runs while you answer, a structure guide, then the model answer.
+  - **Live-coding rehearsal**: up to five coding tasks against one clock, with prompts to think out loud.
+- **My cards**: add your own questions, for example from a company's interview, with a note per company. They go into Export progress.
+- **Locator drill** (in Learn, Playwright): type a Playwright locator and see what it matches on a real page.
 
 Your progress stays in this browser only. A copy opened from another folder or another browser starts empty.
 
@@ -45,40 +50,9 @@ Under every answer there is a **Report a problem with this answer** link. It ope
 
 ## Change the questions
 
-The questions are plain Markdown in `topics/`, one file per topic. A question looks like this:
+The questions are plain Markdown in `topics/`, one file per topic. [CONTRIBUTING.md](CONTRIBUTING.md) shows the format, the checks to run and how to propose a change.
 
-```markdown
-### What is the difference between PUT and PATCH?
-
-Topic: api-rest | Core | id: q0308
-
-**Say:** The short answer, as you would say it out loud.
-
-**Trap:** The answer that sounds right but loses the point.
-
-**Full process:** The longer explanation, with code.
-
-**Follow-ups:**
-- *A likely next question?* Its short answer.
-
-**Source:** https://link-to-the-docs
-```
-
-Keep the `id` of an existing question when you edit it; saved progress and issue reports point to it. A new question takes the next free id.
-
-After a change, run the checks:
-
-```sh
-python3 tools/build.py          # the page builds
-python3 tools/leak_check.py     # no answer states one person's career history
-npm ci                          # once: installs Playwright (needs Node.js 20 or newer)
-npx playwright install          # once: downloads Chromium, Firefox and WebKit
-npm test                        # builds the page and runs the browser tests
-```
-
-`npm test` runs every test in three browsers at desktop and phone width. WebKit needs system libraries that Ubuntu and macOS have; on other Linux systems it may not start. Then run only the others: `npx playwright test --project 'chromium-*' --project 'firefox-*'`.
-
-`leak_check.py` prints each problem line with a label. `[personal]` means the line states one person's career history, such as "I have used X" or "in a previous job". Reword it as advice ("If you have used X, say how"). If the line is fine as it is, read it once more, then run `python3 tools/leak_check.py --accept`. That stores a fingerprint of the line in `tools/reviewed-lines.txt`; commit that file with your change.
+Every release also carries `questions.json`: all questions with their ids, topics and tiers, for reuse under CC BY-SA 4.0.
 
 ## Licence
 

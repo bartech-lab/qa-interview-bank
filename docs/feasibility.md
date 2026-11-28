@@ -77,6 +77,13 @@ Each probe page reports into `window.__result`. "file" means the page was opened
 | SQLite wasm (`sql-wasm.wasm`) | 688,280 | 336,401 | 448,536 |
 | sql.js single file, not used | 981,105 | 446,512 | 595,352 |
 
+18. **A service worker keeps the page usable with no server after one visit** (phase 6, 2026-11-28), by http, in Chromium 159, Firefox 159 and WebKit 27.2. WebKit ran in Playwright's Docker image (`mcr.microsoft.com/playwright:v1.65.1-noble`, 2 CPUs) on archpc, not GitHub Actions.
+    - Setup: a page registers `sw.js`, which caches the page on install and answers every request network first, with the cache as the fallback. "Offline" means the http server was closed; Chromium's offline emulation may not reach a service worker's own requests, so it was not used.
+    - Visit once, reload once (the second load goes through the worker), then change the served page and reload: the new page showed in all three, so a new deploy wins while the server is up.
+    - Server closed: a reload showed the last page in 13 ms (Chromium), 37 ms (Firefox) and 11 ms (WebKit), and a new tab on the same address showed it too.
+    - By file:// a page cannot register a worker, so the built page adds the worker and the install file only over http(s) (docs/phase6-spec.md, section 6).
+    - Runner: `tools-local/probe18.mjs <dir> <browser>`.
+
 ## Table
 
 WebKit rows come from the Probes workflow run of b56e7ab; Chromium rows from the same runner code; Firefox rows from the runner with stock file:// rules restored. The table is rendered from the JSON results.

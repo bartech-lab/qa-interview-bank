@@ -22,10 +22,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # the data version carries the date of the last topics/ change
       - name: Content check
         run: python3 tools/leak_check.py
       - name: Build
-        run: python3 tools/build.py && mkdir site && cp dist/index.html site/index.html
+        run: python3 tools/build.py && mkdir site && cp dist/index.html dist/sw.js dist/manifest.webmanifest dist/icon.svg dist/questions.json site/
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:

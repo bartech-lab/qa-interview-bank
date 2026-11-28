@@ -2,7 +2,7 @@
 const APP = 'qa-interview-bank', FORMAT = 1, MAX_IMPORT = 5000000;
 let importState = { msg: null, kind: '', pending: null };
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
-const hasProgress = s => ['known', 'shaky', 'missed', 'notes', 'code'].some(k => Object.keys(s[k]).length);
+const hasProgress = s => ['known', 'shaky', 'missed', 'notes', 'code', 'cards', 'companies'].some(k => Object.keys(s[k]).length);
 
 function exportProgress() {
   const t = today();
@@ -42,9 +42,9 @@ function importFile(input) {
 function importYes() {
   const raw = importState.pending, p = cleanProgress(raw.progress)[0], when = new Date(raw.exported);
   p.backup = isNaN(when) ? null : dayOf(when);
-  store = p; save();
+  store = p; save(); syncCards();
   const ids = new Set(['known', 'shaky', 'missed', 'notes', 'code', 'srs'].flatMap(k => Object.keys(p[k])));
-  const foreign = [...ids].filter(id => !byId[id]).length;
+  const foreign = [...ids].filter(id => !byId[id] && !p.cards[id]).length;  // marks on the file's own cards are not foreign
   importState = { kind: 'ok', pending: null,
     msg: `Progress imported: ${plural(Object.keys(p.known).length, 'known mark')}.` + (foreign ? ` ${plural(foreign, 'question')} in the file ${foreign === 1 ? 'is' : 'are'} not in this version of the bank; ${foreign === 1 ? 'it is' : 'they are'} kept.` : '') };
   overall(); renderHome();

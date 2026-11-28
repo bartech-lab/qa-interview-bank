@@ -29,7 +29,7 @@ const real = (p: Page, text: string): Locator => {
   return new Function('page', 'return ' + (s.startsWith('page.') ? s : 'page.' + s))(frameOf(p));
 };
 async function openLoc(p: Page) {
-  await p.getByRole('button', { name: 'Locators' }).click();
+  await goTo(p, 'learn', '01-playwright'); await p.locator('#drill-open').click();
   await expect(p.locator('#locators')).toBeVisible();
   await expect(frameOf(p).locator('body *').first()).toBeAttached();
 }
@@ -54,16 +54,16 @@ const sameSetOf = async (p: Page, text: string) => real(p, text).count();
 
 // ---------------------------------------------------------------- parts, ids and names
 test('parts: header button, view, picker, frame, box, result line, task list, verdict', async ({ bank }) => {
-  const tab = bank.locator('#tab-locators');
-  await expect(bank.getByRole('button', { name: 'Locators' })).toHaveAttribute('id', 'tab-locators');
+  const tab = bank.locator('#tab-learn');
+  await expect(bank.locator('#tab-locators')).toHaveCount(0);
   await expect(bank.locator('#locators')).toBeHidden();
-  await expect(tab).not.toHaveClass(/\bon\b/);
-  await tab.click();
+  await expect(bank.locator('#tab-review')).not.toHaveClass(/\bon\b/);
+  await goTo(bank, 'learn', '01-playwright'); await bank.locator('#drill-open').click();
   await expect(bank.locator('#locators')).toBeVisible();
   await expect(tab).toHaveClass(/\bon\b/);
   await goTo(bank, 'home');
   await expect(bank.locator('#locators')).toBeHidden();
-  await expect(tab).not.toHaveClass(/\bon\b/);
+  await expect(bank.locator('#tab-review')).not.toHaveClass(/\bon\b/);
   await goTo(bank, 'locators');
   await expect(bank.locator('#locators')).toBeVisible();
 
@@ -240,12 +240,13 @@ test('FM5 page. inside has: is removed, so the filter matches like real Playwrig
 
 test('FM5 a string that contains page. keeps it', async ({ bank }) => {
   await openOn(bank, 'shop');
-  const control = await sameSetOf(bank, "getByText('one')");
+  // Phase 6: the frozen pages lost the case menu, so the control text is a word the shop page itself shows.
+  const control = await sameSetOf(bank, "getByText('Pen')");
   expect(control, 'text without "page." would match here').toBeGreaterThan(0);
-  await typeLoc(bank, "getByText('page.one')");
+  await typeLoc(bank, "getByText('page.Pen')");
   await expect(state(bank)).toHaveAttribute('data-state', 'none');
   await expect(marks(bank)).toHaveCount(0);
-  await typeLoc(bank, "page.getByText('page.one');");
+  await typeLoc(bank, "page.getByText('page.Pen');");
   await expect(state(bank)).toHaveAttribute('data-state', 'none');
 });
 
@@ -344,7 +345,7 @@ test('FM8 clicks on links, buttons and submit buttons and a form submit change n
   await frame.locator('body').evaluate(b => b.setAttribute('data-mark', 'kept'));
   const pageUrl = bank.url();
   const frameUrl = bank.frames().find(f => f !== bank.mainFrame())!.url();
-  await frame.getByRole('link').first().click();
+  // Phase 6: signup lost its links with the case menu; the shop page's own links are clicked below.
   await frame.getByRole('button', { name: 'Create account' }).click();
   await frame.getByRole('button', { name: 'Show password' }).click();
   await frame.getByLabel('Email').fill('a@b.c');
@@ -354,6 +355,11 @@ test('FM8 clicks on links, buttons and submit buttons and a form submit change n
   await expect(frame.locator('body')).toHaveAttribute('data-mark', 'kept');
   expect(bank.url()).toBe(pageUrl);
   expect(bank.frames().find(f => f !== bank.mainFrame())!.url()).toBe(frameUrl);
+  await choosePage(bank, 'shop');
+  await frame.locator('body').evaluate(b => b.setAttribute('data-mark', 'kept'));
+  for (const link of await frame.getByRole('link').all()) await link.click();
+  await expect(frame.locator('body')).toHaveAttribute('data-mark', 'kept');
+  expect(bank.url()).toBe(pageUrl);
   for (const p of info.pages) await choosePage(bank, p.id);
   expect(urls.filter(u => /^(https?|file|ftp):/.test(u)), 'requests made while the frame was in use').toEqual([]);
 });
@@ -594,7 +600,7 @@ for (const part of ['pwi', 'frozen']) {
   test(`FM13 part ${part} cannot be unpacked: the alert shows, no page error`, async ({ watched: page }) => {
     await corruptParts(page, [part]);
     await load(page);
-    await page.getByRole('button', { name: 'Locators' }).click();
+    await goTo(page, 'learn', '01-playwright'); await page.locator('#drill-open').click();
     await expect(page.locator('#locators').getByRole('alert')).toHaveText(MSG.unpack);
     await goTo(page, 'home');
     await expect(page.locator('#locators')).toBeHidden();
@@ -607,6 +613,7 @@ test('FM13 no DecompressionStream: the alert shows, no page error', async ({ wat
     (window as unknown as Record<string, unknown>).DecompressionStream = undefined;
   });
   await page.goto(PAGE_URL);
-  await page.getByRole('button', { name: 'Locators' }).click();
+  // Phase 6: no header tab; without DecompressionStream the page cannot boot, so the drill is opened directly.
+  await page.evaluate(() => (window as unknown as { go: (v: string) => void }).go('locators'));
   await expect(page.locator('#locators').getByRole('alert')).toHaveText(MSG.unpack);
 });

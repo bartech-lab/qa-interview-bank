@@ -63,6 +63,7 @@ function runTask(btn, i) {
   const box = btn.closest('.editor'), q = Q[i], code = editorCode(box), out = box.querySelector('.out');
   if (!btn._ctl) stopOther(box, '.check-btn');
   box.querySelector('.judge').innerHTML = '';
+  rhNote(i, 'Ran');
   return runButton(btn, ctl => starterLang(q) === 'sql' ? runSQL(code, q.seed, out, ctl) : runTS(code, out, ctl));
 }
 function checkTask(btn, i) {
@@ -72,6 +73,7 @@ function checkTask(btn, i) {
   judge.innerHTML = '<div class="out-status">Checking…</div>';
   return runButton(btn, async ctl => {
     const v = await judgeSQL(q, code, ctl, judge);
+    if (v && v.verdict) rhNote(i, v.verdict === 'match' ? 'Correct' : 'Not correct yet');
     if (!judge.isConnected) return v;
     judge.innerHTML = `<div class="verdict" data-verdict="${v.verdict}">${esc(v.message)}</div>${v.detail ? `<div class="out-error">${esc(v.detail)}</div>` : ''}`;
     if (v.mine && v.want) {

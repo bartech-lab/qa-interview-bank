@@ -74,6 +74,7 @@ Rules from phase 1 that apply (`docs/feasibility.md`): nothing beside the HTML; 
 Every locator of the parity set below (rows 49 to 57 added in phase 4's follow-up for `.or()`, `.and()` and multi-option filters) and every task answer is typed into the trainer on its page in the built page. Real Playwright 1.65.1 builds the same locator on `#loc-frame` (the text with `page.` in front (locators inside `.or()`, `.and()` and `has:` carry their own `page.` in the table, as in real test code), evaluated with `page` bound to `page.frameLocator('#loc-frame')`) and collects its matched set. The elements marked `data-qa-match` must be exactly that set, in Chromium, Firefox and WebKit, by file://.
 
 - Guard against an empty pass: an entry marked 0 below must match 0 elements in real Playwright; every other entry at least 1.
+- Phase 6 removed the case menu from the frozen pages. Rows 14, 18, 19 and 46 targeted it and now target the page content. No page has a `title` attribute any more, so no row uses `getByTitle`.
 - Mix rule, checked by the test itself: at most a third of the parity set uses only `getByRole` calls; every kind in the "kind" column appears at least once; at least 10 entries are typed the way learners type (column "typed").
 - If a locator ever matches differently, the trainer stops accepting that form (state `unsupported`) or states the limit on screen, and the parity test expects that instead. The entry stays in the set.
 
@@ -92,12 +93,12 @@ Every locator of the parity set below (rows 49 to 57 added in phase 4's follow-u
 | 11 | expense-claims | `getByPlaceholder('ewa@')` | placeholder | partial | ≥1 |
 | 12 | expense-claims | `getByPlaceholder('EWA@EXAMPLE.COM', { exact: true })` | placeholder | case | 0 |
 | 13 | shop | `getByTestId('order-total')` | testid | | ≥1 |
-| 14 | notes | `getByTestId('notifications')` | testid | | ≥1 |
+| 14 | notes | `getByRole('listitem').filter({ has: page.getByText('Book notes') })` | filter |  | ≥1 |
 | 15 | shop | `getByTestId('order')` | testid | partial | 0 |
 | 16 | gallery | `getByAltText('photo 1 of')` | alt | case | ≥1 |
 | 17 | gallery | `getByAltText(/Photo \d of/)` | alt | regex | ≥1 |
-| 18 | settings | `getByTitle('Switch to dark theme')` | title | | ≥1 |
-| 19 | settings | `getByTitle('dark theme')` | title | partial | ≥1 |
+| 18 | gallery | `getByAltText('Photo 1 of 24 from the trip')` | alt |  | ≥1 |
+| 19 | gallery | `getByAltText('from the trip')` | alt | partial | ≥1 |
 | 20 | orders | `locator('tbody tr')` | css | | ≥1 |
 | 21 | shop | `locator('[data-testid="order-total"]')` | css | | ≥1 |
 | 22 | settings | `locator('select option')` | css | | ≥1 |
@@ -124,7 +125,7 @@ Every locator of the parity set below (rows 49 to 57 added in phase 4's follow-u
 | 43 | product-tabs | `getByRole('tab', { selected: true })` | role | | ≥1 |
 | 44 | shop | `getByRole('link', { name: 'reviews for' })` | role | partial | ≥1 |
 | 45 | orders | `getByRole('cell', { name: 'Ann' })` | role | | ≥1 |
-| 46 | playlist | `getByRole('link')` | role | | ≥1 |
+| 46 | playlist | `getByLabel('Move Slow Train')` | label |  | ≥1 |
 | 47 | shop | `page.getByRole('button', { name: 'Add Pen' });` | role | prefix | ≥1 |
 | 48 | signup | `await page.getByLabel('Name', { exact: true })` | label | prefix | ≥1 |
 | 49 | notes | `getByRole('button', { name: 'Star' }).or(page.getByRole('button', { name: 'Archive' }))` | or |  | ≥1 |

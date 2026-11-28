@@ -13,9 +13,11 @@ pages, or dist/index.html is larger than BUDGET bytes (the size budget in docs/f
 """
 import base64
 import gzip
+import hashlib
 import json
 import re
 import shutil
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -23,11 +25,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TOPICS, DIST = ROOT / "topics", ROOT / "dist"
 SRC = ROOT / "src"
-SCRIPTS = ("pack", "data", "markdown", "answer", "editor", "run", "sql", "review", "backup", "locators", "navigation", "home", "learn", "quiz", "start")
+SCRIPTS = ("pack", "data", "markdown", "answer", "editor", "run", "sql", "review", "backup", "cards", "locators", "navigation", "home", "learn", "quiz",
+           "setup", "mock", "rehearsal", "offline", "start")
 VENDOR = ROOT / "vendor"
 PACKS = {"codemirror": "codemirror.js", "sucrase": "sucrase.js", "sqljs": "sql-wasm.js", "sqlwasm": "sql-wasm.wasm", "pwi": "playwright-injected.js"}
 LOCATORS = SRC / "locators"  # frozen e2e-casebook pages and the trainer's tasks (docs/phase4-spec.md)
 CASEBOOK = SRC / "casebook.json"  # links from questions to e2e-casebook cases (idea 51)
+KEYWORDS = SRC / "topic-keywords.json"  # keyword patterns per topic slug, for the job-ad paste (idea 59)
+OFFLINE = ("sw.js", "manifest.webmanifest", "icon.svg")  # served beside the page on Pages only (docs/phase6-spec.md, section 6)
+REPO_URL = "https://github.com/bartech-lab/qa-interview-bank"
 BUDGET = 4_500_000  # bytes for dist/index.html, docs/feasibility.md
 FONT = re.compile(r"url\(fonts/([\w.-]+\.woff2)\)")
 TOPIC = re.compile(r"^Topic: (\S+) \| (Core|Standard|Niche) \| id: (q\d{4})$", re.M)
@@ -72,9 +78,10 @@ def mark_runnable(q: dict) -> None:
     q["body"] = FENCE.sub(fence, body)
 
 
-def questions() -> tuple[list, list]:
+def questions(topics: Path = TOPICS) -> tuple[list, list]:
+    """Every question in topics/*.md. Each keeps its Markdown as written in "md"; "body" gets the build's run marks."""
     qs, problems, ids = [], [], {}
-    for f in sorted(TOPICS.glob("*.md")):
+    for f in sorted(topics.glob("*.md")):
         text = f.read_text(encoding="utf-8")
         title, section, seed = text.splitlines()[0].lstrip("# "), "", None
         for chunk in re.split(r"(?m)^(?=#{2,3} )", text):
@@ -92,7 +99,8 @@ def questions() -> tuple[list, list]:
                 if m.group(3) in ids:
                     problems.append(f"{f.name}: id {m.group(3)} repeats ({ids[m.group(3)]})")
                 ids[m.group(3)] = f.name
-                item = {"id": m.group(3), "file": f.stem, "topic": title, "section": section, "q": q, "body": body.strip()}
+                item = {"id": m.group(3), "file": f.stem, "topic": title, "section": section, "q": q, "body": body.strip(), "md": body.strip(),
+                        "slug": m.group(1), "tier": m.group(2)}
                 starter = STARTER.search(item["body"])
                 sql_task = bool(starter and re.search(r"^```sql\s*$", starter.group(0), re.M))
                 if seed and (sql_task or "```sql" in body):
@@ -106,6 +114,41 @@ def questions() -> tuple[list, list]:
                 mark_runnable(item)
                 qs.append(item)
     return qs, problems
+
+
+def data_version(qs: list, root: Path = ROOT) -> str:
+    """The question set's label: commit date of the newest change to topics/, then a hash of ids, titles and bodies
+    (docs/phase6-spec.md, Words used here). Without git history the date part is "local"."""
+    h = hashlib.sha256(json.dumps(sorted((q["id"], q["q"], q["md"]) for q in qs), ensure_ascii=False).encode()).hexdigest()[:12]
+    try:
+        day = subprocess.run(["git", "log", "-1", "--format=%cs", "--", "topics"], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        day = ""
+    return f"{day.replace('-', '.') if day else 'local'}+{h}"
+
+
+def questions_json(qs: list, version: str) -> str:
+    """Idea 71: the questions as a reusable data file, bodies as written in topics/ (no run marks)."""
+    rows = [{"id": q["id"], "title": q["q"], "topic": q["slug"], "tier": q["tier"], "file": q["file"], "section": q["section"], "body": q["md"]}
+            for q in sorted(qs, key=lambda q: q["id"])]
+    return json.dumps({"dataVersion": version, "license": "CC BY-SA 4.0", "source": REPO_URL, "questions": rows}, ensure_ascii=False, indent=1) + "\n"
+
+
+def keywords(qs: list) -> tuple[bytes, list]:
+    """Idea 59: the keyword patterns, one entry per topic slug the questions use. Returns the packed part and the problems."""
+    data, problems = json.loads(KEYWORDS.read_text(encoding="utf-8")), []
+    used = {q["slug"] for q in qs}
+    if missing := sorted(used - data.keys()):
+        problems.append(f"src/topic-keywords.json: no entry for topic(s) {missing}")
+    if extra := sorted(data.keys() - used):
+        problems.append(f"src/topic-keywords.json: topic(s) {extra} are used by no question")
+    for slug, t in data.items():
+        for pat in t.get("patterns", []):
+            try:
+                re.compile(pat[3:] if pat.startswith("cs:") else pat)
+            except re.error as e:
+                problems.append(f"src/topic-keywords.json: {slug}: bad pattern {pat!r}: {e}")
+    return json.dumps(data, ensure_ascii=False).encode(), problems
 
 
 def link_casebook(qs: list) -> list:
@@ -187,25 +230,34 @@ def main() -> int:
     problems += link_casebook(qs)
     frozen_part, more = frozen()
     problems += more
+    kw_part, more = keywords(qs)
+    problems += more
     if problems:
         print(*problems, sep="\n", file=sys.stderr)
         return 1
-    parts = {"data": json.dumps(qs, ensure_ascii=False).encode()} | {k: (VENDOR / f).read_bytes() for k, f in PACKS.items()} | {"frozen": frozen_part}
-    page = page_source().replace("/*PACKS*/", "\n".join(pack(k, v) for k, v in parts.items()))
+    version = data_version(qs)
+    page_qs = [{k: v for k, v in q.items() if k not in ("md", "slug", "tier")} for q in qs]
+    parts = {"data": json.dumps(page_qs, ensure_ascii=False).encode()} | {k: (VENDOR / f).read_bytes() for k, f in PACKS.items()} \
+        | {"frozen": frozen_part, "keywords": kw_part}
+    page = page_source().replace("/*DATA_VERSION*/", json.dumps(version)).replace("/*PACKS*/", "\n".join(pack(k, v) for k, v in parts.items()))
     shutil.rmtree(DIST, ignore_errors=True)
     DIST.mkdir()
     (DIST / "index.html").write_text(page, encoding="utf-8")
+    (DIST / "questions.json").write_text(questions_json(qs, version), encoding="utf-8")
+    for name in OFFLINE:
+        (DIST / name).write_text((SRC / name).read_text(encoding="utf-8").replace("/*DATA_VERSION*/", json.dumps(version)), encoding="utf-8")
     size = (DIST / "index.html").stat().st_size
     if size > BUDGET:
         print(f"dist/index.html is {size:,} bytes, over the {BUDGET:,}-byte budget in docs/feasibility.md", file=sys.stderr)
         return 1
     with zipfile.ZipFile(DIST / "qa-interview-bank.zip", "w", zipfile.ZIP_DEFLATED) as z:
         z.write(DIST / "index.html", "qa-interview-bank/index.html")
+        z.write(DIST / "questions.json", "qa-interview-bank/questions.json")
         for name in ("README.md", "LICENSE", "LICENSE-CONTENT.md"):
             z.write(ROOT / name, f"qa-interview-bank/{name}")
         for f in sorted(TOPICS.glob("*.md")):
             z.write(f, f"qa-interview-bank/topics/{f.name}")
-    print(f"OK: {len(qs)} questions -> dist/index.html ({size:,} bytes, budget {BUDGET:,}) and dist/qa-interview-bank.zip")
+    print(f"OK: {len(qs)} questions, data version {version} -> dist/index.html ({size:,} bytes, budget {BUDGET:,}), dist/questions.json and dist/qa-interview-bank.zip")
     return 0
 
 

@@ -123,7 +123,7 @@ test('address #qNNNN opens that question in Learn; #locators opens the trainer; 
   expect(await currentId(page)).toBe(id);
   await page.evaluate(() => { location.hash = '#locators'; });
   await expect(page.locator('#locators')).toBeVisible();
-  await expect(page.locator('#tab-locators')).toHaveClass(/\bon\b/);
+  await expect(page.locator('#tab-learn')).toHaveClass(/\bon\b/);
   await page.evaluate(() => { location.hash = '#q0002'; });
   await expect.poll(() => currentId(page)).toBe('q0002');
   await page.goto('about:blank');  // a new load: changing only the # part would not reload the page

@@ -11,11 +11,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # release notes compare with the previous tag; the data version needs the date of the last topics/ change
       - name: Content check
-        run: python3 tools/leak_check.py
+        run: python3 tools/leak_check.py && python3 tools/content_check.py
       - name: Build
         run: python3 tools/build.py
-      - name: Create the release with the zip
+      - name: Release notes (questions added, removed and changed since the previous tag)
+        run: |
+          prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          if [ -n "$prev" ]; then python3 tools/release_notes.py "$prev" > notes.md; else echo "First release." > notes.md; fi
+          cat notes.md
+      - name: Create the release with the zip and questions.json
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/qa-interview-bank.zip --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" dist/qa-interview-bank.zip dist/questions.json --title "$GITHUB_REF_NAME" --notes-file notes.md

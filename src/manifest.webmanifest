@@ -1,0 +1,11 @@
+{
+ "name": "QA Interview Bank",
+ "short_name": "QA Bank",
+ "description": "Interview questions for QA and test automation roles, with answers, quizzes and spaced review. Works offline.",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#e9edf2",
+ "theme_color": "#2f4f8f",
+ "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

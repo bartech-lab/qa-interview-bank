@@ -15,11 +15,15 @@ jobs:
           cache: npm
       - name: Content check (personal-history patterns)
         run: python3 tools/leak_check.py
+      - name: Content check (labels, duplicate titles, source links)
+        run: python3 tools/content_check.py
       - run: npm ci
       - name: Vendor parts match the pinned packages
         run: node tools/vendor.mjs && git status --porcelain vendor/ && test -z "$(git status --porcelain vendor/)"
       - name: Install browsers
         run: npx playwright install --with-deps chromium firefox webkit
+      - name: Tool tests (content check, release notes, questions.json)
+        run: python3 -m unittest discover -s tests/tools -t .
       - name: Build and browser tests
         run: npm test
       - uses: actions/upload-artifact@v4

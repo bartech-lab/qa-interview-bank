@@ -4,7 +4,7 @@
 //   worker  TS task q1019's worked solution runs in a worker and prints its ok line
 //   limit   the 5 s limit stops while (true) {}
 //   sql     SQL task q1030's worked answer is judged "match"
-//   locators  the Locators tab marks 3 Add buttons on the Shop page, and 2 elements for an .or() locator
+//   locators  the locator drill marks 3 Add buttons on the Shop page, and 2 elements for an .or() locator
 //   address   a fresh load of the page with #q0018 opens that question in Learn
 // Targets: file:// of dist/index.html, a local http server on dist/, and the GitHub Pages copy.
 // Whether Safari's automation may open file:// at all is recorded, not assumed; a refused file:// is a finding, not a failure.
@@ -104,7 +104,7 @@ async function checks(url) {
     return 'ok, verdict match';
   });
   await step('locators', async () => {
-    // The Locators tab (phase 4): the trainer's frame reads locators with Playwright's engine and reports a count.
+    // The locator drill (phase 4; under Learn since phase 6): the trainer's frame reads locators with Playwright's engine and reports a count.
     await js("eval('go')('locators')");
     await until('trainer ready', () => js("const s = document.getElementById('loc-state'); return !!s && s.dataset.input === ''"), 20000);
     const got = [];

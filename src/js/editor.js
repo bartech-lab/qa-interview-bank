@@ -66,15 +66,16 @@ function answer(q) {
     ${f.Trap ? `<div class="trap"><div class="lbl">Common trap</div>${md(f.Trap)}</div>` : ''}
     ${f['Full process'] ? `<details class="block"><summary>Full explanation <span class="hint">steps and code</span></summary><div class="inner">${md(f['Full process'])}</div></details>` : ''}
     ${fu ? `<details class="block"><summary>Follow-up questions <span class="hint">${fu} the interviewer may ask next</span></summary><div class="inner">${followUps(f['Follow-ups'])}</div></details>` : ''}
-    ${casebook(q)}${f.Source ? sources(f.Source) : ''}${report(q)}</div>`;
+    ${q.own ? '' : casebook(q)}${f.Source ? sources(f.Source) : ''}${q.own ? '' : report(q)}</div>`;  // card text never goes into a public issue
 }
 const tierBadge = t => `<span class="tier ${t}" title="${esc(TIERS[t])}">${t}</span>`;
-const crumbs = q => `<div class="crumbs">${tierBadge(q.tier)}<span>${esc(fileMeta(q.file))}</span><span>${inline(q.sec)}</span></div>`;
+const crumbs = q => q.own ? `<div class="crumbs"><span>My card</span>${q.company ? `<span>${esc(q.company)}</span>` : ''}</div>`
+  : `<div class="crumbs">${tierBadge(q.tier)}<span>${esc(fileMeta(q.file))}</span><span>${inline(q.sec)}</span></div>`;
 const infoTiers = () => `<span class="info" tabindex="0">?<span class="tip"><b>What do Core, Standard and Niche mean?</b>${Object.entries(TIERS).map(([n, d]) => `<p>${tierBadge(n)} ${d}</p>`).join('')}</span></span>`;
 
 function overall() {
-  const n = Q.filter(known).length, due = dueList(store, today()).length;
-  $('ov-text').innerHTML = `${n} / ${Q.length}<span class="ov-word"> known</span>`; $('ov-bar').style.width = (100 * n / Q.length) + '%';
+  const n = bankQ().filter(known).length, due = dueList(store, today()).length;  // the counter counts bank questions only, not cards
+  $('ov-text').innerHTML = `${n} / ${BANK}<span class="ov-word"> known</span>`; $('ov-bar').style.width = (100 * n / BANK) + '%';
   $('tab-review').innerHTML = `Review${due ? ` <span class="badge" title="Due today">${due}</span>` : ''}`;
 }
 

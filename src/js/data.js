@@ -1,10 +1,12 @@
 // ---------- data ----------
-let Q = [], files = [];  // filled by prepare() once the questions are unpacked (boot in start.js)
+let Q = [], files = [];  // filled by prepare() once the questions are unpacked (boot in start.js); Q ends with the learner's cards
+let BANK = 0;  // how many of Q are bank questions; the cards follow them (syncCards)
+const DATA_VERSION = /*DATA_VERSION*/;  // the question set's label, set by tools/build.py (docs/phase6-spec.md)
 const META = {
   '01-playwright': 'Playwright', '02-typescript-javascript': 'TypeScript & JavaScript', '03-api': 'API testing',
   '04-sql-databases': 'SQL & databases', '05-testing-fundamentals': 'Testing fundamentals', '06-framework-and-flaky': 'Framework design & flaky tests',
   '07-ci-docker-cloud': 'CI/CD, Docker & Git', '08-ai-testing-and-tools': 'AI in QA', '09-mobile': 'Mobile testing',
-  '10-performance-security-a11y': 'Performance, security & a11y', '11-agile-leadership': 'Agile & leadership', '13-live-coding': 'Live coding & home tasks',
+  '10-performance-security-a11y': 'Performance, security & a11y', '11-agile-leadership': 'Agile & leadership', '13-live-coding': 'Live coding & home tasks', 'my-cards': 'My cards',
 };
 const TIERS = {
   Core: 'The topic appears in 30% or more of the QA job ads this bank was built from, or it is set to Core by hand. Only the first 5 questions of each such topic are Core; the rest are Standard.',
@@ -20,17 +22,21 @@ function prepare(list) {
     q.sec = (q.section || 'General').replace(/^Section \d+:\s*/i, '').replace(/\s*\(`?[\w-]+`?\)$/, '');
     q.f = fields(q.body);
   });
+  Q.forEach(q => { q.slug = (q.body.match(/^Topic: (\S+)/m) || [])[1] || ''; });
   files = [...new Set(Q.map(q => q.file))];
-  byId = Object.fromEntries(Q.map(q => [q.k, q]));
+  BANK = Q.length;
   store = read() || blank();
+  syncCards();
 }
+const bankQ = () => Q.slice(0, BANK);
 const $ = id => document.getElementById(id);
 
 // ---------- saved progress ----------
 // localStorage['qa-bank'] holds everything below (docs/phase2-spec.md). Keys this version does not know are kept,
 // so a copy of the page from a newer version does not lose its data when an older copy saves.
 const STORE_KEY = 'qa-bank', THEME_KEY = 'qa-bank-theme', MARKS = ['known', 'shaky', 'missed'];
-const blank = () => ({ v: 2, known: {}, shaky: {}, missed: {}, notes: {}, code: {}, srs: {}, exam: null, backup: null, mix: null, mixSize: 10, locators: {}, locPage: null });
+const CARD_ID = /^u[0-9a-z]{1,16}$/, CARD_MAX = 10000, COMPANY_MAX = 80, MAX_CARDS = 500, MAX_COMPANIES = 50;
+const blank = () => ({ v: 2, known: {}, shaky: {}, missed: {}, notes: {}, code: {}, srs: {}, exam: null, backup: null, mix: null, mixSize: 10, locators: {}, locPage: null, cards: {}, companies: {} });
 
 // Days are local calendar days as 'YYYY-MM-DD'; strings in this form compare in date order.
 const pad = n => String(n).padStart(2, '0');
@@ -49,7 +55,7 @@ function cleanProgress(raw) {
   const map = (name, ok) => {
     if (raw[name] === undefined) return;
     if (!isObj(raw[name])) return bad.push(name);
-    for (const [id, x] of Object.entries(raw[name])) ok(x) ? out[name][id] = x : bad.push(`${name}.${id}`);
+    for (const [id, x] of Object.entries(raw[name])) ok(x, id) ? out[name][id] = x : bad.push(`${name}.${id}`);
   };
   MARKS.forEach(m => map(m, x => x === 1));
   map('notes', x => typeof x === 'string'); map('code', x => typeof x === 'string'); map('locators', x => x === 1);
@@ -61,6 +67,13 @@ function cleanProgress(raw) {
   }
   if (raw.locPage !== undefined && raw.locPage !== null) { if (typeof raw.locPage === 'string') out.locPage = raw.locPage; else bad.push('locPage'); }
   if (raw.mixSize !== undefined) { if ([5, 10, 20].includes(raw.mixSize)) out.mixSize = raw.mixSize; else bad.push('mixSize'); }
+  // Own cards and company notes (docs/phase6-spec.md, section 2).
+  const str = (x, min, max) => typeof x === 'string' && x.length >= min && x.length <= max;
+  map('cards', (x, id) => CARD_ID.test(id) && isObj(x) && str(x.q, 1, CARD_MAX) && x.q.trim() !== '' && str(x.a, 0, CARD_MAX)
+    && (x.company === undefined || str(x.company, 0, COMPANY_MAX)) && isDay(x.created));
+  map('companies', (x, name) => str(name, 1, COMPANY_MAX) && str(x, 0, CARD_MAX));
+  if (Object.keys(out.cards).length > MAX_CARDS) bad.push('cards');
+  if (Object.keys(out.companies).length > MAX_COMPANIES) bad.push('companies');
   for (const id of Object.keys(out.known)) { delete out.shaky[id]; delete out.missed[id]; }
   for (const id of Object.keys(out.shaky)) delete out.missed[id];
   return [out, bad];
@@ -102,5 +115,6 @@ function update(change) {
   const t = today();
   if (!store.mix || store.mix.day !== t) store.mix = { day: t, ids: buildMix(store, t) };  // today's mix is fixed at its first save
   change(store); save();
+  syncCards();  // another tab may have added or removed cards
 }
 const known = q => !!store.known[q.k];

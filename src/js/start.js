@@ -14,6 +14,7 @@ document.addEventListener('keydown', e => {
 window.addEventListener('storage', e => {
   if (e.key !== STORE_KEY && e.key !== null) return;
   if (!saveFailed) store = read() || store;
+  syncCards();
   overall();
   if (view === 'home') renderHome();
   if (view === 'review') renderReview();
@@ -50,8 +51,9 @@ async function boot() {
   go('home');
   openFromAddress();
   document.documentElement.dataset.ready = '1';
+  offlineSetup();
 }
-// Addresses other pages link to (docs/phase4-spec.md): #q0158 opens that question in Learn, #locators the Locators tab.
+// Addresses other pages link to (docs/phase4-spec.md): #q0158 opens that question in Learn, #locators the locator drill (under Learn).
 // Anything else, or an unknown id, leaves home open.
 function openFromAddress() {
   const h = location.hash.slice(1);

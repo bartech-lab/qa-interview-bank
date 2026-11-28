@@ -5,7 +5,9 @@ function renderHome() {
     <section class="toc" aria-labelledby="toc-title"><h2 id="toc-title">Topics</h2>
       <div class="toc-list">${files.map(topicRow).join('')}</div>
       <div class="toc-note">Each bar shows the questions you know, find shaky or didn't know, out of all questions in the topic. ${tierBadge('Core')} questions are the most asked in QA job ads. ${infoTiers()}</div></section>
-    <footer class="homefoot"><div id="backuprow">${backupRow()}</div><div class="resetrow" id="resetrow">${resetRow(false)}</div></footer>`;
+    ${myCardsSection()}
+    <footer class="homefoot"><div id="backuprow">${backupRow()}</div><div class="resetrow" id="resetrow">${resetRow(false)}</div>
+      <p class="muted small" id="data-version">Questions: ${esc(DATA_VERSION)}, ${BANK} questions.</p>${offlineNote()}</footer>`;
 }
 function topicRow(f) {
   const qs = Q.filter(q => q.file === f), n = m => qs.filter(q => store[m][q.k]).length, w = m => (100 * n(m) / qs.length).toFixed(1) + '%';
@@ -17,7 +19,8 @@ function topicRow(f) {
 function resetRow(asking) {
   const n = k => Object.keys(store[k]).length;
   if (!hasProgress(store)) return '';
-  const parts = [[n('known'), 'known mark'], [n('shaky'), 'shaky mark'], [n('missed'), 'question', " you didn't know"], [n('notes'), 'note'], [n('code'), 'saved code edit']];
+  const parts = [[n('known'), 'known mark'], [n('shaky'), 'shaky mark'], [n('missed'), 'question', " you didn't know"], [n('notes'), 'note'], [n('code'), 'saved code edit'],
+    [n('cards'), 'card'], [n('companies'), 'company note']];
   const what = parts.filter(([c]) => c).map(([c, w, tail = '']) => plural(c, w) + tail).join(', ').replace(/, ([^,]*)$/, ' and $1');
   return asking
     ? `<span id="reset-ask">Delete ${what}? This cannot be undone.</span>
@@ -28,7 +31,7 @@ function resetRow(asking) {
 // Reset deletes the saved progress, so a stale second tab cannot bring it back. The theme stays.
 function resetProgress() {
   try { localStorage.removeItem(STORE_KEY); saveFailed = false; } catch (e) {}
-  store = blank(); importState = { msg: null, kind: '', pending: null };
+  store = blank(); importState = { msg: null, kind: '', pending: null }; syncCards();
   showSaveError(); overall(); renderHome();
 }
 

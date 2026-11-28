@@ -320,13 +320,16 @@
 
   /* locator trainer (docs/phase4-spec.md) */
   #locators { padding:20px; }
-  .loc-wrap { display:grid; grid-template-columns:minmax(300px, 380px) 1fr; gap:20px; max-width:1400px; margin:0 auto; align-items:start; }
+  /* The controls and tasks sit left of the page; on a phone the order is controls, page, tasks, so the page shows without scrolling. */
+  .loc-wrap { display:grid; grid-template-columns:minmax(300px, 380px) 1fr; grid-template-rows:auto 1fr; gap:16px 20px; max-width:1800px; margin:0 auto; align-items:start; }
+  .loc-wrap > .loc-panel:first-child { grid-column:1; grid-row:1; } .loc-tasks-panel { grid-column:1; grid-row:2; } .loc-stage { grid-column:2; grid-row:1 / span 2; }
+  .loc-panel .back { margin:0 0 8px; padding:0; }
   .loc-panel { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px 18px; box-shadow:var(--shadow); }
-  .loc-panel h2 { margin:0 0 4px; font-size:20px; } .loc-panel h3 { margin:16px 0 6px; font-size:15px; }
+  .loc-panel h2 { margin:0 0 4px; font-size:20px; } .loc-panel h3 { margin:0 0 6px; font-size:15px; }
   .loc-field { display:block; margin:12px 0 0; font-weight:600; font-size:14px; }
   .loc-field select, .loc-field input { display:block; width:100%; margin-top:4px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:var(--bg); font-weight:400; }
   #loc-input { font-family:var(--mono); font-size:14px; }
-  #loc-state { min-height:3.2em; margin:10px 0 0; font-size:14px; }
+  #loc-state { min-height:1.6em; margin:10px 0 0; font-size:14px; }
   #loc-state[data-state=unsupported], #loc-state[data-state=invalid] { color:var(--bad); }
   #loc-tasks { margin:0; padding-left:22px; }
   #loc-tasks li { margin:4px 0; }
@@ -336,8 +339,45 @@
   #loc-verdict { font-size:14px; margin:10px 0 0; } #loc-verdict[data-verdict=pass] { color:var(--ok); } #loc-verdict[data-verdict=count], #loc-verdict[data-verdict=other] { color:var(--warn); }
   #loc-answer { font-family:var(--mono); font-size:13px; }
   .loc-stage { min-width:0; }
-  #loc-frame { width:100%; height:calc(100vh - 120px); min-height:480px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  #loc-frame { width:100%; height:calc(100vh - 110px); min-height:420px; border:1px solid var(--line); border-radius:8px; background:#fff; }
   .loc-error { color:var(--bad); }
   .casebook { margin:18px 0 0; padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--soft); }
   .casebook ul { margin:4px 0 6px; padding-left:20px; } .casebook p { margin:4px 0 0; }
-  @media (max-width: 760px) { .loc-wrap { grid-template-columns:1fr; } #locators { padding:12px; } #loc-frame { height:70vh; } }
+  @media (max-width: 760px) { .loc-wrap { grid-template-columns:1fr; grid-template-rows:none; gap:12px; } .loc-wrap > * { grid-column:1 !important; grid-row:auto !important; }
+    #locators { padding:12px; } #loc-frame { height:55vh; min-height:320px; } .loc-panel > .muted.small { display:none; } }
+  /* phase 6: own cards, practice modes, mock interview, rehearsal (docs/phase6-spec.md) */
+  #my-cards { margin-top:56px; }
+  #my-cards h2 { font:600 30px/1.2 var(--serif); margin:0 0 14px; }
+  .card-rows { border-top:2px solid var(--fg); padding-top:4px; margin-bottom:14px; columns:2; column-gap:64px; }
+  .card-company { display:block; width:100%; border:0; background:none; padding:9px 0; font-size:17px; text-align:left; break-inside:avoid; }
+  .card-company:hover .t-name { text-decoration:underline; text-underline-offset:3px; }
+  #my-cards > p { margin:0 0 14px; max-width:60ch; }
+  .field { display:flex; flex-direction:column; gap:6px; margin:14px 0 0; font-size:14px; font-weight:600; }
+  .field textarea, .field input { font:15px/1.5 var(--sans); padding:9px 11px; border:1px solid var(--line); border-radius:4px; background:var(--card); color:var(--fg); font-weight:400; }
+  .field textarea { resize:vertical; }
+  #card-msg { color:var(--bad); font-size:14px; min-height:1.2em; margin:10px 0 0; }
+  #card-msg:empty { min-height:0; margin:0; }
+  .card-tools { margin-top:12px; } #card-delete-ask { font-size:14px; }
+  .drill-row { margin:14px 0 0; } .drill-open { margin-top:6px; align-self:flex-start; }
+  .modes { margin:14px 0 12px; } .srcs { margin-bottom:12px; }
+  .ad-topics { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+  .ad-topic-row { display:flex; gap:8px; align-items:baseline; font-size:15px; }
+  #ad-match { margin-top:8px; } #ad-result > p { margin:10px 0 0; }
+  .mock-timer { font:600 20px/1 var(--sans); color:var(--fg); font-variant-numeric:tabular-nums; min-width:3.2em; text-align:right; }
+  .mock-timer.over { color:var(--warn); }
+  .mock-field { margin-top:18px; }
+  .mock-guide-row { margin-top:14px; }
+  .mock-guide-box { border-left:3px solid var(--acc); padding:4px 0 4px 14px; }
+  .mock-guide-box ol { margin:6px 0 0; padding-left:20px; }
+  #mock-mine .mine-text { white-space:pre-wrap; margin:0; }
+  .mock-times { margin:22px auto 0; border-collapse:collapse; font-size:14px; text-align:left; max-width:100%; }
+  .mock-times th, .mock-times td { padding:6px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .mock-times td:nth-child(n+2) { white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #mock-copy-out .field { text-align:left; }
+  .rh-list { display:flex; flex-direction:column; gap:6px; max-height:360px; overflow:auto; padding-right:6px; }
+  .rh-row { display:flex; gap:8px; align-items:baseline; font-size:15px; }
+  .rh-prompt-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border:1px solid var(--line); border-left:3px solid var(--acc); border-radius:4px; background:var(--card); }
+  .rh-prompt-row .lbl { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  #rh-prompt { margin:0; flex:1; font:500 17px/1.4 var(--serif); }
+  #rh-timeup { color:var(--bad); font-weight:600; }
+  @media (max-width: 760px) { .card-rows { columns:1; } }

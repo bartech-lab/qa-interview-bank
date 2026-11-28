@@ -1,0 +1,1007 @@
+{
+ "a11y": {
+  "name": "Accessibility",
+  "patterns": [
+   "accessibility",
+   "a11y",
+   "WCAG",
+   "cs:ARIA",
+   "dostępnoś\\w+ cyfrow\\w*",
+   "screen readers?",
+   "axe-core",
+   "czytnik\\w+ ekranu"
+  ]
+ },
+ "agile": {
+  "name": "Agile, Scrum, Kanban",
+  "patterns": [
+   "Agile",
+   "Scrum",
+   "Kanban",
+   "SAFe",
+   "sprint\\w*",
+   "zwinn\\w*",
+   "metodyk\\w+",
+   "DoD",
+   "DoR",
+   "definition of done"
+  ]
+ },
+ "ai-prompting": {
+  "name": "Prompting and MCP",
+  "patterns": [
+   "prompt\\w*",
+   "cs:MCP",
+   "Model Context Protocol",
+   "context engineering"
+  ]
+ },
+ "ai-testing": {
+  "name": "Testing AI and LLM systems",
+  "patterns": [
+   "LLMs?",
+   "GenAI",
+   "generative AI",
+   "cs:ML",
+   "machine learning",
+   "cs:RAG",
+   "evals?",
+   "evaluation",
+   "non-deterministic",
+   "hallucynacj\\w*",
+   "hallucinations?",
+   "model output\\w*",
+   "prompt injection",
+   "Langfuse",
+   "LangSmith",
+   "Promptfoo"
+  ]
+ },
+ "ai-tools": {
+  "name": "AI coding tools",
+  "patterns": [
+   "Copilot",
+   "Cursor",
+   "Claude( Code)?",
+   "ChatGPT",
+   "Codex",
+   "AI tools?",
+   "AI-assisted",
+   "AI assisted",
+   "narzędzi\\w* AI",
+   "AI coding",
+   "AI agents?",
+   "agent\\w* AI",
+   "AI-augmented",
+   "AI-powered",
+   "cs:AI"
+  ]
+ },
+ "api-auth": {
+  "name": "OAuth, JWT, sessions",
+  "patterns": [
+   "OAuth\\d?",
+   "JWT",
+   "OIDC",
+   "SSO",
+   "authentication",
+   "authorization",
+   "uwierzytelni\\w*",
+   "autoryzacj\\w*"
+  ]
+ },
+ "api-contract": {
+  "name": "Contract testing",
+  "patterns": [
+   "contract test\\w*",
+   "cs:Pact",
+   "consumer-driven",
+   "testy kontraktowe",
+   "schema validation",
+   "JSON Schema"
+  ]
+ },
+ "api-graphql": {
+  "name": "GraphQL",
+  "patterns": [
+   "GraphQL"
+  ]
+ },
+ "api-integration": {
+  "name": "Integrations and webhooks",
+  "patterns": [
+   "integration test\\w*",
+   "testy integracyjne",
+   "testów integracyjnych",
+   "webhooks?",
+   "third-party",
+   "integracj\\w+"
+  ]
+ },
+ "api-providers": {
+  "name": "OData, Auth0, Keycloak, NestJS",
+  "patterns": [
+   "OData",
+   "Auth0",
+   "Keycloak",
+   "NestJS"
+  ]
+ },
+ "api-rest": {
+  "name": "REST and HTTP",
+  "patterns": [
+   "cs:REST",
+   "REST(ful)? API\\w*",
+   "HTTP",
+   "API testing",
+   "api tests?",
+   "testing APIs?",
+   "testowani\\w+ API",
+   "testy API",
+   "API automation",
+   "cs:API",
+   "cs:APIs",
+   "endpoints?",
+   "backend",
+   "back-end"
+  ]
+ },
+ "api-soap": {
+  "name": "SOAP, gRPC",
+  "patterns": [
+   "SOAP",
+   "gRPC"
+  ]
+ },
+ "api-tools": {
+  "name": "Postman and API tools",
+  "patterns": [
+   "Postman",
+   "Bruno",
+   "Insomnia",
+   "Swagger",
+   "OpenAPI",
+   "Newman",
+   "REST Assured",
+   "RestAssured",
+   "Charles( Proxy)?",
+   "Fiddler",
+   "SoapUI",
+   "cURL"
+  ]
+ },
+ "bdd": {
+  "name": "BDD, TDD, Gherkin",
+  "patterns": [
+   "BDD",
+   "TDD",
+   "ATDD",
+   "Cucumber",
+   "Gherkin",
+   "SpecFlow"
+  ]
+ },
+ "ci-azure": {
+  "name": "Azure DevOps and Azure",
+  "patterns": [
+   "Azure( DevOps| Pipelines)?"
+  ]
+ },
+ "ci-cd": {
+  "name": "CI/CD",
+  "patterns": [
+   "CI ?/ ?CD",
+   "cs:CI",
+   "pipelines?",
+   "potok\\w*",
+   "continuous integration",
+   "continuous delivery",
+   "continuous deployment"
+  ]
+ },
+ "ci-github": {
+  "name": "GitHub Actions",
+  "patterns": [
+   "GitHub Actions",
+   "GitHub"
+  ]
+ },
+ "ci-gitlab": {
+  "name": "GitLab CI",
+  "patterns": [
+   "GitLab( CI)?"
+  ]
+ },
+ "ci-jenkins": {
+  "name": "Jenkins",
+  "patterns": [
+   "Jenkins"
+  ]
+ },
+ "cloud-aws": {
+  "name": "AWS and cloud",
+  "patterns": [
+   "cs:AWS",
+   "cs:GCP",
+   "Google Cloud",
+   "S3",
+   "Lambda",
+   "cloud",
+   "chmur\\w*",
+   "Terraform"
+  ]
+ },
+ "cross-compat": {
+  "name": "Compatibility and localisation",
+  "patterns": [
+   "compatibility",
+   "kompatybilnoś\\w*",
+   "localization",
+   "localisation",
+   "i18n",
+   "multi-language"
+  ]
+ },
+ "data-platforms": {
+  "name": "Cosmos DB, Spark, Databricks",
+  "patterns": [
+   "Cosmos DB",
+   "Spark",
+   "Databricks"
+  ]
+ },
+ "data-testing": {
+  "name": "Data pipelines, ETL, warehouses",
+  "patterns": [
+   "ETL",
+   "data pipelines?",
+   "data warehouses?",
+   "Snowflake",
+   "data migration\\w*",
+   "migracj\\w+ danych",
+   "BigQuery",
+   "Power BI",
+   "data quality",
+   "dbt",
+   "Airflow",
+   "data validation"
+  ]
+ },
+ "db-nosql": {
+  "name": "NoSQL",
+  "patterns": [
+   "NoSQL",
+   "MongoDB",
+   "Redis",
+   "Cosmos ?DB",
+   "DynamoDB",
+   "Elasticsearch"
+  ]
+ },
+ "docker-k8s": {
+  "name": "Docker and Kubernetes",
+  "patterns": [
+   "Docker",
+   "Docker Compose",
+   "Kubernetes",
+   "cs:K8s",
+   "k8s",
+   "Helm",
+   "container\\w*",
+   "konteneryzacj\\w*",
+   "Testcontainers"
+  ]
+ },
+ "docs": {
+  "name": "Documentation",
+  "patterns": [
+   "documentation",
+   "dokumentacj\\w*"
+  ]
+ },
+ "fw-architecture": {
+  "name": "Framework design",
+  "patterns": [
+   "test frameworks?",
+   "automation frameworks?",
+   "frameworks? automatyz\\w*",
+   "framework\\w* test\\w*",
+   "test architecture",
+   "architektur\\w+ test\\w*",
+   "test automation strateg\\w*",
+   "build\\w* framework\\w*",
+   "scalable",
+   "maintainable"
+  ]
+ },
+ "fw-automation": {
+  "name": "Test automation in general",
+  "patterns": [
+   "test automation",
+   "automation testing",
+   "automated tests?",
+   "automatyzacj\\w+",
+   "automatyzując\\w*",
+   "automatyzuj\\w*",
+   "testy automatyczne",
+   "testów automatycznych",
+   "automatyczn\\w+ test\\w*",
+   "QA automation",
+   "SDET"
+  ]
+ },
+ "fw-flaky": {
+  "name": "Flaky tests",
+  "patterns": [
+   "flak\\w+",
+   "niestabiln\\w+ test\\w*",
+   "test stability",
+   "stabilność test\\w*",
+   "test reliability",
+   "unstable tests?"
+  ]
+ },
+ "fw-pom": {
+  "name": "Page Object Model",
+  "patterns": [
+   "page objects?",
+   "POM",
+   "screenplay"
+  ]
+ },
+ "fw-test-data": {
+  "name": "Test data management",
+  "patterns": [
+   "test data",
+   "dane testowe",
+   "danych testowych",
+   "seeding",
+   "test isolation",
+   "test environment\\w*",
+   "środowisk\\w+ test\\w*"
+  ]
+ },
+ "git": {
+  "name": "Git workflows",
+  "patterns": [
+   "cs:Git",
+   "git",
+   "pull requests?",
+   "merge requests?",
+   "code reviews?",
+   "branching"
+  ]
+ },
+ "istqb": {
+  "name": "ISTQB and terminology",
+  "patterns": [
+   "ISTQB",
+   "certyfikat\\w*",
+   "certifications?"
+  ]
+ },
+ "java-dotnet": {
+  "name": "Java, C# and other languages",
+  "patterns": [
+   "cs:Java(?!Script)",
+   "Jav[ąy]",
+   "C#",
+   "\\.NET",
+   "Kotlin",
+   "cs:Go",
+   "Golang",
+   "Swift",
+   "Dart"
+  ]
+ },
+ "js-async": {
+  "name": "Async, Promises, event loop",
+  "patterns": [
+   "async\\w*",
+   "promises?",
+   "event loop",
+   "asynchroniczn\\w*"
+  ]
+ },
+ "js-core": {
+  "name": "JavaScript",
+  "patterns": [
+   "JavaScript",
+   "cs:JS",
+   "ES6",
+   "Node(\\.js|JS)?"
+  ]
+ },
+ "lead-mentor": {
+  "name": "Leading and mentoring",
+  "patterns": [
+   "mentor\\w*",
+   "lead\\w*",
+   "lider\\w*",
+   "coaching",
+   "zespoł\\w+ QA",
+   "test lead",
+   "team lead",
+   "onboarding",
+   "ownership",
+   "knowledge sharing",
+   "dzielenie się wiedzą"
+  ]
+ },
+ "linux-observability": {
+  "name": "Linux, logs, monitoring",
+  "patterns": [
+   "Linux",
+   "Bash",
+   "shell",
+   "Grafana",
+   "Kibana",
+   "Sentry",
+   "Datadog",
+   "Prometheus",
+   "OpenTelemetry",
+   "observability",
+   "monitoring",
+   "monitorowani\\w*",
+   "New Relic",
+   "Splunk",
+   "ELK",
+   "logs?",
+   "logi\\w*"
+  ]
+ },
+ "messaging": {
+  "name": "Kafka and message queues",
+  "patterns": [
+   "Kafka",
+   "RabbitMQ",
+   "event-driven",
+   "message queues?",
+   "SQS",
+   "event bus",
+   "SFTP"
+  ]
+ },
+ "metrics": {
+  "name": "Quality metrics and KPIs",
+  "patterns": [
+   "metrics?",
+   "metryk\\w*",
+   "KPIs?",
+   "OKRs?",
+   "coverage",
+   "pokryci\\w*",
+   "DORA metrics",
+   "mutation"
+  ]
+ },
+ "microservices": {
+  "name": "Microservices",
+  "patterns": [
+   "micro-?services?",
+   "mikroserwis\\w*",
+   "distributed systems?"
+  ]
+ },
+ "migration-frameworks": {
+  "name": "Migrating between test tools",
+  "patterns": [
+   "migrat\\w+ .{0,30}(Selenium|Cypress|Playwright|framework)"
+  ]
+ },
+ "mobile-appium": {
+  "name": "Appium, Detox, Maestro",
+  "patterns": [
+   "Appium",
+   "Detox",
+   "Maestro",
+   "XCUITest",
+   "Espresso",
+   "Flutter",
+   "React Native"
+  ]
+ },
+ "mobile-general": {
+  "name": "Mobile testing",
+  "patterns": [
+   "mobile\\w*",
+   "mobiln\\w*",
+   "cs:iOS",
+   "Android",
+   "TestFlight",
+   "real devices?",
+   "emulators?",
+   "simulators?",
+   "Play Console"
+  ]
+ },
+ "multitenant-saas": {
+  "name": "SaaS and multi-tenant",
+  "patterns": [
+   "cs:SaaS",
+   "multi-?tenant"
+  ]
+ },
+ "oop-patterns": {
+  "name": "OOP, SOLID, design patterns, clean code",
+  "patterns": [
+   "OOP",
+   "SOLID",
+   "design patterns?",
+   "wzorc\\w+ projektow\\w*",
+   "clean code",
+   "programowanie obiektowe",
+   "programowania obiektowego",
+   "DRY",
+   "KISS"
+  ]
+ },
+ "ops-monitoring": {
+  "name": "CloudWatch, New Relic, AppConfig",
+  "patterns": [
+   "CloudWatch",
+   "New Relic",
+   "AppConfig"
+  ]
+ },
+ "performance": {
+  "name": "Performance and load testing",
+  "patterns": [
+   "performance test\\w*",
+   "performance",
+   "wydajnoś\\w*",
+   "wydajnościow\\w*",
+   "load test\\w*",
+   "testy obciążeniowe",
+   "stress test\\w*",
+   "JMeter",
+   "cs:k6",
+   "Gatling",
+   "Locust",
+   "Lighthouse",
+   "Core Web Vitals"
+  ]
+ },
+ "performance-artillery": {
+  "name": "Artillery",
+  "patterns": [
+   "Artillery"
+  ]
+ },
+ "pw-api": {
+  "name": "APIRequestContext and API tests in Playwright",
+  "patterns": [
+   "APIRequest\\w*",
+   "api tests? in playwright"
+  ]
+ },
+ "pw-auth": {
+  "name": "Auth and storage state",
+  "patterns": [
+   "storage ?state",
+   "session reuse"
+  ]
+ },
+ "pw-browsers": {
+  "name": "Cross-browser and device emulation",
+  "patterns": [
+   "cross-?browser",
+   "Chromium",
+   "WebKit",
+   "Firefox",
+   "BrowserStack",
+   "Sauce ?Labs",
+   "LambdaTest"
+  ]
+ },
+ "pw-component": {
+  "name": "Component testing",
+  "patterns": [
+   "component tests?",
+   "component testing",
+   "testy komponent\\w*"
+  ]
+ },
+ "pw-config": {
+  "name": "Config and projects",
+  "patterns": [
+   "playwright\\.config",
+   "globalSetup",
+   "global setup"
+  ]
+ },
+ "pw-debug": {
+  "name": "Trace viewer and debugging",
+  "patterns": [
+   "trace viewer",
+   "traces?",
+   "codegen",
+   "UI mode",
+   "Playwright Inspector"
+  ]
+ },
+ "pw-fixtures": {
+  "name": "Fixtures and hooks",
+  "patterns": [
+   "fixtures?",
+   "test\\.extend",
+   "beforeEach"
+  ]
+ },
+ "pw-general": {
+  "name": "Playwright overall",
+  "patterns": [
+   "playwright",
+   "playwirght"
+  ]
+ },
+ "pw-locators": {
+  "name": "Playwright locators",
+  "patterns": [
+   "locators?",
+   "getByRole",
+   "selectors?"
+  ]
+ },
+ "pw-network": {
+  "name": "Network mocking, route and HAR",
+  "patterns": [
+   "page\\.route",
+   "HAR",
+   "network mock\\w*",
+   "network interception",
+   "request interception",
+   "API mocking",
+   "mock\\w*",
+   "stub\\w*"
+  ]
+ },
+ "pw-parallel": {
+  "name": "Workers, parallelism and sharding",
+  "patterns": [
+   "parallel\\w*",
+   "shard\\w*",
+   "workers?",
+   "równoległ\\w*"
+  ]
+ },
+ "pw-reporting": {
+  "name": "Reporters",
+  "patterns": [
+   "Allure",
+   "ReportPortal",
+   "reporters?",
+   "test reports?",
+   "test reporting",
+   "raport\\w* z test\\w*"
+  ]
+ },
+ "pw-visual": {
+  "name": "Visual regression",
+  "patterns": [
+   "visual regression",
+   "visual testing",
+   "Percy",
+   "Applitools",
+   "screenshot testing",
+   "toHaveScreenshot",
+   "snapshot testing",
+   "testy wizualne"
+  ]
+ },
+ "pw-waits-assertions": {
+  "name": "Auto-waiting and web-first assertions",
+  "patterns": [
+   "auto-?wait\\w*",
+   "web-first",
+   "expect\\.poll",
+   "soft assertions?"
+  ]
+ },
+ "pw-websockets": {
+  "name": "WebSockets and realtime",
+  "patterns": [
+   "web ?sockets?",
+   "socket\\.io",
+   "real-?time"
+  ]
+ },
+ "python": {
+  "name": "Python",
+  "patterns": [
+   "python\\w*"
+  ]
+ },
+ "react-frontend": {
+  "name": "React and frontend basics",
+  "patterns": [
+   "React(\\.js|JS)?",
+   "Angular",
+   "Vue(\\.js)?",
+   "Next\\.js",
+   "frontend",
+   "front-end",
+   "HTML",
+   "CSS",
+   "DOM"
+  ]
+ },
+ "release": {
+  "name": "Release management and go/no-go",
+  "patterns": [
+   "release\\w*",
+   "wdroże\\w*",
+   "go/no-go",
+   "release readiness",
+   "hotfix\\w*",
+   "feature flags?",
+   "A/B test\\w*",
+   "deployments?"
+  ]
+ },
+ "requirements": {
+  "name": "Requirements analysis",
+  "patterns": [
+   "requirements?",
+   "wymaga\\w*",
+   "ambiguit\\w*",
+   "business logic",
+   "logik\\w+ biznesow\\w*",
+   "business processes",
+   "traceability",
+   "SDLC",
+   "STLC"
+  ]
+ },
+ "security": {
+  "name": "Security testing",
+  "patterns": [
+   "security",
+   "bezpieczeństw\\w*",
+   "OWASP",
+   "penetration",
+   "pentest\\w*",
+   "Burp",
+   "XSS",
+   "SQL injection",
+   "CSRF",
+   "GDPR",
+   "RODO",
+   "compliance",
+   "ISO 27001",
+   "DORA",
+   "KNF"
+  ]
+ },
+ "shift-left": {
+  "name": "Shift left and quality culture",
+  "patterns": [
+   "shift.left",
+   "quality culture",
+   "quality gates?",
+   "quality engineering",
+   "quality advocate",
+   "whole-team"
+  ]
+ },
+ "soft-skills": {
+  "name": "Analytical thinking, independence, problem solving",
+  "patterns": [
+   "analytical\\w*",
+   "analityczn\\w*",
+   "problem[- ]solving",
+   "rozwiązywani\\w+ problemów",
+   "attention to detail",
+   "independen\\w*",
+   "samodzieln\\w*",
+   "odpowiedzialn\\w*",
+   "proactiv\\w*",
+   "proaktywn\\w*",
+   "mindset",
+   "passion\\w*",
+   "continuous improvement"
+  ]
+ },
+ "sql-core": {
+  "name": "SQL",
+  "patterns": [
+   "cs:SQL",
+   "SQL queries",
+   "zapyta\\w+ SQL",
+   "bazy? danych",
+   "baz danych",
+   "databases?",
+   "PostgreSQL",
+   "Postgres",
+   "MySQL",
+   "MS ?SQL",
+   "Oracle( ?DB)?",
+   "T-SQL",
+   "PL/SQL"
+  ]
+ },
+ "stakeholders": {
+  "name": "Stakeholders and communication",
+  "patterns": [
+   "stakeholder\\w*",
+   "interesariusz\\w*",
+   "communication",
+   "komunikacj\\w*",
+   "komunikatywn\\w*",
+   "collaborat\\w*",
+   "współprac\\w*",
+   "cross-functional",
+   "business analysts?",
+   "product owners?",
+   "product managers?",
+   "klient\\w*"
+  ]
+ },
+ "test-bugs": {
+  "name": "Defects and root cause",
+  "patterns": [
+   "bug reports?",
+   "defect\\w*",
+   "defekt\\w*",
+   "błęd\\w*",
+   "zgłoszeń",
+   "root cause",
+   "debugging",
+   "debugowani\\w*",
+   "triage"
+  ]
+ },
+ "test-design": {
+  "name": "Test design techniques",
+  "patterns": [
+   "test design",
+   "boundary value\\w*",
+   "equivalence partition\\w*",
+   "decision tables?",
+   "test techniques",
+   "techniki testowania",
+   "test cases?",
+   "test scenarios?",
+   "przypadk\\w+ testow\\w*",
+   "scenariusz\\w* testow\\w*"
+  ]
+ },
+ "test-levels": {
+  "name": "Test levels and types",
+  "patterns": [
+   "regression\\w*",
+   "regresj\\w+",
+   "regresyjn\\w*",
+   "smoke tests?",
+   "smoke testing",
+   "sanity",
+   "system test\\w*",
+   "functional test\\w*",
+   "testy funkcjonalne",
+   "end-to-end",
+   "E2E",
+   "black.box",
+   "white.box",
+   "grey.box"
+  ]
+ },
+ "test-manual": {
+  "name": "Manual and exploratory testing",
+  "patterns": [
+   "manual test\\w*",
+   "manual QA",
+   "testy manualne",
+   "testów manualnych",
+   "testowani\\w+ manualn\\w*",
+   "exploratory",
+   "eksploracyjn\\w*"
+  ]
+ },
+ "test-mgmt-tools": {
+  "name": "Jira, Xray, TestRail, Zephyr",
+  "patterns": [
+   "Jira",
+   "Xray",
+   "cs:TMS",
+   "TestRail",
+   "Zephyr",
+   "qTest",
+   "Confluence",
+   "test management"
+  ]
+ },
+ "test-risk": {
+  "name": "Risk-based testing",
+  "patterns": [
+   "risk-based",
+   "risk based",
+   "risk analysis",
+   "ryzyk\\w*",
+   "risks?"
+  ]
+ },
+ "test-strategy": {
+  "name": "Test strategy and planning",
+  "patterns": [
+   "test strateg\\w*",
+   "testing strateg\\w*",
+   "QA strateg\\w*",
+   "quality strateg\\w*",
+   "strategi\\w+ testow\\w*",
+   "strategi\\w+ testów",
+   "test plans?",
+   "test planning",
+   "plan\\w* test\\w*",
+   "test pyramid",
+   "testing pyramid",
+   "piramid\\w+ test\\w*",
+   "test approach",
+   "quality standards?",
+   "quality processes",
+   "quality assurance processes"
+  ]
+ },
+ "test-uat": {
+  "name": "UAT",
+  "patterns": [
+   "UAT",
+   "user acceptance",
+   "testy akceptacyjne",
+   "acceptance tests?",
+   "acceptance criteria",
+   "kryteri\\w+ akceptacji"
+  ]
+ },
+ "tools-other-e2e": {
+  "name": "Selenium, Cypress, WebdriverIO",
+  "patterns": [
+   "Selenium",
+   "WebDriver\\w*",
+   "WebdriverIO",
+   "cs:WDIO",
+   "Cypress",
+   "Robot Framework",
+   "TestCafe",
+   "Puppeteer",
+   "Protractor"
+  ]
+ },
+ "ts-core": {
+  "name": "TypeScript",
+  "patterns": [
+   "TypeScript",
+   "cs:TS"
+  ]
+ },
+ "unit-frameworks": {
+  "name": "Jest, Vitest, Mocha and unit tests",
+  "patterns": [
+   "cs:Jest(?=[,./)]|\\s+(or|and|tests?|lub|i)\\b)",
+   "cs:(?<=[,(/]\\s)Jest",
+   "Vitest",
+   "Mocha",
+   "Chai",
+   "unit tests?",
+   "unit testing",
+   "testy jednostkowe",
+   "testów jednostkowych",
+   "Supertest",
+   "pytest",
+   "unittest"
+  ]
+ },
+ "web-testing": {
+  "name": "Web application testing",
+  "patterns": [
+   "web applications?",
+   "aplikacj\\w+ webow\\w*",
+   "web products?",
+   "testing",
+   "QA",
+   "quality assurance",
+   "testy",
+   "testowani\\w*",
+   "tester\\w*"
+  ]
+ }
+}

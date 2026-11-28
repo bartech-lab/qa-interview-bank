@@ -178,3 +178,53 @@ export const rowIds = (page: Page) => page.locator('.rq-row').evaluateAll(els =>
 export const importFile = (o: unknown) => ({ name: 'progress.json', mimeType: 'application/json', buffer: Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)) });
 export const exportFile = (progressObj: unknown, exported = '2026-01-10T10:00:00.000Z') =>
   ({ app: 'qa-interview-bank', format: 1, exported, progress: progressObj });
+
+// ---- phase 6: a small http server for the offline-copy tests (docs/phase6-spec.md, section 6) ----
+import http from 'node:http';
+import fs from 'node:fs';
+
+export type Site = {
+  url: string;                                          // http://127.0.0.1:<port>, the same after stop() and start()
+  stop: () => Promise<void>;                            // the port refuses connections
+  start: () => Promise<void>;                           // listens again on the same port
+  swap: (o: { index?: string; sw?: (text: string) => string }) => void;  // a "new deploy": other index.html and sw.js text
+};
+const MIME: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml' };
+
+// Serves the folder of the page under test (QIB_PAGE or dist/) with the caching headers GitHub Pages sends, so an
+// implementation that trusts the HTTP cache shows an old page after a deploy. Closed in teardown.
+export const testWithSite = test.extend<{ site: Site }>({
+  site: async ({}, use) => {
+    const root = path.dirname(path.resolve(process.env.QIB_PAGE || 'dist/index.html'));
+    const over: { index?: string; sw?: (text: string) => string } = {};
+    const sockets = new Set<import('node:net').Socket>();
+    const make = () => {
+      const s = http.createServer((req, res) => {
+        const name = decodeURIComponent((req.url || '/').split('?')[0]).replace(/^\/+/, '') || 'index.html';
+        const file = path.join(root, path.normalize(name));
+        const headers = (ext: string) => ({ 'content-type': MIME[ext] || 'application/octet-stream', 'cache-control': 'max-age=600' });
+        if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('not found'); return; }
+        const ext = path.extname(file);
+        let body: Buffer | string = fs.readFileSync(file);
+        if (name === 'index.html' && over.index !== undefined) body = over.index;
+        if (name === 'sw.js' && over.sw) body = over.sw(body.toString('utf8'));
+        res.writeHead(200, headers(ext));
+        res.end(body);
+      });
+      s.on('connection', sock => { sockets.add(sock); sock.on('close', () => sockets.delete(sock)); });
+      return s;
+    };
+    let server = make();
+    await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
+    const port = (server.address() as import('node:net').AddressInfo).port;
+    const stop = () => new Promise<void>(r => { for (const s of sockets) s.destroy(); server.close(() => r()); });
+    const site: Site = {
+      url: `http://127.0.0.1:${port}`,
+      stop,
+      start: async () => { server = make(); await new Promise<void>(r => server.listen(port, '127.0.0.1', r)); },
+      swap: o => { Object.assign(over, o); },
+    };
+    await use(site);
+    await stop();
+  },
+});

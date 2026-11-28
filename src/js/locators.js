@@ -209,18 +209,21 @@ async function renderLocators() {
   if (!loc.page) loc.page = (pages.find(p => p.id === store.locPage) || pages[0]).id;
   box.innerHTML = `<div class="loc-wrap">
     <section class="loc-panel">
-      <h2>Locator trainer</h2>
+      <button class="back" id="loc-back" onclick="go('learn', '01-playwright')">← Playwright</button>
+      <h2>Locator drill</h2>
       <p class="muted small">Type a Playwright locator. Its matches light up on a frozen copy of an e2e-casebook page, read by Playwright's own locator engine.</p>
       <label class="loc-field">Frozen page <select id="loc-page" onchange="locPick(this.value)">${pages.map(p => `<option value="${esc(p.id)}">${esc(p.title)}</option>`).join('')}</select></label>
       <label class="loc-field">Locator <input id="loc-input" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" oninput="locTyped()"></label>
       <p id="loc-state" role="status"></p>
+    </section>
+    <div class="loc-stage"><iframe id="loc-frame" sandbox="allow-scripts"></iframe></div>
+    <section class="loc-panel loc-tasks-panel">
       <h3>Tasks on this page</h3>
       <ol id="loc-tasks" aria-label="Tasks on this page"></ol>
       <p id="loc-verdict" role="status"></p>
       <p id="loc-reveal" hidden><button class="btn small" onclick="locReveal()">Show an answer</button> <code id="loc-answer" hidden></code></p>
       <p class="small"><a id="loc-case" target="_blank" rel="noopener"></a></p>
     </section>
-    <div class="loc-stage"><iframe id="loc-frame" sandbox="allow-scripts"></iframe></div>
   </div>`;
   if (!loc.listening) { addEventListener('message', locReply); loc.listening = true; }
   locShowPage();

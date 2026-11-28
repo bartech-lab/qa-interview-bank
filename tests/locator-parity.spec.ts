@@ -1,5 +1,6 @@
 // Phase 4: parity of the locator trainer with real Playwright (docs/phase4-spec.md, "Parity with real Playwright").
-// Rows 1 to 48 and the tests were written from the spec only; rows 49 to 57 were added later. All rows are copied from the spec table; every task answer comes from src/locators/tasks.json.
+// Rows 1 to 48 and the tests were written from the spec only; rows 49 to 57 were added later. Rows 14, 18, 19 and 46 were
+// replaced in phase 6: they targeted the case menu, which the frozen pages no longer carry (docs/phase4-spec.md). All rows are copied from the spec table; every task answer comes from src/locators/tasks.json.
 import { test, expect, goTo } from './fixtures';
 import type { Page, FrameLocator, Locator } from '@playwright/test';
 import fs from 'node:fs';
@@ -22,12 +23,12 @@ const PARITY: ParityRow[] = [
   [11, "expense-claims", "getByPlaceholder('ewa@')", "placeholder", "partial", false],
   [12, "expense-claims", "getByPlaceholder('EWA@EXAMPLE.COM', { exact: true })", "placeholder", "case", true],
   [13, "shop", "getByTestId('order-total')", "testid", "", false],
-  [14, "notes", "getByTestId('notifications')", "testid", "", false],
+  [14, "notes", "getByRole('listitem').filter({ has: page.getByText('Book notes') })", "filter", "", false],
   [15, "shop", "getByTestId('order')", "testid", "partial", true],
   [16, "gallery", "getByAltText('photo 1 of')", "alt", "case", false],
   [17, "gallery", "getByAltText(/Photo \\d of/)", "alt", "regex", false],
-  [18, "settings", "getByTitle('Switch to dark theme')", "title", "", false],
-  [19, "settings", "getByTitle('dark theme')", "title", "partial", false],
+  [18, "gallery", "getByAltText('Photo 1 of 24 from the trip')", "alt", "", false],
+  [19, "gallery", "getByAltText('from the trip')", "alt", "partial", false],
   [20, "orders", "locator('tbody tr')", "css", "", false],
   [21, "shop", "locator('[data-testid=\"order-total\"]')", "css", "", false],
   [22, "settings", "locator('select option')", "css", "", false],
@@ -54,7 +55,7 @@ const PARITY: ParityRow[] = [
   [43, "product-tabs", "getByRole('tab', { selected: true })", "role", "", false],
   [44, "shop", "getByRole('link', { name: 'reviews for' })", "role", "partial", false],
   [45, "orders", "getByRole('cell', { name: 'Ann' })", "role", "", false],
-  [46, "playlist", "getByRole('link')", "role", "", false],
+  [46, "playlist", "getByLabel('Move Slow Train')", "label", "", false],
   [47, "shop", "page.getByRole('button', { name: 'Add Pen' });", "role", "prefix", false],
   [48, "signup", "await page.getByLabel('Name', { exact: true })", "label", "prefix", false],
   [49, "notes", "getByRole('button', { name: 'Star' }).or(page.getByRole('button', { name: 'Archive' }))", "or", "", false],
@@ -120,7 +121,8 @@ test('FM15 mix rule: the 57 rows hold every kind, at least 10 typed ones, and at
   expect(PARITY.map(r => r[0])).toEqual(Array.from({ length: 57 }, (_, i) => i + 1));
   for (const r of PARITY) expect(info.pages.map(p => p.id), `row ${r[0]} names a known page`).toContain(r[1]);
   const kinds = new Set(PARITY.map(r => r[3]));
-  for (const k of ['text', 'label', 'placeholder', 'testid', 'alt', 'title', 'css', 'xpath', 'filter', 'nth', 'first', 'last', 'role', 'or', 'and']) expect(kinds, `kind ${k} present`).toContain(k);
+  // No 'title' kind since phase 6: the only title attributes were in the case menu the frozen pages no longer carry.
+  for (const k of ['text', 'label', 'placeholder', 'testid', 'alt', 'css', 'xpath', 'filter', 'nth', 'first', 'last', 'role', 'or', 'and']) expect(kinds, `kind ${k} present`).toContain(k);
   expect(PARITY.filter(r => r[4] !== '').length).toBeGreaterThanOrEqual(10);
   // Role-only: every call of the chain is getByRole (string contents do not count as calls).
   const calls = (text: string) => new Set([...text.replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, "''").matchAll(/([A-Za-z]\w*)\(/g)].map(m => m[1]));
