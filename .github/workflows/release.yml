@@ -20,7 +20,9 @@ jobs:
       - name: Release notes (questions added, removed and changed since the previous tag)
         run: |
           prev=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
-          if [ -n "$prev" ]; then python3 tools/release_notes.py "$prev" > notes.md; else echo "First release." > notes.md; fi
+          # docs/releases/<tag>.md, when present, says what changed in the page; the question changes follow it.
+          if [ -f "docs/releases/${GITHUB_REF_NAME}.md" ]; then cat "docs/releases/${GITHUB_REF_NAME}.md" > notes.md; echo >> notes.md; else : > notes.md; fi
+          if [ -n "$prev" ]; then python3 tools/release_notes.py "$prev" >> notes.md; else echo "First release." >> notes.md; fi
           cat notes.md
       - name: Create the release with the zip and questions.json
         env:
